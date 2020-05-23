@@ -1,2 +1,2 @@
-# ProphetsWay.EntityFrameworkTools
-Basic utilities for EF projects implementing the BaseDataAccess interfaces.
+# ProphetsWay.EFTools
+Basic utilities for EntityFramework projects implementing the BaseDataAccess interfaces.
