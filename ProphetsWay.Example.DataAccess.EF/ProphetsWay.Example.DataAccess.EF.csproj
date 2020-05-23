@@ -1,7 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EntityFramework" Version="6.4.4" />
+    <PackageReference Include="ProphetsWay.BaseDataAccess" Version="1.1.0-126.Beta" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProphetsWay.EFTools\ProphetsWay.EFTools.csproj" />
+    <ProjectReference Include="..\ProphetsWay.Example\ProphetsWay.Example.DataAccess\ProphetsWay.Example.DataAccess.csproj" />
+  </ItemGroup>
 
 </Project>
