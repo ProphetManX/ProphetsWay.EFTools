@@ -1,6 +1,7 @@
 ﻿using ProphetsWay.BaseDataAccess;
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 using System.Linq;
@@ -22,9 +23,12 @@ namespace ProphetsWay.EFTools
 	public abstract class BaseDao<TEntityType, TIdType> : BaseDao, IBaseDao<TEntityType> where TEntityType : class, IBaseIdEntity<TIdType>
 	{
 		protected DbSet<TEntityType> Dataset { get; }
+		private DbContextTransaction _transaction;
+
 		protected BaseDao(DbContext context) : base(context)
 		{
 			Dataset = Context.Set<TEntityType>();
+			_transaction = null;
 		}
 
 		public int Delete(TEntityType item)
@@ -46,6 +50,28 @@ namespace ProphetsWay.EFTools
 			Dataset.AddOrUpdate(item);
 			return Context.SaveChanges();
 		}
+
+		protected void EnsureBeginTransaction()
+		{
+			if(Context.Database.CurrentTransaction == null)
+			{
+				_transaction = Context.Database.BeginTransaction();
+			}
+		}
+
+		protected void EnsureTransactionCommit()
+		{
+			_transaction?.Commit();
+			_transaction = null;
+		}
+
+		protected void EnsureTransactionRollback()
+		{
+			_transaction?.Rollback();
+			_transaction = null;
+		}
+
+		
 	}
 
 #pragma warning disable CS0618 // Type or member is obsolete
