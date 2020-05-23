@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.EFTools", "ProphetsWay.EFTools\ProphetsWay.EFTools.csproj", "{5BE3031C-E40A-4048-8655-AA7E95526007}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "ProphetsWay.Example.Database", "ProphetsWay.Example\ProphetsWay.Example.Database\ProphetsWay.Example.Database.sqlproj", "{828E118D-68BA-4F92-8794-46CBF85AC4C3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.Example.DataAccess", "ProphetsWay.Example\ProphetsWay.Example.DataAccess\ProphetsWay.Example.DataAccess.csproj", "{910ACEE9-BCE6-4BC8-AE41-2EA8EB107491}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProphetsWay.Example submodule", "ProphetsWay.Example submodule", "{1A486F83-5557-42B2-BB8F-97D34BA029EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProphetsWay.EFTools.Tests", "ProphetsWay.EFTools.Tests\ProphetsWay.EFTools.Tests.csproj", "{F227F01C-5CF2-4E8C-A904-2E8F48B829C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProphetsWay.Example.DataAccess.EF", "ProphetsWay.Example.DataAccess.EF\ProphetsWay.Example.DataAccess.EF.csproj", "{AC66629E-045D-4BA8-9D29-C2DC7A3EC233}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5BE3031C-E40A-4048-8655-AA7E95526007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BE3031C-E40A-4048-8655-AA7E95526007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BE3031C-E40A-4048-8655-AA7E95526007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BE3031C-E40A-4048-8655-AA7E95526007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{828E118D-68BA-4F92-8794-46CBF85AC4C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{828E118D-68BA-4F92-8794-46CBF85AC4C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{828E118D-68BA-4F92-8794-46CBF85AC4C3}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{828E118D-68BA-4F92-8794-46CBF85AC4C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{828E118D-68BA-4F92-8794-46CBF85AC4C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{828E118D-68BA-4F92-8794-46CBF85AC4C3}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{910ACEE9-BCE6-4BC8-AE41-2EA8EB107491}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{910ACEE9-BCE6-4BC8-AE41-2EA8EB107491}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{910ACEE9-BCE6-4BC8-AE41-2EA8EB107491}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{910ACEE9-BCE6-4BC8-AE41-2EA8EB107491}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F227F01C-5CF2-4E8C-A904-2E8F48B829C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F227F01C-5CF2-4E8C-A904-2E8F48B829C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F227F01C-5CF2-4E8C-A904-2E8F48B829C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F227F01C-5CF2-4E8C-A904-2E8F48B829C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC66629E-045D-4BA8-9D29-C2DC7A3EC233}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC66629E-045D-4BA8-9D29-C2DC7A3EC233}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC66629E-045D-4BA8-9D29-C2DC7A3EC233}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC66629E-045D-4BA8-9D29-C2DC7A3EC233}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{828E118D-68BA-4F92-8794-46CBF85AC4C3} = {1A486F83-5557-42B2-BB8F-97D34BA029EB}
+		{910ACEE9-BCE6-4BC8-AE41-2EA8EB107491} = {1A486F83-5557-42B2-BB8F-97D34BA029EB}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {855A9DA5-3F0C-4AAA-9A9D-72E6C44087C2}
+	EndGlobalSection
+EndGlobal
