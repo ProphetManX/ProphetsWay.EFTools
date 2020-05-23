@@ -18,23 +18,38 @@ namespace ProphetsWay.EFTools
 	}
 
 #pragma warning disable CS0618 // Type or member is obsolete
-	public abstract class BaseGetAllWithIntIdDao<T> : BaseGetAllDao<T, int>, IBaseGetAllDao<T> where T : class, IBaseIdEntity<int>
+	public abstract class BaseGetAllDaoWithIntId<T> : BaseGetAllDao<T, int>, IBaseGetAllDao<T> where T : class, IBaseIdEntity<int>
 #pragma warning restore CS0618 // Type or member is obsolete
 	{
-		protected BaseGetAllWithIntIdDao(DbContext context) : base(context) { }
+		protected BaseGetAllDaoWithIntId(DbContext context) : base(context) { }
+
+		public override T Get(T item)
+		{
+			return Dataset.Where(i => i.Id == item.Id).SingleOrDefault();
+		}
 	}
 
 #pragma warning disable CS0618 // Type or member is obsolete
-	public abstract class BaseGetAllWithLongIdDao<T> : BaseGetAllDao<T, long>, IBaseGetAllDao<T> where T : class, IBaseIdEntity<long>
+	public abstract class BaseGetAllDaoWithLongId<T> : BaseGetAllDao<T, long>, IBaseGetAllDao<T> where T : class, IBaseIdEntity<long>
 #pragma warning restore CS0618 // Type or member is obsolete
 	{
-		protected BaseGetAllWithLongIdDao(DbContext context) : base(context) { }
+		protected BaseGetAllDaoWithLongId(DbContext context) : base(context) { }
+
+		public override T Get(T item)
+		{
+			return Dataset.Where(i => i.Id == item.Id).SingleOrDefault();
+		}
 	}
 
 #pragma warning disable CS0618 // Type or member is obsolete
-	public abstract class BaseGetAllWithGuidIdDao<T> : BaseGetAllDao<T, Guid>, IBaseGetAllDao<T> where T : class, IBaseIdEntity<Guid>
+	public abstract class BaseGetAllDaoWithGuidId<T> : BaseGetAllDao<T, Guid>, IBaseGetAllDao<T> where T : class, IBaseIdEntity<Guid>
 #pragma warning restore CS0618 // Type or member is obsolete
 	{
-		protected BaseGetAllWithGuidIdDao(DbContext context) : base(context) { }
+		protected BaseGetAllDaoWithGuidId(DbContext context) : base(context) { }
+
+		public override T Get(T item)
+		{
+			return Dataset.Where(i => i.Id == item.Id).SingleOrDefault();
+		}
 	}
 }
