@@ -1,18 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="EntityFramework" Version="6.4.4" />
-    <PackageReference Include="FluentAssertions" Version="5.10.3" />
-    <PackageReference Include="ProphetsWay.BaseDataAccess" Version="1.1.0-126.Beta" />
-  </ItemGroup>
+	<!-- Conditionally obtain references for the .NET Standard 2.0 target -->
+	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.4" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.4" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ProphetsWay.EFTools\ProphetsWay.EFTools.csproj" />
-    <ProjectReference Include="..\ProphetsWay.Example\ProphetsWay.Example.DataAccess\ProphetsWay.Example.DataAccess.csproj" />
-  </ItemGroup>
+	<!-- Conditionally obtain references for the .NET Framework 2.1 target -->
+	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
+		<PackageReference Include="EntityFramework" Version="6.4.4" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="FluentAssertions" Version="5.10.3" />
+		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="1.1.0-126.Beta" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ProphetsWay.EFTools\ProphetsWay.EFTools.csproj" />
+		<ProjectReference Include="..\ProphetsWay.Example\ProphetsWay.Example.DataAccess\ProphetsWay.Example.DataAccess.csproj" />
+	</ItemGroup>
 
 </Project>

@@ -1,10 +1,18 @@
-﻿using ProphetsWay.BaseDataAccess;
-using System;
-using System.Data;
-using System.Data.Common;
+﻿#if NETSTANDARD2_0
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+#endif
+#if NETSTANDARD2_1
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
+#endif
+using ProphetsWay.BaseDataAccess;
+using System;
+using System.Collections.Generic;
+using System.Data;
+
 using System.Linq;
+using System.Reflection;
 
 namespace ProphetsWay.EFTools
 {
@@ -23,7 +31,14 @@ namespace ProphetsWay.EFTools
 	public abstract class BaseDao<TEntityType, TIdType> : BaseDao, IBaseDao<TEntityType> where TEntityType : class, IBaseIdEntity<TIdType>
 	{
 		protected DbSet<TEntityType> Dataset { get; }
+
+#if NETSTANDARD2_0
+		private IDbContextTransaction _transaction;
+#endif
+#if NETSTANDARD2_1
 		private DbContextTransaction _transaction;
+#endif
+
 
 		protected BaseDao(DbContext context) : base(context)
 		{
@@ -47,10 +62,19 @@ namespace ProphetsWay.EFTools
 
 		public int Update(TEntityType item)
 		{
+#if NETSTANDARD2_1
+
 			Dataset.AddOrUpdate(item);
+#endif
+#if NETSTANDARD2_0
+			var orig = Dataset.Single(x => x.Id.Equals(item.Id));
+			var entry = Context.Entry(orig);
+
+			entry.CurrentValues.SetValues(item);
+			entry.State = EntityState.Modified;
+#endif
 			return Context.SaveChanges();
 		}
-
 		protected void EnsureBeginTransaction()
 		{
 			if(Context.Database.CurrentTransaction == null)
@@ -71,7 +95,8 @@ namespace ProphetsWay.EFTools
 			_transaction = null;
 		}
 
-		
+
+
 	}
 
 #pragma warning disable CS0618 // Type or member is obsolete

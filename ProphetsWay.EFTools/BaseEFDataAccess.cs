@@ -1,6 +1,12 @@
-﻿using ProphetsWay.BaseDataAccess;
-using System;
+﻿#if NETSTANDARD2_0
+using Microsoft.EntityFrameworkCore;
+#endif
+#if NETSTANDARD2_1
 using System.Data.Entity;
+using System.Data.Entity.Migrations;
+# endif
+using ProphetsWay.BaseDataAccess;
+using System;
 
 namespace ProphetsWay.EFTools
 {
