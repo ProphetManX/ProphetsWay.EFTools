@@ -12,7 +12,7 @@ namespace ProphetsWay.Example.DataAccess.EF.Daos
 
 		public Company GetCustomCompanyFunction(int id)
 		{
-			return Dataset.Skip(id % GetCount(null)).First();
+			return Dataset.OrderBy(x=> x.Id).Skip(id % GetCount(null)).First();
 		}
 	}
 }

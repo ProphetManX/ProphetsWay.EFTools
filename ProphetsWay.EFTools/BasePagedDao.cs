@@ -18,7 +18,7 @@ namespace ProphetsWay.EFTools
 
 		public IList<TEntityType> GetPaged(TEntityType item, int skip, int take)
 		{
-			return Dataset.Skip(skip).Take(take).ToList();
+			return Dataset.OrderBy(x=> x.Id).Skip(skip).Take(take).ToList();
 		}
 	}
 
