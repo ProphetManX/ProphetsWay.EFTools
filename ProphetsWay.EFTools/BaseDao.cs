@@ -1,8 +1,8 @@
-﻿#if NETSTANDARD2_0
+﻿#if NETSTANDARD2_0 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 #endif
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET45 || NET461 || NET471 || NET472
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
@@ -35,7 +35,7 @@ namespace ProphetsWay.EFTools
 #if NETSTANDARD2_0
 		private IDbContextTransaction _transaction;
 #endif
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET45 || NET461 || NET471 || NET472
 		private DbContextTransaction _transaction;
 #endif
 
@@ -62,7 +62,7 @@ namespace ProphetsWay.EFTools
 
 		public int Update(TEntityType item)
 		{
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET45 || NET461 || NET471 || NET472
 
 			Dataset.AddOrUpdate(item);
 #endif

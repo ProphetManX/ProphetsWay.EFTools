@@ -1,7 +1,7 @@
 ﻿#if NETSTANDARD2_0
 using Microsoft.EntityFrameworkCore;
 #endif
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET45 || NET461 || NET471 || NET472
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 # endif

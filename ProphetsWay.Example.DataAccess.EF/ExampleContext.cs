@@ -1,7 +1,7 @@
 ﻿#if NETSTANDARD2_0
 using Microsoft.EntityFrameworkCore;
 #endif
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET45 || NET461 || NET471 || NET472
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
@@ -25,7 +25,7 @@ namespace ProphetsWay.Example.DataAccess.EF
 			modelBuilder.Entity<User>().HasOne(x => x.Job).WithMany().HasForeignKey("JobId");
 #endif
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET45 || NET461 || NET471 || NET472
 		protected override void OnModelCreating(DbModelBuilder modelBuilder)
 		{		
 			modelBuilder.Entity<User>().HasOptional(x => x.Company).WithMany().Map(m => m.MapKey("CompanyId"));
