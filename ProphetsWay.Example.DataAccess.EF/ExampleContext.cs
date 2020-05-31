@@ -22,7 +22,8 @@ namespace ProphetsWay.Example.DataAccess.EF
 			modelBuilder.Entity<Job>().ToTable("Jobs");
 
 
-
+			modelBuilder.Entity<User>().HasOptional(x => x.Company).WithMany().Map(m => m.MapKey("CompanyId"));
+			modelBuilder.Entity<User>().HasOptional(x => x.Job).WithMany().Map(m => m.MapKey("JobId"));
 		}
 
 
