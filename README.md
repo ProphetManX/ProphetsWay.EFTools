@@ -1,32 +1,19 @@
 # ProphetsWay.EFTools
-Basic utilities for EntityFramework projects implementing the BaseDataAccess interfaces.
-
-
-
-
-
-
-
-
-# ProphetsWay.iBatisTools
-
 | Release   | Status |
 |   ---     |  ---   |
 | Latest Build: | [![Build status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/EFTools%20-%20CI)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=17)
-| Alpha:    | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/7/15)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=7)  update still
-| Beta:     | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/7/16)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=7)  update still
-| Release:  | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/7/17)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=7)  update still
+| Alpha:    | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/9/21)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=9)  update still
+| Beta:     | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/9/22)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=9)  update still
+| Release:  | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/9/23)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=9)  update still
 
 
-A small library that will help with using iBatisNet as your DAL
-
-In my testing I have found that I can't get iBatisNet to work in Net Core Test application, so I have the iBatisTools project
-only building in Net Framework setups for now.  If anyone can get me a version of iBatisNet that I can use in both Net Framework
-and Net Core, I will be absolutely happy to upgrade this to support them both as well.
+A small library that is useful when utilizing EntityFramework for a Data Access Layer (DAL) while 
+adhering to Business Layer to DAL decoupling. This uses the paradigm explained in 
+https://github.com/ProphetManX/ProphetsWay.BaseDataAccess, see its README for more information.
 
 
 ## How to use
-You can reference iBatisTools from NuGet.  Once you have it in your project, you will be able to write custom implementations
+You can reference EFTools from NuGet.  Once you have it in your project, you will be able to write custom implementations
 for your DAL, however some functionality will be handled for you in base abstract classes that you can inherit from.  I will
 try to explain each of the base classes in order of how I would probably code a new project from scratch.
 
@@ -34,43 +21,71 @@ For examples, please see the example projects included in the GitHub repository.
 
 ## Base Dao Classes
 ##### Special note
-iBatisTools references interfaces that were established in another project, ProphetsWay.BaseDataAccess.  The point of mentioning
-this is that you will need to follow the guidelines for the DAO interfaces defined within that project 
+EFTools references interfaces that were established in another project, ProphetsWay.BaseDataAccess.  The point of mentioning
+this is that you will need to follow the guidelines for the Data Access Object (DAO) interfaces defined within that project 
 (but only to make use of the BaseDao classes).
 
 
-### BaseDao
-This Dao implements the IBaseDao interface, meaning it has all the CRUD calls established within.  It is built around a specific
-naming convention to be used within your SqlMap.xml files.  The following methods are implemented:
+### BaseDao and BaseDaoWith[type]Id
+This Dao implements the IBaseDao interface, meaning it has all the Create, Read, Update and Delete (CRUD) calls established within.  
+The following methods are implemented:
 
 ``` c#
 T Get(T item);
 void Insert(T item);
 int Update(T item);
 int Delete(T item);
+
+void EnsureBeginTransaction();
+void EnsureTransactionCommit();
+void EnsureTransactionRollback();
 ```
 
-To make use of these methods, you must set the namespace in your SqlMap.xml files to be the literal name of the entity it is for.
-For example, if you have a POCO named ```Company``` then in your SqlMap.xml you need ```namespace="Company"```.  Then 
-you will need to have four specifically named queries created.
+An awkward thing to notice is how all the CRUD calls take an item an argument, this is used so all Entities
+can use the same method names and there isn't any overlap.  The system knows which DAO to use because of the type
+of the argument passed.  In the case of ```T Get(T item);``` and ```T Delete(T item);``` 
+only the 'ID' property needs to be set of the passed object; however it is most likely you won't use 
+```T Get(T item);``` directly due to the base class ```BaseDataAccess<TIdType>``` which I will 
+get to further down.
 
-``` xml
-<select id="Get[EntityName]ById" parameterClass="[Namespace].[EntityName]" />
-<insert id="Insert[EntityName]" parameterClass="[Namespace].[EntityName]" />
-<update id="Update[EntityName]" parameterClass="[Namespace].[EntityName]" />
-<update id="Delete[EntityName]ById" parameterClass="[Namespace].[EntityName]" />
-```
-When setup as per the previous example entity ```Company```
-``` xml
-<select id="GetCompanyById" parameterClass="ProphetsWay.iBatisTools.Ex.DataAccess.Entities.Company" />
-<insert id="InsertCompany" parameterClass="ProphetsWay.iBatisTools.Ex.DataAccess.Entities.Company" />
-<update id="UpdateCompany" parameterClass="ProphetsWay.iBatisTools.Ex.DataAccess.Entities.Company" />
-<update id="DeleteCompanyById" parameterClass="ProphetsWay.iBatisTools.Ex.DataAccess.Entities.Company" />
+Additionally there are the "EnsureTransaction" methods defined and made available to you.  These are for situations
+within a specific DAO that you need to ensure the call is wrapped within a Transaction, but don't have the scope
+to tell if a transaction was started higher within the call stack.  Because you can't begin a second transaction
+while the first is begun, these methods will create one if none exists, and if one did exist, it won't commit/rollback
+any changes either (leaving the commit/rollback to fall on the initial transaction creator).
+
+
+Lastly all the BaseDao classes have a required constructor that you must pass in the ```DbContext``` that the
+DAO will use to interface with the database.  I'll show an example of creating a DAL class that puts everything together
+further down.
+
+
+#### BaseDaoWith[type]Id
+Because of how EntityFramework works, it was required to identify the 'type' of the identifier property
+on your entities, so to optimize the queries.  For this reason there are three implementations of the ```BaseDao```
+class:  ```BaseDaoWithIntId<T>```, ```BaseDaoWithLongId<T>```, and ```BaseDaoWithGuidId<T>```.  Basically 
+you should use the one that corresponds to the type of the primary key you use in your database schema.  
+**You will a similar trend with the next two DAOs covered.*
+
+##### Example
+In the following code block, you can see my implementation of the ```UserDao```, it implements the interface ```IUserDao```
+which requires the CRUD calls, and it defines one additional method ```CustomUserFunctionality(User user)```.  Using
+```BaseDaoWithIntId<User>``` tells the BaseDao that my entity is a "User" object, all the CRUD calls are handled for me
+in that base class, and all I needed to implement manually is the additional method.
+
+``` c#
+internal class UserDao : BaseDaoWithIntId<User>, IUserDao
+{
+	public UserDao(DbContext context) : base(context) { }
+
+	public void CustomUserFunctionality(User user)
+	{
+		user.Whatever = "custom functionality triggered";
+		Update(user);
+	}
+}
 ```
 
-You will still need to manually write the queries however you want, but you will get the whole entity as your parameter object.
-In the case for ```Get``` and ```Delete``` you only need the Id property to be set on the object, but the variable is still
-the object.
 
 ### BaseGetAllDao
 This Dao inherits from BaseDao and implements the IBaseGetAllDao interface.  The following method is implemented:
@@ -78,14 +93,19 @@ This Dao inherits from BaseDao and implements the IBaseGetAllDao interface.  The
 IList<T> GetAll(T item);
 ```
 
-Since this inherits from BaseDao, the naming convention of the SqlMap.xml is still required for the CRUD calls.  The new
-query you will need to add is:
-``` xml
-<select id="GetAll" />
+##### Example
+Below is an implementation of ```JobDao```.  Similar to above it implements the ```IJobDao``` 
+interface which defines all the default methods needed, however in this case it does not define any additional methods
+to implement.  All the CRUD and the GetAll methods are coded for me in the base classes.
+
+
+``` c#
+internal class JobDao : BaseGetAllDaoWithIntId<Job>, IJobDao
+{
+	public JobDao(DbContext context) : base(context) { }
+}
 ```
 
-Unlike the methods for BaseDao, ```GetAll``` doesn't require the entity name to be part of the query name.  It also does 
-not require any parameter since the point is to return all of the entity from the database.
 
 ### BasePagedDao
 This Dao inherits from BaseDao and implements the IBasePagedDao interface.  The following methods are implemented:
@@ -95,137 +115,129 @@ int GetCount(T item);
 IList<T> GetPaged(T item, int skip, int take);
 ```
 
-Just like above, naming convention for the namespace is required in the SqlMap.xml.  The new queries needed are:
-
-``` xml
-<select id="GetCount" resultClass="int" />
-<select id="GetPaged" parameterClass="map" />
-```
-
-With ```GetCount``` no parameters are required, and the point for this is to provide an upper limit for your UI to get quickly
-when rendering a paging control.  Then the ```GetPaged``` method has a ```"map"``` as it's parameter.  The two values in the
-map are ```#Offset#``` and ```#PageSize#``` and you should use them in your queries.  For the ```Company``` example 
-from above:
-
-``` xml
-<select id="GetPaged" parameterClass="map" resultMap="CompanyMap">
-	SELECT *
-	FROM dbo.Companies
-	OFFSET #Offset#
-	ROWS FETCH NEXT #PageSize# ROWS ONLY
-</select>
-```
-
-## EnumTypeHandlers
-Sometimes in your entities you use objects to reference a value from a drop down, maybe it's a string literal, and other times
-you want to use an ```enum``` object value.  In order to use these with iBatis you have to use a ```TypeHandler``` class that 
-implements ```ITypeHandlerCallback```.  In iBatisTools there are two options that have been setup for you to choose from:
-```EnumTypeAsIntHandler<T>``` and ```EnumTypeAsStringHandler<T>```.  You will need to create a new class type handler
-to work with your specific class objects, however you only need to inherit one of those two classes, and specify your class
-as the generic value for T.  For example, I have the following enum and type handler created:
+##### Example
+Below is the last type of DAO created for ```CompanyDao``` using the interface ```ICompanyDao```.  This specifies 
+default functionality, and an additional method ```GetCustomCompanyFunction(int id)```.  Just as before all the default
+functionality is implemented in the base classes and you only need to code the additional methods you define.
 
 ``` c#
-//roles as an enum is defined within my DataAccess project along with all my entity models
-public enum Roles
+internal class CompanyDao : BasePagedDaoWithIntId<Company>, ICompanyDao
 {
-	Admin,
-	User,
-	Developer
+	public CompanyDao(DbContext context) : base(context) { }
+
+	public Company GetCustomCompanyFunction(int id)
+	{
+		return Dataset.OrderBy(x=> x.Id).Skip(id % GetCount(null)).First();
+	}
 }
-
-//RoleHandler is defined within my iBatis DAL project 
-public class RoleHandler : EnumTypeAsIntHandler<Roles>    {    } 
 ```
 
-The difference between ```AsInt``` and ```AsString``` refer to how the value is stored in the database.  ```AsInt``` will store
-the integer value of the enum in your database, so you would likely need to create a reference table for those values to map to
-for database sanity checks and queries.  Since integers are likely a smaller footprint than strings, usually this is the 
-preferred implementation.  However sometimes you just want the string value of the enum stored in the database, so basic queries
-can quickly inform what the value represents, for that you need to use the ```AsString``` version.
 
+### BaseEFContext
+This is a simple abstract class that is defined so that you always pass the connection string via its constructor.
+It is used so that the next base class can properly instanciate your specific 'Typed' context.
 
-## MapperFactory
-Lastly to talk about is the ```MapperFactory``` class.  This is what will construct the mapper you use for your Daos.  All the
-base Dao classes require a mapper argument when they're constructed.  I always felt like this part was annoying since it is 
-where the actual validation for your SqlMap.xml and SqlMap.config files are actually validated.  This now has some logging
-embedded within it so you can quickly identify what is blowing up your code if/when you make map changes.
+##### Example
+Here is an example of the ```DbContext``` that you'll create for your own application.  It inherits the ```BaseEFContext```
+and thus its constructor, but everything else about the context is what you would expect from a manual EntityFramework
+project.
 
-The one major requirement for using the ```MapperFactory``` is that you name your SqlMap.config file as follows:  
-"SqlMap.[whatever naming you prefer].config" and the file must be set as an embedded resource within your project.  The code
-will use a referenced assembly to find the config file, and then depending on how the config file is setup, it will find all
-the SqlMap.xml files and load them.  There are three options to generate a mapper, one takes no arguments and assumes the 
-connection string information is wholly contained within the config file, a second option takes a full connection string 
-to be used, and the third option takes a ```NameValueCollection``` as a parameter so you can specify what variables/values
-you want to pass in and use within your config file.
-
-Examples:
-``` xml
-<!-- complete connection information -->
-<database>
-	<provider name="sqlServer2008"/>
-	<dataSource name="ProphetsWay.iBatisTools.Ex.Database" connectionString="Initial Catalog=ProphetsWay.iBatisTools.Ex.Database;Data Source=localhost;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Connect Timeout=60;Encrypt=False;TrustServerCertificate=False"/>
-</database>
-
-<!-- whole connection string replacement -->
-<database>
-	<provider name="sqlServer2008"/>
-	<dataSource name="ProphetsWay.iBatisTools.Ex.Database" connectionString="${connectionString}"/>
-</database>
-
-<!-- specific value/variable replacement -->
-<database>
-	<provider name="sqlServer2008"/>
-	<dataSource name="ProphetsWay.iBatisTools.Ex.Database" connectionString="Initial Catalog=ProphetsWay.iBatisTools.Ex.Database;Data Source=localhost;user id=${username};password=${password};Connection Timeout=60;Max Pool Size=1000"/>
-</database>
-```
-
-You can see the replacement values use the syntax of ```${variableName}```, the connection string option was setup so you 
-don't have to know the variable to replace, it is handled for you.  However if you prefer to keep the details for a connection
-in separate places, you can use many different variables and pass all the values in to build the connection (or really any part
-of the config file).
-
-Lastly is an example of how you'd invoke each of those examples above.
 ``` c#
-public ExDataAccessTake1()
+public class ExampleContext : BaseEFContext
 {
-	_mapper = GetType().Assembly.GenerateMapper();
-	_companyDao = new CompanyDao(_mapper);
-	_jobDao = new JobDao(_mapper);
-	_userDao = new UserDao(_mapper);
-}
+	public ExampleContext(string nameOrConnectionString) : base(nameOrConnectionString) { }
 
-public ExDataAccessTake2(string connString)
-{
-	_mapper = GetType().Assembly.GenerateMapper(connString);
-	_companyDao = new CompanyDao(_mapper);
-	_jobDao = new JobDao(_mapper);
-	_userDao = new UserDao(_mapper);
-}
+	public DbSet<Company> Companies { get; set; }
+	public DbSet<User> Users { get; set; }
+	public DbSet<Job> Jobs { get; set; }
 
-public ExDataAccessTake3(string userName, string userPass)
-{
-	//I recommend creating the name value collection within this project
-	//so that you can verify the "keys" match the variables used within your
-	//SqlMap.config file.
-	//If you choose to use more/many/different variables, just make sure
-	//you require them in your constructor here, and pass them all into your 
-	//NameValueCollection before calling GenerateMapper.
-	var coll = new NameValueCollection();
-	coll.Add("username", userName);
-	coll.Add("password", userPass);
+	protected override void OnModelCreating(DbModelBuilder modelBuilder)
+	{		
+		modelBuilder.Entity<User>().HasOptional(x => x.Company).WithMany().Map(m => m.MapKey("CompanyId"));
+		modelBuilder.Entity<User>().HasOptional(x => x.Job).WithMany().Map(m => m.MapKey("JobId"));
 
-	_mapper = GetType().Assembly.GenerateMapper(coll);
-	_companyDao = new CompanyDao(_mapper);
-	_jobDao = new JobDao(_mapper);
-	_userDao = new UserDao(_mapper);
+		modelBuilder.Entity<Company>().ToTable("Companies");
+		modelBuilder.Entity<User>().ToTable("Users");
+		modelBuilder.Entity<Job>().ToTable("Jobs");
+	}
 }
 ```
 
-You can see that all the code referenced is in the constructor of the main DataAccess implementation file.  In here all the 
-specific Dao's are also created so that they share the same mapper object/connection to the database.  This will allow you 
-to structure some calls using a transaction and then work across multiple tables/Daos and commit or rollback depending 
-on how things play out for you.  If you were to give each Dao their own mapper instance, then this functionality would not
-be possible.
+### BaseEFDataAccess<TContextType, TIdType>
+Now this is the part where it all comes together.  Your application's DAL will implement whatever ```IDataAccess```
+interface you defined with all the ```IDao```'s specified within.  This base class will create your ```DbContext```
+automatically when constructed as defined by ```TContextType``` and by passing it ```TIdType``` it will give you access
+to a new way to "Get" entities by Id instead of the ```T Get(T item);```.  
+Now you can just call ```yourDAL.Get<T>(idValue);``` to return an item of type T with an Id that you pass in.
+
+Internally to this class you create each IDao, and then just "pass thru" each method call to the specific Dao they 
+correspond to.  Please see the example below.
+
+##### Example
+
+
+``` c#
+public class ExampleDataAccess : BaseEFDataAccess<ExampleContext, int>, IExampleDataAccess
+{
+	private readonly ICompanyDao _companyDao;
+	private readonly IJobDao _jobDao;
+	private readonly IUserDao _userDao;
+
+	public ExampleDataAccess(string connectionString) : base(connectionString)
+	{
+		_companyDao = new CompanyDao(Context);
+		_jobDao = new JobDao(Context);
+		_userDao = new UserDao(Context);
+	}
+
+	#region CompanyDao
+
+	public Company Get(Company item)
+	{
+		return _companyDao.Get(item);
+	}
+
+	public int GetCount(Company item)
+	{
+		return _companyDao.GetCount(item);
+	}
+
+	public Company GetCustomCompanyFunction(int id)
+	{
+		return _companyDao.GetCustomCompanyFunction(id);
+	}
+
+	public IList<Company> GetPaged(Company item, int skip, int take)
+	{
+		return _companyDao.GetPaged(item, skip, take);
+	}
+
+	public void Insert(Company item)
+	{
+		_companyDao.Insert(item);
+	}
+
+	public int Delete(Company item)
+	{
+		return _companyDao.Delete(item);
+	}
+
+	public int Update(Company item)
+	{
+		return _companyDao.Update(item);
+	}
+
+	#endregion
+
+	//Region for JobDao
+
+	//Region for UserDao
+
+	}
+}
+
+```
+
 
 For working examples of how all these parts work, please see the example projects within the GitHub repository.
 
@@ -233,21 +245,26 @@ For working examples of how all these parts work, please see the example project
 
 ## Running the tests
 
-The library has 9 unit tests currently.  I only covered code that exercises the iBatisTools functionality.
-They are created with an XUnit test project, as well as Example projects with differing iBatis SqlMap.config setups.
-Unfortunately I don't have the unit tests running in the build pipeline because they are actually
-hitting my local database to run.
+The library has 21 unit tests currently.  I only covered code that exercises the EFTools functionality.
+They are created with an XUnit test project. Unfortunately I don't have the unit tests running in 
+the build pipeline because they are actually hitting a local database to run.
+
+If you look at the project ```ProphetsWay.EFTools.Tests``` you'll see that each set of tests is actually
+just a new class inheriting from each original test class, but overriding a property that returns an instance 
+of a particular interface.  It looks confusing, but this is so I can fully test ```IExampleDataAccess``` 
+as defined within ```ProphetsWay.Example.DataAccess``` using the same tests the example project defined,
+but with using my new custom implementation which utilizes EFTools.
 
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/ProphetManX/ProphetsWay.iBatisTools/tags). 
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/ProphetManX/ProphetsWay.EFTools/tags). 
 
 ## Authors
 
 * **G. Gordon Nasseri** - *Initial work* - [ProphetManX](https://github.com/ProphetManX)
 
-See also the list of [contributors](https://github.com/ProphetManX/ProphetsWay.iBatisTools/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/ProphetManX/ProphetsWay.EFTools/graphs/contributors) who participated in this project.
 
 ## License
 
