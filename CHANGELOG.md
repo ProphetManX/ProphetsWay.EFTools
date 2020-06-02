@@ -1,5 +1,6 @@
 # v1.0.1
-
+Updated [ProphetsWay.Example](https://github.com/ProphetManX/ProphetsWay.Example) submodule.
+Updated readme link and Licence to MIT.
 
 
 
