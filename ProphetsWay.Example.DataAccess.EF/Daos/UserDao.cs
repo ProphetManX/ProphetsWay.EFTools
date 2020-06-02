@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 #endif
-#if NETSTANDARD2_1 || NET45 || NET461 || NET471 || NET472
+#if NETSTANDARD2_1 || NET45 || NET461 || NET471 || NET472 || NET48
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
