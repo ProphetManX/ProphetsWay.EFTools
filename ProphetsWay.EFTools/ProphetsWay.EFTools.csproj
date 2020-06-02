@@ -46,7 +46,7 @@ For more information on this project, please go to https://github.com/ProphetMan
 	
 	
 	<ItemGroup>
-	<PackageReference Include="ProphetsWay.BaseDataAccess" Version="1.1.0-126.Beta" />
+	<PackageReference Include="ProphetsWay.BaseDataAccess" Version="1.1.1" />
 	</ItemGroup>
 
 </Project>
