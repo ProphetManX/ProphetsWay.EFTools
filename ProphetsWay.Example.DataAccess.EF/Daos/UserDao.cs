@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
-using ProphetsWay.EFTools;
+using ProphetsWay.EFTools.Int;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.IDaos;
 
 namespace ProphetsWay.Example.DataAccess.EF.Daos
 {
-	internal class UserDao : BaseDaoWithIntId<User>, IUserDao
+	internal class UserDao : BaseDao<User>, IUserDao
 	{
 		public UserDao(DbContext context) : base(context) { }
 

@@ -6,14 +6,14 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
-using ProphetsWay.EFTools;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.IDaos;
 using System.Linq;
+using ProphetsWay.EFTools.Int;
 
 namespace ProphetsWay.Example.DataAccess.EF.Daos
 {
-	internal class CompanyDao : BasePagedDaoWithIntId<Company>, ICompanyDao
+	internal class CompanyDao : BasePagedDao<Company>, ICompanyDao
 	{
 		public CompanyDao(DbContext context) : base(context) { }
 

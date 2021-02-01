@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
-using ProphetsWay.EFTools;
+using ProphetsWay.EFTools.Int;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.IDaos;
 
 namespace ProphetsWay.Example.DataAccess.EF.Daos
 {
-	internal class JobDao : BaseGetAllDaoWithIntId<Job>, IJobDao
+	internal class JobDao : BaseGetAllDao<Job>, IJobDao
 	{
 		public JobDao(DbContext context) : base(context) { }
 	}
