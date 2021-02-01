@@ -6,10 +6,7 @@ using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
 using ProphetsWay.BaseDataAccess;
-
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ProphetsWay.EFTools.Long
 {
@@ -19,7 +16,7 @@ namespace ProphetsWay.EFTools.Long
 
 		public IList<TEntityType> GetAll(TEntityType item)
 		{
-			return Dataset.ToList();
+			return Dao.GetAll(item);
 		}
 	}
 }

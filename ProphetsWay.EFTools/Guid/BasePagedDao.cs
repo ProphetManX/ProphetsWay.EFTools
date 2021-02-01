@@ -6,25 +6,22 @@ using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
 using ProphetsWay.BaseDataAccess;
-
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
-namespace ProphetsWay.EFTools.Int
+namespace ProphetsWay.EFTools.Guid
 {
-	public abstract class BasePagedDao<TEntityType> : BaseDao<TEntityType>, IBasePagedDao<TEntityType> where TEntityType : class, IBaseIdEntity<int>
+	public abstract class BasePagedDao<TEntityType> : BaseDao<TEntityType>, IBasePagedDao<TEntityType> where TEntityType : class, IBaseIdEntity<System.Guid>
 	{
 		protected BasePagedDao(DbContext context) : base(context) { }
 
 		public int GetCount(TEntityType item)
 		{
-			return Dataset.Count();
+			return Dao.GetCount(item);
 		}
 
 		public IList<TEntityType> GetPaged(TEntityType item, int skip, int take)
 		{
-			return Dataset.OrderBy(x => x.Id).Skip(skip).Take(take).ToList();
+			return Dao.GetPaged(item, skip, take);
 		}
 	}
 }
