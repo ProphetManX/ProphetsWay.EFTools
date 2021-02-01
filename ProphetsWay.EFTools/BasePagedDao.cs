@@ -1,7 +1,7 @@
-﻿#if NETSTANDARD2_0
+﻿#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0 || NETCOREAPP2_1 || NETCOREAPP3_1
 using Microsoft.EntityFrameworkCore;
 #endif
-#if NETSTANDARD2_1 || NET45 || NET461 || NET471 || NET472
+#if NET45 || NET451 || NET452|| NET46 || NET461 || NET471 || NET472 || NET48
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 # endif
@@ -13,7 +13,7 @@ using System.Linq;
 namespace ProphetsWay.EFTools
 {
 	[Obsolete("You should be using one of the three new implementations:  BasePagedWithIntIdDao, BasePagedWithLongIdDao, or BasePagedWithGuidIdDao")]
-	public abstract class BasePagedDao<TEntityType, TIdType> : BaseDao<TEntityType, TIdType>, IBasePagedDao<TEntityType> where TEntityType : class, IBaseIdEntity<TIdType>
+	public abstract class BasePagedDao<TEntityType, TIdType> : BaseDao<TEntityType, TIdType>, IBasePagedDao<TEntityType> where TEntityType : class, IBaseIdEntity<TIdType> 
 	{
 		protected BasePagedDao(DbContext context) : base(context) { }
 

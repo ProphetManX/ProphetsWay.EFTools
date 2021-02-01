@@ -1,23 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net45;net461;net471;net472;net48;netstandard2.0;netstandard2.1;</TargetFrameworks>
+		<TargetFrameworks>
+			net45;net451;net452;net46;net461;net471;net472;net48;
+			netstandard2.0;netstandard2.1;
+			netcoreapp2.1;netcoreapp3.1;
+			net50;
+		</TargetFrameworks>
 	</PropertyGroup>
 
 	<!-- Conditionally obtain references for the .NET Standard 2.0 target -->
-	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or $(TargetFramework.StartsWith('netcoreapp'))">
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.4" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.4" />
 	</ItemGroup>
 
-	<!-- Conditionally obtain references for the .NET Framework 2.1 target -->
-	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' or $(TargetFramework.StartsWith('net4'))">
+	<!-- Conditionally obtain references for the .NET Framework 4.x target -->
+	<ItemGroup Condition=" $(TargetFramework.StartsWith('net4'))">
 		<PackageReference Include="EntityFramework" Version="6.4.4" />
+	</ItemGroup>
+
+	<!-- Conditionally obtain references for the .NET Framework 2.1 target -->
+	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' or $(TargetFramework.StartsWith('net5'))">
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.2" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.2" />
 	</ItemGroup>
 	
 	<ItemGroup>
 		<PackageReference Include="FluentAssertions" Version="5.10.3" />
-		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="1.1.1" />
+		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
