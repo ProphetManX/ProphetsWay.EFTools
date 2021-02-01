@@ -9,7 +9,8 @@
 		</TargetFrameworks>
 
 		<Description>
-A small library that is useful when utilizing EntityFramework for a Data Access Layer (DAL) while adhering to Business Layer to DAL decoupling. 
+A small library that is useful when utilizing EntityFramework for a Data Access Layer (DAL) while adhering to Business Layer to DAL decoupling.
+			
 This uses the paradigm explained in https://github.com/ProphetManX/ProphetsWay.BaseDataAccess.  See the README for more information.
 
 For more information on this project, please go to https://github.com/ProphetManX/ProphetsWay.EFTools.
@@ -57,7 +58,11 @@ For more information on this project, please go to https://github.com/ProphetMan
 	
 	
 	<ItemGroup>
-	<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.0.0" />
+		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="profile.png" Pack="true" PackagePath=""/>
 	</ItemGroup>
 
 </Project>
