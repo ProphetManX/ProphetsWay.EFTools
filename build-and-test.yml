@@ -8,6 +8,8 @@ steps:
   displayName: 'Build Solution'
   inputs:
     command: 'build'
+    projects: '**/*.csproj'
+
 
 - task: VSTest@2
   displayName: 'Run Unit Tests'
