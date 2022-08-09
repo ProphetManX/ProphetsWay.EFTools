@@ -12,3 +12,4 @@ variables:
   RepoName: 'ProphetManX/ProphetsWay.EFTools'
   NuGetFeedCredentialName: 'ProphetManX''s NuGet'
   GitHubConnectionName: 'ProphetsWay@GitHub'
+  LocalTestsOnly: 'yes'    #used when the unit test are only meant to be run locally, and not in the pipeline (uses a local database)
