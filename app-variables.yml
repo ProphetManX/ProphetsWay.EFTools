@@ -1,0 +1,15 @@
+variables:
+  #user must update these each build personally as new versions are being worked on
+  Major: '2'
+  Minor: '0'
+  Patch: '0'
+
+  # set these once and forget them per project/repo 
+  #HasSqlProj: ''  #can be empty or ignored if unnecessary, but if "yes" then pipeline will find any *.sqlproj projects and build them 
+  PostTargetToNuGet: 'yes'  #can be empty or ignored if unnecessary, but if "yes" then pipeline will build alpha, beta, and semantic NuGet release packages
+  TargetProject: '**/ProphetsWay.EFTools.csproj'
+  Product: 'EFTools'
+  RepoName: 'ProphetManX/ProphetsWay.EFTools'
+  NuGetFeedCredentialName: 'ProphetManX''s NuGet'
+  GitHubConnectionName: 'ProphetsWay@GitHub'
+  LocalTestsOnly: 'yes'    #used when the unit test are only meant to be run locally, and not in the pipeline (uses a local database)

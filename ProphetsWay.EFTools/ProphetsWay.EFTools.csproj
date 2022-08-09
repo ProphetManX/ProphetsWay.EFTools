@@ -1,10 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net45;net461;net471;net472;netstandard2.0;netstandard2.1;</TargetFrameworks>
+		<TargetFrameworks>
+			net45;net451;net452;net46;net461;net471;net472;net48;
+			netstandard2.0;netstandard2.1;
+			netcoreapp3.1;
+			net50;net60;
+		</TargetFrameworks>
 
 		<Description>
-A small library that is useful when utilizing EntityFramework for a Data Access Layer (DAL) while adhering to Business Layer to DAL decoupling. 
+A small library that is useful when utilizing EntityFramework for a Data Access Layer (DAL) while adhering to Business Layer to DAL decoupling.
+			
 This uses the paradigm explained in https://github.com/ProphetManX/ProphetsWay.BaseDataAccess.  See the README for more information.
 
 For more information on this project, please go to https://github.com/ProphetManX/ProphetsWay.EFTools.
@@ -34,19 +40,35 @@ For more information on this project, please go to https://github.com/ProphetMan
 
 
 	<!-- Conditionally obtain references for the .NET Standard 2.0 target -->
-	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+	<ItemGroup Condition=" $(TargetFramework.StartsWith('netstandard2.')) or $(TargetFramework.StartsWith('netcoreapp'))">
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.4" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.4" />
 	</ItemGroup>
 
-	<!-- Conditionally obtain references for the .NET Framework 2.1 target -->
-	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' or $(TargetFramework.StartsWith('net4'))">
+	<!-- Conditionally obtain references for the .NET Framework 4.x target -->
+	<ItemGroup Condition=" $(TargetFramework.StartsWith('net4'))">
 		<PackageReference Include="EntityFramework" Version="6.4.4" />
+	</ItemGroup>
+
+	<!-- Conditionally obtain references for the .NET Framework 2.1 target -->
+	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' or $(TargetFramework.StartsWith('net5'))">
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.2" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.2" />
+	</ItemGroup>
+
+	<!-- Conditionally obtain references for the .NET Framework 2.1 target -->
+	<ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.7" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.7" />
 	</ItemGroup>
 	
 	
 	<ItemGroup>
-	<PackageReference Include="ProphetsWay.BaseDataAccess" Version="1.1.1" />
+		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.1.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="profile.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 
 </Project>
