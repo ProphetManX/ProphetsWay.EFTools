@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 #if NET45 || NET451 || NET452 || NET46 || NET461 || NET471 || NET472 || NET48
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
-# endif
+#endif
 using ProphetsWay.BaseDataAccess;
 using System;
 
 namespace ProphetsWay.EFTools
 {
-	public class BaseEFDataAccess<TContextType, TIdType> : BaseDataAccess<TIdType>, IBaseDataAccess<TIdType> where TContextType : BaseEFContext
+	public class BaseEFDataAccess<TContextType, TIdType> : BaseDataAccess.BaseDataAccess, IBaseDataAccess where TContextType : BaseEFContext
 	{
 		protected DbContext Context { get; }
 
@@ -19,6 +19,12 @@ namespace ProphetsWay.EFTools
 			Context = (DbContext)Activator.CreateInstance(typeof(TContextType), new object[] { connectionString });
 		}
 
+#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+		public BaseEFDataAccess(DbContextOptions options)
+        {
+			Context = (DbContext)Activator.CreateInstance(typeof(TContextType), new object[] { options });
+		}
+#endif
 		public override void TransactionCommit()
 		{
 			Context.Database.CurrentTransaction.Commit();

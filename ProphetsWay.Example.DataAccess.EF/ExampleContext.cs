@@ -12,7 +12,11 @@ namespace ProphetsWay.Example.DataAccess.EF
 {
 	public class ExampleContext : BaseEFContext
 	{
-		public ExampleContext(string nameOrConnectionString) : base(nameOrConnectionString) { }
+		public ExampleContext(string connectionString) : base(connectionString) { }
+
+#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+		public ExampleContext(DbContextOptions<ExampleContext> options) : base(options) { }
+#endif
 
 		public DbSet<Company> Companies { get; set; }
 		public DbSet<User> Users { get; set; }

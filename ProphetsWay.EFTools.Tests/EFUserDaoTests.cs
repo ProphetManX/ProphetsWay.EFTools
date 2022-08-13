@@ -6,6 +6,6 @@ namespace ProphetsWay.EFTools.Tests
 {
 	public class EFUserDaoTests : UserDaoTests
 	{
-		protected override IUserDao GetIExampleDataAccess => new ExampleDataAccess(Constants.ConnectionStrings.ProphetsWayExample);
+		protected override IUserDao GetIExampleDataAccess => Constants.GetExampleDataAccess;
 	}
 }
