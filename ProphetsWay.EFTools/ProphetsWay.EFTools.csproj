@@ -60,14 +60,17 @@ For more information on this project, please go to https://github.com/ProphetMan
 	<ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.7" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.7" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="6.0.7" />
 	</ItemGroup>
 	
 	
 	<ItemGroup>
-		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.1.4" />
+		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.1.5" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Include="..\CHANGELOG.md" Link="CHANGELOG.md" />
+		<None Include="..\README.md" Link="README.md" />
 		<None Include="profile.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 

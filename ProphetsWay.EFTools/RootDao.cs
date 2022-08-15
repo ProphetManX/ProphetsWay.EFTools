@@ -55,8 +55,8 @@ namespace ProphetsWay.EFTools
 
 			Dataset.AddOrUpdate(item);
 #endif
-#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0 || NETCOREAPP2_1 || NETCOREAPP3_1
-			var orig = Dataset.Single(x => x.Id.Equals(item.Id));
+#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+			var orig = Dataset.AsTracking().Single(x => x.Id.Equals(item.Id));
 			var entry = Context.Entry(orig);
 
 			entry.CurrentValues.SetValues(item);

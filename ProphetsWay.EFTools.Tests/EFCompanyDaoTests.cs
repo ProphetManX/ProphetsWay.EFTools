@@ -6,6 +6,6 @@ namespace ProphetsWay.EFTools.Tests
 {
 	public class EFCompanyDaoTests : CompanyDaoTests
 	{
-		protected override ICompanyDao GetIExampleDataAccess => new ExampleDataAccess(Constants.ConnectionStrings.ProphetsWayExample);
+		protected override ICompanyDao GetIExampleDataAccess => Constants.GetExampleDataAccess;
 	}
 }

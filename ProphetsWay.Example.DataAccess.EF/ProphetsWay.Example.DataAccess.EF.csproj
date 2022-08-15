@@ -34,7 +34,7 @@
 	
 	<ItemGroup>
 		<PackageReference Include="FluentAssertions" Version="5.10.3" />
-		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.1.4" />
+		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.1.5" />
 	</ItemGroup>
 
 	<ItemGroup>

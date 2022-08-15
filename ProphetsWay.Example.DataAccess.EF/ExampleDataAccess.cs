@@ -1,4 +1,8 @@
-﻿using ProphetsWay.EFTools;
+﻿#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+using Microsoft.EntityFrameworkCore;
+#endif
+
+using ProphetsWay.EFTools;
 using ProphetsWay.Example.DataAccess.EF.Daos;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.IDaos;
@@ -11,18 +15,35 @@ namespace ProphetsWay.Example.DataAccess.EF
 		private readonly ICompanyDao _companyDao;
 		private readonly IJobDao _jobDao;
 		private readonly IUserDao _userDao;
+		private readonly IResourceDao _resourceDao;
+		private readonly ITransactionDao _transactionDao;
 
 
-		public ExampleDataAccess(string connectionString) : base(connectionString)
+
+#if NET6_0_OR_GREATER
+		public ExampleDataAccess() : this(new DbContextOptionsBuilder<ExampleContext>().UseInMemoryDatabase(typeof(ExampleContext).Name).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
+#endif
+
+#if NET45 || NET451 || NET452 || NET46 || NET461 || NET471 || NET472 || NET48
+public ExampleDataAccess(string connectionString) : base(connectionString) {
+#endif
+
+#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+		
+		public ExampleDataAccess(string connectionString) : this(new DbContextOptionsBuilder<ExampleContext>().UseSqlServer(connectionString).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
+
+		public ExampleDataAccess(DbContextOptions options) : base(options)
 		{
-
+#endif
 			_companyDao = new CompanyDao(Context);
 			_jobDao = new JobDao(Context);
 			_userDao = new UserDao(Context);
-
+			_resourceDao = new ResourceDao(Context);
+			_transactionDao = new TransactionDao(Context);
 		}
 
-		#region CompanyDao
+
+#region CompanyDao
 
 		public Company Get(Company item)
 		{
@@ -59,9 +80,9 @@ namespace ProphetsWay.Example.DataAccess.EF
 			return _companyDao.Update(item);
 		}
 
-		#endregion
+#endregion
 
-		#region JobDao
+#region JobDao
 
 		public int Delete(Job item)
 		{
@@ -88,9 +109,9 @@ namespace ProphetsWay.Example.DataAccess.EF
 			return _jobDao.Update(item);
 		}
 
-		#endregion
+#endregion
 
-		#region UserDao
+#region UserDao
 
 		public int Delete(User item)
 		{
@@ -117,6 +138,69 @@ namespace ProphetsWay.Example.DataAccess.EF
 			return _userDao.Update(item);
 		}
 
+        #endregion
+
+        #region TransactionDao
+
+        public IList<Transaction> GetPaged(Transaction item, int skip, int take)
+        {
+            return _transactionDao.GetPaged(item, skip, take);
+        }
+
+        public int GetCount(Transaction item)
+        {
+			return _transactionDao.GetCount(item);
+        }
+
+        public Transaction Get(Transaction item)
+        {
+			return _transactionDao.Get(item);
+        }
+
+        public void Insert(Transaction item)
+        {
+			_transactionDao.Insert(item);
+        }
+
+        public int Update(Transaction item)
+        {
+			return _transactionDao.Update(item);
+        }
+
+        public int Delete(Transaction item)
+        {
+			return _transactionDao.Delete(item);
+        }
+
 		#endregion
-	}
+		
+		#region ResourceDao
+
+		public IList<Resource> GetAll(Resource item)
+        {
+			return _resourceDao.GetAll(item);
+        }
+
+        public Resource Get(Resource item)
+        {
+			return _resourceDao.Get(item);
+        }
+
+        public void Insert(Resource item)
+        {
+			_resourceDao.Insert(item);
+        }
+
+        public int Update(Resource item)
+        {
+            return _resourceDao.Update(item);
+        }
+
+        public int Delete(Resource item)
+        {
+			return _resourceDao.Delete(item);
+        }
+
+        #endregion
+    }
 }

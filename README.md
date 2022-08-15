@@ -1,7 +1,8 @@
 # ProphetsWay.EFTools
-| Master Build Status | NuGet Alpha | NuGet Beta | Nuget Release |
-|   ---   |   ---   |   ---   |   ---   |
-| [![Build status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/EFTools%20-%20CI)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/?definitionId=17) | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/9/21)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=9)  | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/9/22)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=9)  | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/9/23)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=9)  
+
+
+Build Status:  
+[![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/ProphetManX.ProphetsWay.EFTools?repoName=ProphetManX%2FProphetsWay.EFTools&branchName=main)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=22&repoName=ProphetManX%2FProphetsWay.EFTools&branchName=main)
 
 
 
@@ -23,10 +24,13 @@ EFTools references interfaces that were established in another project, Prophets
 this is that you will need to follow the guidelines for the Data Access Object (DAO) interfaces defined within that project 
 (but only to make use of the BaseDao classes).
 
+When using EntityFramework, there are three value types you can use for a Primary Key: int, long, and Guid.  There are now 
+three separate namespaces in EFTools to delineate what type of primary key your table/entity is using.  This is required
+so the default "Get" method can build a proper select by Id. 
 
-### BaseDao and BaseDaoWith[type]Id
-This Dao implements the IBaseDao interface, meaning it has all the Create, Read, Update and Delete (CRUD) calls established within.  
-The following methods are implemented:
+### BaseDao
+This Dao implements the IBaseDao interface, meaning it has all the Create, Read, Update and Delete (CRUD) calls established 
+within.  The following methods are implemented:
 
 ``` c#
 T Get(T item);
@@ -52,27 +56,20 @@ to tell if a transaction was started higher within the call stack.  Because you 
 while the first is begun, these methods will create one if none exists, and if one did exist, it won't commit/rollback
 any changes either (leaving the commit/rollback to fall on the initial transaction creator).
 
-
 Lastly all the BaseDao classes have a required constructor that you must pass in the ```DbContext``` that the
 DAO will use to interface with the database.  I'll show an example of creating a DAL class that puts everything together
 further down.
 
-
-#### BaseDaoWith[type]Id
-Because of how EntityFramework works, it was required to identify the 'type' of the identifier property
-on your entities, so to optimize the queries.  For this reason there are three implementations of the ```BaseDao```
-class:  ```BaseDaoWithIntId<T>```, ```BaseDaoWithLongId<T>```, and ```BaseDaoWithGuidId<T>```.  Basically 
-you should use the one that corresponds to the type of the primary key you use in your database schema.  
-**You will a similar trend with the next two DAOs covered.*
-
 ##### Example
 In the following code block, you can see my implementation of the ```UserDao```, it implements the interface ```IUserDao```
 which requires the CRUD calls, and it defines one additional method ```CustomUserFunctionality(User user)```.  Using
-```BaseDaoWithIntId<User>``` tells the BaseDao that my entity is a "User" object, all the CRUD calls are handled for me
+```BaseDao<User>``` tells the BaseDao that my entity is a "User" object, all the CRUD calls are handled for me
 in that base class, and all I needed to implement manually is the additional method.
 
 ``` c#
-internal class UserDao : BaseDaoWithIntId<User>, IUserDao
+using ProphetsWay.EFTools.Int;
+
+internal class UserDao : BaseDao<User>, IUserDao
 {
 	public UserDao(DbContext context) : base(context) { }
 
@@ -98,7 +95,9 @@ to implement.  All the CRUD and the GetAll methods are coded for me in the base 
 
 
 ``` c#
-internal class JobDao : BaseGetAllDaoWithIntId<Job>, IJobDao
+using ProphetsWay.EFTools.Int;
+
+internal class JobDao : BaseGetAllDao<Job>, IJobDao
 {
 	public JobDao(DbContext context) : base(context) { }
 }
@@ -119,7 +118,9 @@ default functionality, and an additional method ```GetCustomCompanyFunction(int 
 functionality is implemented in the base classes and you only need to code the additional methods you define.
 
 ``` c#
-internal class CompanyDao : BasePagedDaoWithIntId<Company>, ICompanyDao
+using ProphetsWay.EFTools.Int;
+
+internal class CompanyDao : BasePagedDao<Company>, ICompanyDao
 {
 	public CompanyDao(DbContext context) : base(context) { }
 
@@ -133,30 +134,40 @@ internal class CompanyDao : BasePagedDaoWithIntId<Company>, ICompanyDao
 
 ### BaseEFContext
 This is a simple abstract class that is defined so that you always pass the connection string via its constructor.
-It is used so that the next base class can properly instanciate your specific 'Typed' context.
+It is used so that the next base class can properly instantiate your specific 'Typed' context.
 
 ##### Example
 Here is an example of the ```DbContext``` that you'll create for your own application.  It inherits the ```BaseEFContext```
 and thus its constructor, but everything else about the context is what you would expect from a manual EntityFramework
-project.
+project.  There are two constructors in the example below, but the prefered method going forward is the ```DbContextOptions``` one.
+They aren't both required to be defined in your custom context.
 
 ``` c#
 public class ExampleContext : BaseEFContext
 {
 	public ExampleContext(string nameOrConnectionString) : base(nameOrConnectionString) { }
+	public ExampleContext(DbContextOptions<ExampleContext> options) : base(options) { }
 
 	public DbSet<Company> Companies { get; set; }
 	public DbSet<User> Users { get; set; }
+	public DbSet<Resource> Resources { get; set; }
+	public DbSet<Transaction> Transactions { get; set; }
 	public DbSet<Job> Jobs { get; set; }
 
 	protected override void OnModelCreating(DbModelBuilder modelBuilder)
 	{		
-		modelBuilder.Entity<User>().HasOptional(x => x.Company).WithMany().Map(m => m.MapKey("CompanyId"));
-		modelBuilder.Entity<User>().HasOptional(x => x.Job).WithMany().Map(m => m.MapKey("JobId"));
+		modelBuilder.Entity<User>().HasOne(x => x.Company).WithMany().HasForeignKey("CompanyId");
+		modelBuilder.Entity<User>().HasOne(x => x.Job).WithMany().HasForeignKey("JobId");
+		modelBuilder.Entity<User>().Property(x => x.RoleStr).HasConversion(x=> x.ToString(), x=> (Roles)System.Enum.Parse(typeof(Roles), x));
+
+		modelBuilder.Entity<Transaction>().HasOne(x => x.Company).WithMany().HasForeignKey("CompanyId");
+		modelBuilder.Entity<Transaction>().HasOne(x => x.User).WithMany().HasForeignKey("UserId");
 
 		modelBuilder.Entity<Company>().ToTable("Companies");
-		modelBuilder.Entity<User>().ToTable("Users");
 		modelBuilder.Entity<Job>().ToTable("Jobs");
+		modelBuilder.Entity<Resource>().ToTable("Resources");
+		modelBuilder.Entity<Transaction>().ToTable("Transactions");
+		modelBuilder.Entity<User>().ToTable("Users");
 	}
 }
 ```
@@ -180,12 +191,24 @@ public class ExampleDataAccess : BaseEFDataAccess<ExampleContext, int>, IExample
 	private readonly ICompanyDao _companyDao;
 	private readonly IJobDao _jobDao;
 	private readonly IUserDao _userDao;
+	private readonly IResourceDao _resourceDao;
+	private readonly ITransactionDao _transactionDao;
 
-	public ExampleDataAccess(string connectionString) : base(connectionString)
+	//This is a constructor you could create, requiring no arguments that would create a new "in memory" database instance for unit testing
+	//	or you could copy the syntax and just create the "in memory" settings via the [DbContextOptions] you pass into the main constructor
+	public ExampleDataAccess() : this(new DbContextOptionsBuilder<ExampleContext>().UseInMemoryDatabase(typeof(ExampleContext).Name).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
+	
+	//This is a constructor that mimics the "easy" setup, when you create the DataAccess instance and just want to point it to a SQL Server instance via ConnectionString
+	public ExampleDataAccess(string connectionString) : this(new DbContextOptionsBuilder<ExampleContext>().UseSqlServer(connectionString).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
+
+	//This is the proper constructor, that takes the [DbContextOptions] arguments, this is where you need to instanciate all your _entityDaos.
+	public ExampleDataAccess(DbContextOptions options) : base(options)
 	{
 		_companyDao = new CompanyDao(Context);
 		_jobDao = new JobDao(Context);
 		_userDao = new UserDao(Context);
+		_resourceDao = new ResourceDao(Context);
+		_transactionDao = new TransactionDao(Context);
 	}
 
 	#region CompanyDao
@@ -231,6 +254,10 @@ public class ExampleDataAccess : BaseEFDataAccess<ExampleContext, int>, IExample
 
 	//Region for UserDao
 
+	//Region for ResourceDao
+
+	//Region for TransactionDao
+
 	}
 }
 
@@ -243,7 +270,7 @@ For working examples of how all these parts work, please see the example project
 
 ## Running the tests
 
-The library has 21 unit tests currently.  I only covered code that exercises the EFTools functionality.
+The library has 35 unit tests currently.  I only covered code that exercises the EFTools functionality.
 They are created with an XUnit test project. Unfortunately I don't have the unit tests running in 
 the build pipeline because they are actually hitting a local database to run.
 

@@ -16,17 +16,8 @@ namespace ProphetsWay.EFTools
 #endif
 
 #if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
-
-		private readonly string _connString;
-
-		protected BaseEFContext(string connectionString)  {
-			_connString = connectionString;
-		}
-
-		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-		{
-			optionsBuilder.UseSqlServer(_connString);
-		}
+		protected BaseEFContext(string connectionString) : this(new DbContextOptionsBuilder().UseSqlServer(connectionString).Options) { }
+		protected BaseEFContext(DbContextOptions builderOptions) : base(builderOptions) { }
 #endif
 	}
 }
