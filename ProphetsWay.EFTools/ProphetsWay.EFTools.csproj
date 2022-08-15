@@ -16,20 +16,29 @@ This uses the paradigm explained in https://github.com/ProphetManX/ProphetsWay.B
 For more information on this project, please go to https://github.com/ProphetManX/ProphetsWay.EFTools.
 		</Description>
 
+		<Authors>G. Gordon Nasseri</Authors>
+		<Company>Prophet's Way</Company>
+		<Product>EFTools</Product>
+		<RootNamespace>ProphetsWay.EFTools</RootNamespace>
+		<AssemblyName>ProphetsWay.EFTools</AssemblyName>
+		<PackageId>ProphetsWay.EFTools</PackageId>
+		<RepositoryType>GitHub</RepositoryType>
+		<RepositoryUrl>https://github.com/ProphetManX/ProphetsWay.EFTools</RepositoryUrl>
+		<ApplicationIcon />
+		<Win32Resource />
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<SignAssembly>false</SignAssembly>
+		<PackageIcon>profile.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		
+		
 		<!-- Assembly Override Properties -->
-		<PackageRequireLicenseAcceptance />
-		<PackageId />
 		<Version />
-		<Authors />
-		<Company />
-		<Product />
 
 		<Copyright />
-		<PackageLicenseUrl />
 		<PackageProjectUrl />
-		<PackageIconUrl />
-		<RepositoryUrl />
-		<RepositoryType />
 		<PackageTags />
 		<PackageReleaseNotes />
 		<NeutralLanguage />
@@ -62,16 +71,16 @@ For more information on this project, please go to https://github.com/ProphetMan
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.7" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="6.0.7" />
 	</ItemGroup>
-	
+
 	
 	<ItemGroup>
 		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.1.5" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\CHANGELOG.md" Link="CHANGELOG.md" />
-		<None Include="..\README.md" Link="README.md" />
-		<None Include="profile.png" Pack="true" PackagePath="" />
+		<None Include="..\CHANGELOG.md" Link="CHANGELOG.md" Pack="true" PackagePath="" />
+		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="" />
+		<Content Include="..\profile.png" Link="profile.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 
 </Project>
