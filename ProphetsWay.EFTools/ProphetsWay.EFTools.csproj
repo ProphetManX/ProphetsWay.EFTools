@@ -16,20 +16,29 @@ This uses the paradigm explained in https://github.com/ProphetManX/ProphetsWay.B
 For more information on this project, please go to https://github.com/ProphetManX/ProphetsWay.EFTools.
 		</Description>
 
+		<Authors>G. Gordon Nasseri</Authors>
+		<Company>Prophet's Way</Company>
+		<Product>EFTools</Product>
+		<RootNamespace>ProphetsWay.EFTools</RootNamespace>
+		<AssemblyName>ProphetsWay.EFTools</AssemblyName>
+		<PackageId>ProphetsWay.EFTools</PackageId>
+		<RepositoryType>GitHub</RepositoryType>
+		<RepositoryUrl>https://github.com/ProphetManX/ProphetsWay.EFTools</RepositoryUrl>
+		<ApplicationIcon />
+		<Win32Resource />
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<SignAssembly>false</SignAssembly>
+		<PackageIcon>profile.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		
+		
 		<!-- Assembly Override Properties -->
-		<PackageRequireLicenseAcceptance />
-		<PackageId />
 		<Version />
-		<Authors />
-		<Company />
-		<Product />
 
 		<Copyright />
-		<PackageLicenseUrl />
 		<PackageProjectUrl />
-		<PackageIconUrl />
-		<RepositoryUrl />
-		<RepositoryType />
 		<PackageTags />
 		<PackageReleaseNotes />
 		<NeutralLanguage />
