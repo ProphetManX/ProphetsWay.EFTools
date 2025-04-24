@@ -1,7 +1,7 @@
-﻿#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+﻿#if NET8_0_OR_GREATER
 using Microsoft.EntityFrameworkCore;
 #endif
-#if NET45 || NET451 || NET452 || NET46 || NET461 || NET471 || NET472 || NET48
+#if NET461 || NET471 || NET48
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
@@ -19,8 +19,8 @@ namespace ProphetsWay.EFTools
 			Context = (DbContext)Activator.CreateInstance(typeof(TContextType), new object[] { connectionString });
 		}
 
-#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
-		public BaseEFDataAccess(DbContextOptions options)
+#if NET8_0_OR_GREATER
+        public BaseEFDataAccess(DbContextOptions options)
         {
 			Context = (DbContext)Activator.CreateInstance(typeof(TContextType), new object[] { options });
 		}
