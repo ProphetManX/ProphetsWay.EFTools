@@ -1,62 +1,21 @@
 ﻿#if NET8_0_OR_GREATER
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 #endif
 #if NET461 || NET471 || NET48
 using System.Data.Entity;
-using System.Data.Entity.Migrations;
 #endif
 using ProphetsWay.BaseDataAccess;
-using System.Data;
 using System.Linq;
 
 namespace ProphetsWay.EFTools.Long
 {
-	public abstract class BaseDao<T> : IBaseDao<T> where T : class, IBaseIdEntity<long>
-	{
-		internal RootDao<T, long> Dao;
+    public abstract class BaseDao<T> : RootBaseDao<T, long>, IBaseDao<T> where T : class, IBaseIdEntity<long>
+    {
+        protected BaseDao(DbContext context) : base(context) { }
 
-		protected BaseDao(DbContext context)
-		{
-			Dao = new RootDao<T, long>(context);
-		}
-
-		public DbContext Context => Dao.Context;
-		public DbSet<T> Dataset => Dao.Dataset;
-
-		public int Delete(T item)
-		{
-			return Dao.Delete(item);
-		}
-
-		public T Get(T item)
-		{
-			return Dao.Dataset.Where(i => i.Id == item.Id).SingleOrDefault();
-		}
-
-		public void Insert(T item)
-		{
-			Dao.Insert(item);
-		}
-
-		public int Update(T item)
-		{
-			return Dao.Update(item);
-		}
-
-		public void EnsureBeginTransaction()
-		{
-			Dao.EnsureBeginTransaction();
-		}
-
-		public void EnsureTransactionCommit()
-		{
-			Dao.EnsureTransactionCommit();
-		}
-
-		public void EnsureTransactionRollback()
-		{
-			Dao.EnsureTransactionRollback();
-		}
-	}
+        public override T Get(T item)
+        {
+            return Dao.Dataset.Where(i => i.Id == item.Id).SingleOrDefault();
+        }
+    }
 }
