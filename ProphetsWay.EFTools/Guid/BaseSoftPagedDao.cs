@@ -9,12 +9,12 @@ using ProphetsWay.BaseDataAccess;
 namespace ProphetsWay.EFTools.Guid
 {
     /// <summary>
-    /// This is a base class for Data Access Objects (DAOs) that manage entities with a Guid ID.
+    /// This is a base class for Data Access Objects (DAOs) that manage entities with an Guid ID and take advantage of Soft Deletes (set deleted date, but keep records in the database).
     /// This class implements the basic CRUD operations as well as GetCount/GetPaged methods, allowing for advanced UI paging control of the data.
     /// </summary>
     /// <typeparam name="TEntityType">The type of your entity this DAO will manage.</typeparam>
-	public abstract class BasePagedDao<TEntityType> : BaseDao<TEntityType>, IBasePagedDao<TEntityType> where TEntityType : class, IBaseIdEntity<System.Guid>
-	{
-		protected BasePagedDao(DbContext context) : base(context) { }
-	}
+	public abstract class BaseSoftPagedDao<TEntityType> : BaseDao<TEntityType>, IBasePagedDao<TEntityType> where TEntityType : class, IBaseSoftIdEntity<System.Guid>
+    {
+        protected BaseSoftPagedDao(DbContext context) : base(context) { }
+    }
 }

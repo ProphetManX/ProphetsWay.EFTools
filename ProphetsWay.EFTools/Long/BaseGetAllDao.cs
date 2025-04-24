@@ -8,6 +8,11 @@ using ProphetsWay.BaseDataAccess;
 
 namespace ProphetsWay.EFTools.Long
 {
+    /// <summary>
+    /// This is a base class for Data Access Objects (DAOs) that manage entities with a long integer ID.
+    /// This class implements the basic CRUD operations as well as the GetAll method, returning all entities of the specified type (generally used for smaller tables or for lookup references).
+    /// </summary>
+    /// <typeparam name="TEntityType">The type of your entity this DAO will manage.</typeparam>
 	public abstract class BaseGetAllDao<TEntityType> : BaseDao<TEntityType>, IBaseGetAllDao<TEntityType> where TEntityType : class, IBaseIdEntity<long>
 	{
 		protected BaseGetAllDao(DbContext context) : base(context) { }
