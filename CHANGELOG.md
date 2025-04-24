@@ -1,3 +1,7 @@
+# v2.1.0
+Updated libraries to current versions, removed target frameworks that are end of life, and added support for .Net 8.0 and 9.0.
+
+
 # v2.0.0
 Major updates to Entity Framework and removing obsolete methods
 - added support for DbContextOptions at constructor for BaseDataAccess
