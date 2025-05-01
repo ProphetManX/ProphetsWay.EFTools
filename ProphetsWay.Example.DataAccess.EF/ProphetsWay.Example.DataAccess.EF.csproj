@@ -20,7 +20,7 @@
 	
 	<ItemGroup>
 		<PackageReference Include="FluentAssertions" Version="8.2.0" />
-		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.3.0" />
+		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="2.4.0" />
 	</ItemGroup>
 
 	<ItemGroup>
