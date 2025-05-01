@@ -7,16 +7,16 @@ using System.Data.Entity;
 using ProphetsWay.BaseDataAccess;
 using System.Linq;
 
-namespace ProphetsWay.EFTools.Long
+namespace ProphetsWay.EFTools.Guid
 {
     /// <summary>
-    /// This is a base class for Data Access Objects (DAOs) that manage entities with a long integer ID.
+    /// This is a base class for Data Access Objects (DAOs) that manage entities with a Guid ID and take advantage of Soft Deletes (set deleted date, but keep records in the database).
     /// This class implements the basic CRUD operations, but you would likely prefer to use BaseGetAllDao or BaseGetPagedDao to either get all or get a paged list of entities.
     /// </summary>
     /// <typeparam name="T">The type of your entity this DAO will manage.</typeparam>
-    public abstract class BaseDao<T> : RootBaseDao<T, long>, IBaseDao<T> where T : class, IBaseIdEntity<long>
+    public abstract class BaseSoftDao<T> : RootBaseSoftDao<T, System.Guid>, IBaseDao<T> where T : class, IBaseSoftIdEntity<System.Guid>
     {
-        protected BaseDao(DbContext context) : base(context) { }
+        protected BaseSoftDao(DbContext context) : base(context) { }
 
         public override T Get(T item)
         {

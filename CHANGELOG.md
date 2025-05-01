@@ -1,7 +1,11 @@
+# v2.1.0
+Updated libraries to current versions, removed target frameworks that are end of life, and added support for .Net 8.0 and 9.0.
+
+
 # v2.0.0
 Major updates to Entity Framework and removing obsolete methods
 - added support for DbContextOptions at constructor for BaseDataAccess
-- added support for non-connection string instances, will create an "in memory" instance/context (.Net 6 only)
+- added support for non-connection string instances, will create an "in memory" instance/context (.Net 6 and above only)
 - EF Tests exercise old and new .Net versions, but across both EF and EFCore as well
 
 
