@@ -13,7 +13,7 @@ namespace ProphetsWay.EFTools.Int
     /// This class implements the basic CRUD operations as well as the GetAll method, returning all entities of the specified type (generally used for smaller tables or for lookup references).
     /// </summary>
     /// <typeparam name="TEntityType">The type of your entity this DAO will manage.</typeparam>
-    public abstract class BaseSoftGetAllDao<TEntityType> : BaseDao<TEntityType>, IBaseGetAllDao<TEntityType> where TEntityType : class, IBaseSoftIdEntity<int>
+    public abstract class BaseSoftGetAllDao<TEntityType> : BaseSoftDao<TEntityType>, IBaseGetAllDao<TEntityType> where TEntityType : class, IBaseSoftIdEntity<int>
     {
         protected BaseSoftGetAllDao(DbContext context) : base(context) { }
     }

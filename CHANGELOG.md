@@ -1,3 +1,7 @@
+# v2.1.1
+Updated BaseDataAccess to use the new interface for IBaseSoftIdEntity and removed the interface from this project.
+Fixed a bug where the BaseSoft Daos were not using the correct base class.
+
 # v2.1.0
 Updated libraries to current versions, removed target frameworks that are end of life, and added support for .Net 8.0 and 9.0.
 
