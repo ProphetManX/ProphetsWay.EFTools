@@ -1,6 +1,4 @@
 ﻿#if NET8_0_OR_GREATER
-using System.Configuration;
-using System;
 using Microsoft.EntityFrameworkCore;
 #endif
 #if NET461 || NET471 || NET48

@@ -7,13 +7,8 @@ using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
 using ProphetsWay.BaseDataAccess;
-
-using System;
 using System.Collections.Generic;
-using System.Data;
-
 using System.Linq;
-using System.Reflection;
 
 namespace ProphetsWay.EFTools
 {

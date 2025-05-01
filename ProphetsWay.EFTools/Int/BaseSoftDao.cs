@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Data.Entity;
 #endif
 using ProphetsWay.BaseDataAccess;
-
 using System.Linq;
 
 namespace ProphetsWay.EFTools.Int

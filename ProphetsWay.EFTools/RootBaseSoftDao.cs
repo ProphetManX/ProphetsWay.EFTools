@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Data.Entity;
 #endif
 using ProphetsWay.BaseDataAccess;
-
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

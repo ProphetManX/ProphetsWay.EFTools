@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 #endif
 #if NET461 || NET471 || NET48
 using System.Data.Entity;
-using System.Data.Entity.Migrations;
 #endif
 using ProphetsWay.BaseDataAccess;
 using System;

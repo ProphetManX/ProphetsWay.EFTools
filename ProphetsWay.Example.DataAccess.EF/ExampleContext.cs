@@ -1,8 +1,8 @@
-﻿#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+﻿#if NET8_0_OR_GREATER
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 #endif
-#if NET45 || NET451 || NET452 || NET46 || NET461 || NET471 || NET472 || NET48
+#if NET471 || NET48
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 #endif
@@ -16,18 +16,18 @@ namespace ProphetsWay.Example.DataAccess.EF
 	{
 		public ExampleContext(string connectionString) : base(connectionString) { }
 
-#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+#if NET8_0_OR_GREATER
 		public ExampleContext(DbContextOptions<ExampleContext> options) : base(options) { }
 #endif
 
-		public DbSet<Company> Companies { get; set; }
+        public DbSet<Company> Companies { get; set; }
 		public DbSet<User> Users { get; set; }
 		public DbSet<Resource> Resources { get; set; }
 		public DbSet<Transaction> Transactions { get; set; }
 		public DbSet<Job> Jobs { get; set; }
 
 
-#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+#if NET8_0_OR_GREATER
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			modelBuilder.Entity<User>().HasOne(x => x.Company).WithMany().HasForeignKey("CompanyId");
@@ -38,8 +38,8 @@ namespace ProphetsWay.Example.DataAccess.EF
 			modelBuilder.Entity<Transaction>().HasOne(x => x.User).WithMany().HasForeignKey("UserId");
 #endif
 
-#if NET45 || NET451 || NET452 || NET46 || NET461 || NET471 || NET472 || NET48
-		protected override void OnModelCreating(DbModelBuilder modelBuilder)
+#if NET471 || NET48
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
 		{		
 			modelBuilder.Entity<User>().HasOptional(x => x.Company).WithMany().Map(m => m.MapKey("CompanyId"));
 			modelBuilder.Entity<User>().HasOptional(x => x.Job).WithMany().Map(m => m.MapKey("JobId"));

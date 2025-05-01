@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+﻿#if NET8_0_OR_GREATER
 using Microsoft.EntityFrameworkCore;
 #endif
 
@@ -20,22 +20,22 @@ namespace ProphetsWay.Example.DataAccess.EF
 
 
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
 		public ExampleDataAccess() : this(new DbContextOptionsBuilder<ExampleContext>().UseInMemoryDatabase(typeof(ExampleContext).Name).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
 #endif
 
-#if NET45 || NET451 || NET452 || NET46 || NET461 || NET471 || NET472 || NET48
+#if NET471 || NET48
 public ExampleDataAccess(string connectionString) : base(connectionString) {
 #endif
 
-#if NETSTANDARD2_0 || NETSTANDARD2_1 || NET5_0_OR_GREATER || NETCOREAPP2_1 || NETCOREAPP3_1
+#if NET8_0_OR_GREATER
 		
 		public ExampleDataAccess(string connectionString) : this(new DbContextOptionsBuilder<ExampleContext>().UseSqlServer(connectionString).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
 
 		public ExampleDataAccess(DbContextOptions options) : base(options)
 		{
 #endif
-			_companyDao = new CompanyDao(Context);
+            _companyDao = new CompanyDao(Context);
 			_jobDao = new JobDao(Context);
 			_userDao = new UserDao(Context);
 			_resourceDao = new ResourceDao(Context);
@@ -138,9 +138,9 @@ public ExampleDataAccess(string connectionString) : base(connectionString) {
 			return _userDao.Update(item);
 		}
 
-        #endregion
+#endregion
 
-        #region TransactionDao
+#region TransactionDao
 
         public IList<Transaction> GetPaged(Transaction item, int skip, int take)
         {
@@ -172,9 +172,9 @@ public ExampleDataAccess(string connectionString) : base(connectionString) {
 			return _transactionDao.Delete(item);
         }
 
-		#endregion
+#endregion
 		
-		#region ResourceDao
+#region ResourceDao
 
 		public IList<Resource> GetAll(Resource item)
         {
@@ -201,6 +201,8 @@ public ExampleDataAccess(string connectionString) : base(connectionString) {
 			return _resourceDao.Delete(item);
         }
 
-        #endregion
+#endregion
+
+
     }
 }
