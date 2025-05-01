@@ -13,7 +13,7 @@ namespace ProphetsWay.EFTools.Long
     /// This class implements the basic CRUD operations as well as GetCount/GetPaged methods, allowing for advanced UI paging control of the data.
     /// </summary>
     /// <typeparam name="TEntityType">The type of your entity this DAO will manage.</typeparam>
-	public abstract class BaseSoftPagedDao<TEntityType> : BaseDao<TEntityType>, IBasePagedDao<TEntityType> where TEntityType : class, IBaseSoftIdEntity<long>
+	public abstract class BaseSoftPagedDao<TEntityType> : BaseSoftDao<TEntityType>, IBasePagedDao<TEntityType> where TEntityType : class, IBaseSoftIdEntity<long>
     {
         protected BaseSoftPagedDao(DbContext context) : base(context) { }
     }
