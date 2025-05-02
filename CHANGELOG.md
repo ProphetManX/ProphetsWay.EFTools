@@ -1,3 +1,16 @@
+# v2.2.0
+Added support for non Id Based entities, in the BaseSoftDao class. This allows for the use of non Id based entities in the BaseSoftDao class. 
+This is useful for entities that do not have a Id property, such as a composite key or a key that is not an integer.
+The following classes were added:
+
+```c#
+	BaseNonIdDao<T> : IBaseDao<T> where T: class, IBaseEntity
+	BaseSoftNonIdDao<T> : BaseNonIdDao<T>, IBaseDao<T> where T : class, IBaseSoftEntity
+```
+Similarly to the other Soft Dao classes, these classes will use the SoftDelete property to mark the entity as deleted, rather than actually deleting it from the database.
+You won't have to manage the Created, Updated, or Deleted dates manually unless you override the methods in the BaseDao class.
+
+
 # v2.1.1
 Updated BaseDataAccess to use the new interface for IBaseSoftIdEntity and removed the interface from this project.
 Fixed a bug where the BaseSoft Daos were not using the correct base class.
