@@ -82,6 +82,16 @@ pose. Every status change in [feature-requests.md](feature-requests.md) traces t
 | **D8** | **The certification scope is stated publicly, not only in these docs.** Public wording says EFTools is **designed for relational EF Core providers** and **certified and tested by this repository on SQLite and SQL Server**. It **must not imply that any other relational provider is certified**. | **Closes [Q4](#unresolved-purpose-level-questions)**; [FR 7](feature-requests.md#7--stop-forcing-a-database-provider-on-every-consumer), [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) |
 | **D9** | The **obsolete local modification inside the pinned `ProphetsWay.Example` submodule was approved for discard and has been discarded.** The submodule working tree is clean; nothing local stands between the repository and advancing the pointer. | [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) |
 
+**D9's precondition has since been met — factual note, 2026-08-16. The decision text above is the owner's
+and is left exactly as written.** D9's closing clause, *"nothing local stands between the repository and
+advancing the pointer,"* was a statement about a pending action. **That action has been taken:** the pointer
+was advanced to `d845863`, verified by reading `.git/modules/ProphetsWay.Example/HEAD`. Read the clause as
+the record of a condition that *was* satisfied and then *was* acted on — not as an outstanding invitation.
+A future agent finding it and concluding there is still a pointer waiting to be moved would be reading a
+closed decision as an open task. The remaining work is
+[FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) steps 2–6,
+which D9 never spoke to.
+
 **D7 is the decision most likely to be misread as drift by a future agent**, because it puts this
 repository outside a family-wide convention. The reasoning is in
 [The `net10.0`-Only Exception](#the-net100-only-exception--settled), and the short form is that the
@@ -542,12 +552,12 @@ following the owner decisions above — including row 10, which this document ha
 
 | # | Change | Rationale | Effort | Breaking? | Status |
 |---|---|---|---|---|---|
-| 1 | Advance the `ProphetsWay.Example` submodule onto 3.x and bring the EF DAL with it | The paradigm claim is currently a statement about history. Routed here from [Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md) | **Large** | No (repo-internal), but gates everything | **Scheduled** (D6) |
+| 1 | Advance the `ProphetsWay.Example` submodule onto 3.x and bring the EF DAL with it | The paradigm claim is currently a statement about history. Routed here from [Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md) | **Large** | No (repo-internal), but gates everything | **Scheduled** (D6) — **step 1 of 6 landed 2026-08-16**; the pointer is at `d845863`, the remaining five steps are not done, and the repository does not compile in the interim |
 | 2 | `ProphetsWay.BaseDataAccess` `2.5.0` → `3.1.0` | The library advertises a contract it does not reference | Small edit, **large** consequence | **Yes** — transitively | **Scheduled** (D6) |
 | 3 | Implement the 3.x disposal contract in `BaseEFDataAccess` | Required by #2 to compile; the *design* is the real work | Medium | **Yes** — new abstract obligation on derived DALs | **Scheduled** (D6); carries **Q2** |
 | 4 | **Make 3.x EF Core-only; retire EF6/.NET Framework** | Two semantics under one package ID; blocks #5 | Medium (deletion) | **Yes** — by intent; 2.2.x remains | **Scheduled** (D1) |
 | 5 | Retarget to **`net10.0` only** — off `net4x` and the undotted `net80`/`net90` monikers | `net461`/`net471` are EOL; `net80`/`net90` are non-canonical and EOL 10 Nov 2026; EF Core 10 ships only `net10.0` | Medium — the `#if` conditions go with #4 | **Yes** — TFM removal | **Scheduled** (D1 entails it; destination settled by **D7**) |
-| 6 | Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory + `Scope` traits | The inheritance hook it uses no longer exists upstream | Medium | No — `IsPackable=false` | **Scheduled** (forced by 1) |
+| 6 | Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory + `Scope` traits | The inheritance hook it uses no longer exists upstream | Medium | No — `IsPackable=false` | **Scheduled** (forced by 1); **rescoped 2026-08-16** — there is no adapter to rebuild and the seam is upstream, so the deliverable now carries an owner fork |
 | 7 | Stop forcing `SqlServer` + `InMemory` on consumers | A decoupling library must not pick a provider | Small–medium | **Yes** — consumers add their own provider | **Scheduled** (D2) |
 | 8 | Remove `FluentAssertions` 8.2.0 from `ProphetsWay.Example.DataAccess.EF` | Paid licence; test library in a non-test project | Trivial | No — not packaged | **Scheduled** (D6) |
 | 9 | Delete the stray `[submodule "Submod"]` block in `.gitmodules` | Malformed; will confuse `git submodule` | Trivial | No | **Scheduled** (D6) |
@@ -557,6 +567,12 @@ following the owner decisions above — including row 10, which this document ha
 **These are not independent.** #2 forces #3; #4 unblocks #5; #1 forces #6; #7 forces #11. The realistic
 unit of work is **one v3.0.0 release containing #1–#11**, with nothing deferred out of it except the
 pipeline edits inside #11, which belong to another owner.
+
+**Row 12 is absent from this table and that is deliberate.**
+[FR 12](feature-requests.md#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction)
+requests no change to any file here — the 3.x design deletes the members carrying the defect, so its only
+deliverable is a line in the release notes. It was triaged on 2026-08-16 to `Scheduled` for that obligation,
+with the 2.2.x patch `Rejected`; there is nothing for a refinements table to hold.
 
 ---
 
