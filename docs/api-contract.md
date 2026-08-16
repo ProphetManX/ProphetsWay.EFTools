@@ -1,8 +1,11 @@
 # API Contract — ProphetsWay.EFTools 3.0.0
 
 **Status: Stage 2 — Revision 8, *under review*. Revision 7 passed a `Contract Reviewer` review *with
-findings*, and Revision 8 closes those findings. No pass has run against *this* text. Nothing here may be
-described as "closed" or "passed" on Revision 8's own account until one does.**
+findings*, and Revision 8 closed those. A `Contract Reviewer` **delta review of Revision 8** then returned
+**PASS WITH FINDINGS** — two blocking, four significant and four minor, keyed **J1–J10** — and those are
+folded into Revision 8 **in place**, rather than opening a Revision 9. **No pass has run against the text as
+it now stands.** Nothing here may be described as "closed" or "passed" on Revision 8's own account until one
+does.**
 
 > **The status line on Revision 3 said "Stage 2 closed; passed `Contract Reviewer`" and that claim was
 > false.** It was recorded before the revision it described was written. An independent review of the text
@@ -20,11 +23,24 @@ navigation on the row it fetched is `null` and there was no graph for the clause
 purpose-built entity**, because `CompanyResource` has two mapped scalars, both of them in its `MatchRow`
 predicate, and no navigation property at all. The rest are author fixes. Nothing is restructured.
 
+**A delta review of Revision 8 has since returned PASS WITH FINDINGS, keyed J1–J10, and they are folded in
+here rather than into a Revision 9.** Two were blocking: **J1** — a `[C]` obligation resting on a
+certified-provider fact, which S13's provider-neutrality makes unsafe, now rewritten to assert a **library
+mechanism** instead — and **J2** — two obligations restated verbatim in a second group, which **doubled two
+items in the tally the preamble makes the integrity check**. The obligation total is therefore **141, not
+143**, recounted by hand. One finding was not the author's to settle in the ordinary way:
+[**OD-11**](#owner-decisions-taken-during-revision-8) records this library **narrowing** the IDENTIFIER RULE's
+deliberately-unspecified pre-assigned-key case, applied on the reviewer's recommendation and **open to
+reversal by the owner**.
+
 **The change of shape is that every test obligation now carries a `Scope` tag.** The obligations preamble had
 claimed the groups matched the `Contract` / `Characterization` / `Dispatcher` partition; they are subject-area
-groups, and about 125 of 142 obligations had no assignable scope at all. Scope is now stated per obligation,
-assigned by `ProphetsWay.Example`'s own traceability rule, and the per-scope counts are published so a
-translated suite can be checked against them the way that repository checks its own.
+groups, **only one of which named a scope at all**, so every obligation outside that one group — the great
+majority of them — had no scope assigned. Scope is now stated per obligation, assigned **one at a time**
+against `ProphetsWay.Example`'s own traceability rule, and the per-scope counts are published so a translated
+suite can be checked against them the way that repository checks its own. **No tag was assigned by default**,
+and the `Contract` tally below is the result of that per-obligation assignment rather than a residue of what
+was previously untagged.
 
 **Revision 7** answers a focused `Contract Reviewer` delta review of Revision 6, which returned **PASS WITH
 FINDINGS**: the OD-7 sweep found eight of nine sites, the `R4-S*` renumbering left no dangling citation, the
@@ -104,7 +120,10 @@ D1–D9) was reopened; nine new owner decisions ([OD-1–OD-3](#owner-decisions-
 [OD-4–OD-5](#owner-decisions-taken-during-revision-5),
 [OD-6–OD-7](#owner-decisions-taken-during-revision-6),
 [OD-8–OD-9](#owner-decisions-taken-during-revision-8)) were taken to close findings this document could not
-close itself. **OD-7 and OD-8 each reverse something an earlier revision stated** — a rule and a clause
+close itself, and a tenth term, [**OD-11**](#owner-decisions-taken-during-revision-8), is **recorded but not
+yet ratified** — it was applied on the `Contract Reviewer`'s recommendation (J3) and is open to reversal by
+the owner. (**There is no OD-10.** The number was skipped when OD-11 was assigned; nothing is missing.)
+**OD-7 and OD-8 each reverse something an earlier revision stated** — a rule and a clause
 respectively — and they are the only two places in this document where a later revision contradicts an
 earlier one on purpose; in both the superseded wording is retracted rather than left standing.
 
@@ -125,6 +144,11 @@ and two minor, keyed **H1–H9** — together with two findings carried forward 
 **G12**. Two of the nine could not be closed by an agent and were put to the owner as
 [OD-8 and OD-9](#owner-decisions-taken-during-revision-8). Every other row below is an author fix.
 
+**A `Contract Reviewer` delta review of Revision 8 then returned PASS WITH FINDINGS — two blocking, four
+significant and four minor, keyed `J1`–`J10`.** Those rows are appended to the same table rather than opening
+a Revision 9, so this log is the single list a reviewer checks the current text against. One of them produced
+[OD-11](#owner-decisions-taken-during-revision-8); the rest are author fixes.
+
 | Finding | What Revision 8 did |
 |---|---|
 | **H1** | **Blocking, and closed by [OD-9](#owner-decisions-taken-during-revision-8).** The `CompanyResource.CompanyId` obligation was **unauthorable for three independent reasons**: `CompanyResourceDao` derives from `RootNonIdDao<CompanyResource>`, which publishes neither `Get` nor `Update`; `ICompanyResourceDao` declares no `Update` at all; and — the structural one, which survives even a purpose-built `BaseNonIdDao<CompanyResource>` — **both of the entity's two mapped scalars sit inside its `MatchRow` predicate**, so changing either makes the locating query search for the new value, find nothing and return `0`. **There is no column an `Update` could write.** A25's counter-example and the obligation are rewritten against a **purpose-built entity, `Assignment`** — a navigation, its foreign key declared explicitly, and a third writable non-key column — stated as purpose-built and **not present in `ProphetsWay.Example`**, matching the device the split-query obligation already uses |
@@ -137,8 +161,21 @@ and two minor, keyed **H1–H9** — together with two findings carried forward 
 | **H8** | The `Restore` sample never said that **starting from `Dataset` is what keeps `ApplyReadFilter` off the query** — the one property it cannot do without, since `BaseSoftDao.ApplyReadFilter` excludes exactly the soft-deleted rows `Restore` exists to reach. Stated at the sample. The note's conflation of `item` and `stored` is corrected: `item` is in A26's scope but is **never tracked** by this method, so `stored` is the whole of what the `finally` owes |
 | **H9** | **Closed with H1.** A25 concluded *"a relationship expressed as a foreign-key property is repointable through the ordinary path"* from an entity that **declares no navigation property at all** — verified by opening `ProphetsWay.Example.DataAccess/Entities/CompanyResource.cs`, which carries `public int CompanyId` and `public Guid ResourceId` and nothing else. It demonstrated that a scalar is writable and nothing about repointing. `Assignment` carries the navigation, so the conclusion now follows from the example that states it |
 | **G11** | **Carried forward, still open, now closed.** The obligation pinning the OD-7 discard turns on the provider raising a referential-integrity exception. `Microsoft.Data.Sqlite` enables `PRAGMA foreign_keys` on connections it opens, but the obligation did not say so and the SQLite-limitations table never mentioned foreign-key enforcement — build the context without it and the `Insert` succeeds, the exception never fires, and the obligation silently stops testing OD-7. A clause requiring enforcement to be **asserted in the arrangement** is added, and a row to the SQLite table |
-| **G12** | **Carried forward, still open, now closed.** `NormalizeRetrievedTimestamp` is declared on `BaseSoftDao` and `RootSoftNonIdDao` only, so a `Department` materialized through **`UserDao`**'s includes — a hard DAO with no such hook — returns its timestamps as the provider gave them, `Unspecified`, while `IDepartmentDao` rule 18 requires `Kind == Utc`. **The same shape as N10**, and stated where N10 is stated: an included soft entity bypasses **both** the including DAO's inaccessible `ApplyReadFilter` **and** `NormalizeRetrievedTimestamp`. The overclaim that normalization reaches *"every entity a read materializes"* is corrected to **that Data Access Object's own reads**, and an obligation is added beside N10's — `[X]`, deliberately, because pinning it `Contract` would oblige every future implementation to reproduce a gap |
-| **Obligation count** | **142 → 143.** H1 and H2 **rewrote** obligations rather than adding them, G11 **extended** one with a clause, H4 deleted duplicated sentences from inside one, and **G12 added the only new checkbox**. Recounted item by item rather than carried forward: **`Contract` 124, `Characterization` 11, `Dispatcher` 8 — 143**. None is blocked |
+| **G12** | **Carried forward, still open, now closed.** `NormalizeRetrievedTimestamp` is declared on `BaseSoftDao` and `RootSoftNonIdDao` only, so a `Department` materialized through **`UserDao`**'s includes — a hard DAO with no such hook — returns its timestamps as the provider gave them, `Unspecified`. **The same shape as N10**, and stated where N10 is stated: an included soft entity bypasses **both** the including DAO's inaccessible `ApplyReadFilter` **and** `NormalizeRetrievedTimestamp`. The overclaim that normalization reaches *"every entity a read materializes"* is corrected to **that Data Access Object's own reads**, and an obligation is added beside N10's. **Its tag was `[X]` when this row was first written, on the reasoning that pinning a gap `Contract` would oblige every future implementation to reproduce one. The upstream amendment below removed the gap, and the obligation is now `[C]` — see that row** |
+| **Upstream amendment** — `IDepartmentDao` **rule 18 narrowed** | **Not a review finding. An owner decision in `ProphetsWay.Example` that moved a contract this document depends on**, folded into Revision 8 rather than opening Revision 9. Rule 18's *retrieval* clause now binds **`IDepartmentDao`'s own reads only** — `Get`, `GetAll`, `GetPaged` on that interface — and **explicitly does not bind** a `Department` reached as a navigation property of an entity retrieved through another Data Access Object, which carries whatever `Kind` the provider supplied. The stamping half is unchanged. Read against the amended `<remarks>` on `ProphetsWay.Example.DataAccess/IDaos/IDepartmentDao.cs`, not against a summary; recorded upstream as [Example FR 14](../../ProphetsWay.Example/docs/feature-requests.md). **Every site here asserting the broad form was corrected** — A13's justification, the **three** `NormalizeRetrievedTimestamp` signature blocks, the `Timestamp Policy` *Why the second hook exists* paragraph, the [include-bypass section](#including-a-soft-delete-entity-bypasses-its-applyreadfilter--and-that-is-correct), the obligations preamble, and the G12 obligation. **This row said "two" until J5;** the third block is `RootSoftNonIdDao`'s, which carried no `<summary>` at all and is now written out in full. **The substantive consequence is G12's tag:** the bypass is no longer a divergence from a stated contract, it **is** the stated contract, so the obligation now pins specified behavior exactly as N10's does — and N10's is `[C]`. G12 is retagged `[C]` to match. The value-converter alternative this document already rejected on two grounds was declined upstream on the **same two grounds**; both rejections stand and are now cross-referenced |
+| **J1** | **Blocking. A `[C]` obligation rested on a certified-provider fact.** The G12 obligation required the **included** department's `CreatedDate` to carry `DateTimeKind.Unspecified`. `IDepartmentDao` rule 18 does not require that — it says the value carries *"whatever `Kind` the provider supplied, typically `Unspecified`"*, which is a **disclaimer of coverage, not a requirement** — and this document's own `[X]` definition covers *"a per-leg result"*, while S13 makes the design relational-provider-neutral. A conforming PostgreSQL implementation could therefore fail a `Contract` gate. **The ruling recorded here: a `[C]` obligation may not depend on a certified-provider fact.** The obligation is rewritten to assert the **mechanism** instead: a **purpose-built pair** in the test model — a soft `Label`, a hard `Article` that includes it — with `LabelDao`'s two timestamp hooks overridden **together** to a local-time policy, so `NormalizeRetrievedTimestamp` returns a **distinguishable sentinel**, `DateTimeKind.Local`, which no relational provider materializes. The included `Label` must **not** carry the sentinel; `LabelDao.Get` on the same row must. That asserts **the hook did not run**, which is what rule 18's negative clause and A13 state, and it is provider-independent. **`Department` cannot be the subject** — rule 18 pins *both* halves of its policy, so `DepartmentDao`'s hooks cannot legitimately be perturbed, which is the same reason N9 moved a local-time sample off `Department`. **Tag stays `[C]`**; the certified-provider scoping clause added to compensate is **deleted**, being no longer needed. **N10 is unchanged** — as rewritten the two obligations pin the same thing: the including Data Access Object applies none of the included type's own hooks |
+| **J2** | **Blocking. Two obligations were verbatim duplicates, so the integrity-check total was wrong.** The [Provider fidelity](#provider-fidelity-sql-server-leg-only) group restated the `DbUpdateConcurrencyException` pair (R4-S7) already in [CRUD](#crud) — where both already say *"SQL Server leg only"* — and restated **word-for-word** the Transactions group's *"Two Data Access Layer instances over the same database do not share a transaction,"* which also already says so. The preamble makes the sum *the* integrity check, and it had **doubled two items**. Both duplicates are **deleted**; the group's body is now **pointers** to where each obligation actually lives, since the group heading already scopes the leg. **Recounted by hand, item by item, after the deletion: `Contract` 123, `Characterization` 10, `Dispatcher` 8 — total 141.** Every site stating a count is updated with it |
+| **J3** | **Significant. `Insert`'s pre-assigned-key term stated a rule and disclaimed it in one sentence.** The `Side effects` row said any pre-assigned key is replaced where the store generates keys *"which the rule leaves deliberately unspecified, so a caller must depend on neither"* — while the CRUD obligation made *"the generated key wins"* a `[C]`. Both could not stand. **The narrowing is kept**, per the reviewer's recommendation: the disclaiming clause is deleted and replaced with a statement that **this library narrows an upstream-unspecified point for its own implementations**, citing `IDepartmentDao` rule 1 as the precedent `IExampleDataAccess` itself names. The obligation stays `[C]` and now cites the narrowing rather than the interface. Recorded as [**OD-11**](#owner-decisions-taken-during-revision-8), **applied on the reviewer's recommendation and open to reversal by the owner** — it is a contract term a consumer reads, so it is recorded where such terms are recorded rather than left in a table cell. `IExampleDataAccess`'s IDENTIFIER RULE was read before writing it |
+| **J4** | **Significant. The upstream contract was never version-pinned.** The document pins EF Core 10 as a minimum (A31) because *"several rules here are version-sensitive,"* then cited *"the `ProphetsWay.Example` **3.1** contract"* — but the narrowed rule 18 landed **after** 3.1.0, and that repository's `app-variables.yml` reads **3.1.1**. An author resolving "3.1" to 3.1.0 gets the **broad** rule 18, authors G12 as a divergence, and tags it `[X]` — recreating the state J1 just fixed. Both occurrences (S12 and [Snapshot and Tracking](#snapshot-and-tracking)) now read **3.1.1**, and a paragraph beside S12 states that the narrowed rule 18 is present **from 3.1.1**, and that against 3.1.0 the retrieval clause reads broadly and G12's obligation is a divergence |
+| **J5** | **Significant. The keyless branch's hook declaration stated no reach, and this log miscounted the sites.** The **Upstream amendment** row above said *"the **two** `NormalizeRetrievedTimestamp` signature blocks."* This document writes that signature out **three** times — in `BaseSoftDao`'s block, in the `Timestamp Policy` block, and in `RootSoftNonIdDao`'s — and the third carried **no `<summary>` at all**. (The count of *declaration sites in the library* is two, `BaseSoftDao` and `RootSoftNonIdDao`, which is what the Timestamp Pair Rule's four-override-sites table counts; three is the count of blocks in this text, which is what the sweep had to cover.) It matters because this document requires a `Test Designer` to exercise the Pair Rule on **both** branches, *"a suite that covers the keyed branch alone leaves half the override sites unguarded"* — and the keyless branch was the silent one. `RootSoftNonIdDao`'s block now carries the same boundary sentence as `BaseSoftDao`'s, and the row above is corrected to **three** |
+| **J6** | **Significant. There was no tie-breaker for a mixed-traceability obligation.** J1 arose because one obligation bundled a traceable assertion with an untraceable one, and the tagging rule gave no guidance; other multi-clause obligations exist. One line added to the [Scope notation](#test-obligations) block: **an obligation whose assertions do not all trace to a stated rule is either split, or tagged `[X]` whole — `[C]` is not assignable to a mixed obligation**, with the preferred order of moves (split; else rewrite against a stated mechanism; else `[X]`). Had it existed it would have caught J1 without a reviewer |
+| **J7** | **Minor.** G12's obligation opened *"Same arrangement: soft-delete nothing"* while N10's arrangement immediately above requires the department **soft-deleted**. Changed to *"Same include, no soft delete needed."* |
+| **J8** | **Minor.** The `Assignment` obligation named no base class and no include route, though it requires both and its sibling obligations name their instrument explicitly. The **entity sketch in A25** now carries `AssignmentDao : BaseDao<Assignment, int>` with the `ApplyIncludes` override the obligation's re-read goes through, and the obligation points at the sketch instead of re-listing property types |
+| **J9** | **Minor, and a compile defect of the class H5 was raised on.** `Assignment`'s sketch would not compile under `<Nullable>enable</Nullable>` (S6): `public Company Company { get; set; }` and `public string Note { get; set; }` are non-nullable reference types with no initializer. `Company` is now `Company?` — correct in substance too, since `ApplyIncludes` is opt-in and the navigation **is** null on a read that does not include it (OD-1) — and `Note` is initialized to `string.Empty` |
+| **J10** | **Minor.** The preamble said *"about 125 of 142 obligations had no assignable scope,"* and exactly 125 were then `[C]` — unrelated quantities that coincided, inviting the reading that `[C]` was a default. Both sites are reworded to say that **only one group named a scope**, so every obligation outside it was untagged, and to state that **no tag was assigned by default**. The coincidence is gone independently with J2's recount, which moves `Contract` to 123; the wording no longer depends on that |
+| **Sweep — `AutoInclude` and global filters** | **Not a finding; a consequence the reviewer asked to be stated.** A28 lifts query filters on the locating fetch, and this document already states that `IgnoreQueryFilters()` lifts filters on **included** navigation types too. So an `AutoInclude`d navigation on a write's locating fetch arrives **unfiltered as well** — a second invisible per-consumer consequence of the same mechanism. A row is added to the `AutoInclude` table in [Navigation Loading](#model-level-autoinclude-is-an-equally-valid-path), which is the place that promises to state these plainly |
+| **Sweep — anchor** | `#the-rule` resolved by first-wins slug to one of **two** `### The rule` headings. Not broken, but fragile: renaming either would silently repoint it. The Navigation Loading heading is disambiguated to **`### The rule — OD-1, A18`**, matching the Global Query Filters heading's existing `— OD-5, A28` form, and its one citation is repointed |
+| **Obligation count** | **143 → 141**, and the change is a **correction, not a removal of coverage**. J2 deleted two duplicated checkboxes; no obligation lost its subject. J1, J3, J7, J8 and J9 rewrote obligations in place, and J6 added a tagging rule rather than a checkbox. Recounted by hand after the edits rather than derived by subtraction: **`Contract` 123, `Characterization` 10, `Dispatcher` 8 — 141**, and the three sum. Any figure of 143, or of `Contract` 125, is superseded. None is blocked |
 
 #### Revision 7
 
@@ -307,8 +344,17 @@ document traces to one of them, or to a gap-filling decision recorded in
 | **S9** | **The DAO `Ensure*` transaction helpers are removed.** DAL-level `TransactionStart` / `TransactionCommit` / `TransactionRollBack` are the **sole** transaction authority and must match the `ProphetsWay.BaseDataAccess` 3.1.0 contract in full | See [Transactions](#transactions) |
 | **S10** | **DAO `Context` and `Dataset` become `protected`** | They were public. Custom queries move inside the DAO, which is where the paradigm always intended them |
 | **S11** | **Soft-delete timestamps come from `protected virtual DateTime GetCurrentTimestamp()`, defaulting to `DateTime.UtcNow`.** The `UseUtcTime` flag is removed. The clock is paired with `protected virtual DateTime NormalizeRetrievedTimestamp(DateTime)` so a retrieved timestamp carries a `Kind` again (A13) | See [Timestamp Policy](#timestamp-policy) |
-| **S12** | **Forced behavior changes:** `Update` on an absent row returns `0`; `GetAll`/`GetPaged` carry **stable explicit ordering**; the `item` selector is **never read**; snapshot/tracking behavior must satisfy the `ProphetsWay.Example` 3.1 contract; **no async and no `IAsyncDisposable`** in this release | See [Forced Behavior Changes](#forced-behavior-changes) |
+| **S12** | **Forced behavior changes:** `Update` on an absent row returns `0`; `GetAll`/`GetPaged` carry **stable explicit ordering**; the `item` selector is **never read**; snapshot/tracking behavior must satisfy the `ProphetsWay.Example` **3.1.1** contract; **no async and no `IAsyncDisposable`** in this release | See [Forced Behavior Changes](#forced-behavior-changes) |
 | **S13** | **Relational-provider-neutral.** Public EF types appear only where a consumer must supply one — the configured context and its options. **Certified on SQLite and SQL Server** | Extends [D2](purpose-and-scope.md#owner-decisions--2026-08-15) into the signature list |
+
+**S12's upstream contract is pinned to a patch version, and the patch digit matters.** The binding text is
+`ProphetsWay.Example` **3.1.1** — the version in that repository's `app-variables.yml` — not "3.1". The
+narrowing of `IDepartmentDao` **rule 18**'s retrieval clause to that interface's own reads landed **after**
+3.1.0 shipped and is present from **3.1.1**. Read against **3.1.0**, rule 18's retrieval clause reads broadly,
+the `NormalizeRetrievedTimestamp` include bypass is a **divergence** from a stated contract, and the G12
+obligation in [Navigation loading](#navigation-loading--od-1-a18) would be `[X]` rather than `[C]`. This
+document is written against 3.1.1 throughout. A31 pins EF Core's major for the same reason: several rules here
+are version-sensitive, and a version-less citation resolves to whichever text the reader happens to open.
 
 ### Owner Decisions taken during Revision 4
 
@@ -349,8 +395,10 @@ is now wrong. It is retracted where it stood rather than left for a reader to re
 
 ### Owner Decisions taken during Revision 8
 
-Two more, numbered **OD-8–OD-9**. Both close a **blocking** finding this document could not close itself, and
-both are about a statement that could not be written rather than about a behavior anyone wanted changed.
+**OD-8 and OD-9** each close a **blocking** finding this document could not close itself, and both are about a
+statement that could not be written rather than about a behavior anyone wanted changed. **OD-11** was added
+later in the same revision, closing finding **J3**; it is numbered here because it is a contract term a
+consumer reads and belongs where the other such terms are recorded rather than buried in a table row.
 Neither reopens a settled decision, and no design behavior moves.
 
 **OD-8 is the second decision in this document that reverses an earlier one.** It is recorded the way
@@ -361,6 +409,7 @@ so a reader who met the earlier text can see that its removal was deliberate rat
 |---|---|---|
 | **OD-8** | **A26's *"plus any fetched row's whole reachable graph"* clause is retracted.** `Update` and `Delete` locate a row with a tracked fetch that applies **neither `ApplyReadFilter` nor `ApplyIncludes`**, and `item` is **never tracked**, so no relationship fix-up partner exists either — **every navigation on the fetched row is `null`**. The clause described a graph this design cannot produce. Two options were put: widen the fetch so the clause becomes true, or retract it. **The owner chose retraction** — widening would make every write pay for a graph no write uses, and would contradict the opt-in default OD-1 settled. What survives is the fetched **row**, detached in the same `finally` as before. The one route that *does* populate a fetched graph is a consumer-declared model-level `AutoInclude` (H7), and that case is now stated explicitly instead of being reached by accident | [Detachment spans the whole reachable graph](#detachment-spans-the-whole-reachable-graph--a26-od-7), and the replacement obligation in [Writes with a populated navigation graph](#writes-with-a-populated-navigation-graph--od-4-a24a26) |
 | **OD-9** | **The `CompanyResource` counter-example in A25 is replaced by a purpose-built entity, `Assignment`.** `CompanyResource` cannot carry the point three times over: its DAO derives from `RootNonIdDao<CompanyResource>`, which publishes neither `Get` nor `Update`; `ICompanyResourceDao` declares no `Update`; and **both of its two mapped scalars sit in its `MatchRow` predicate**, so an `Update` that changed either would locate nothing and return `0`. It also declares **no navigation property at all**, so it could never have demonstrated that a *relationship* is repointable — only that a scalar is writable. The owner approved specifying an entity for the purpose: one navigation, its foreign key declared explicitly, and a third writable non-key column. It is named as purpose-built and **not present in `ProphetsWay.Example`**, on the same footing as `Country` in the collation obligations | [`Update` writes scalars, and cannot repoint a relationship](#update-writes-scalars-and-cannot-repoint-a-relationship--a25), and the rewritten obligation in [Writes with a populated navigation graph](#writes-with-a-populated-navigation-graph--od-4-a24a26) |
+| **OD-11** | **This library narrows the IDENTIFIER RULE's pre-assigned-key case: on a store-generated column, the generated key replaces whatever the caller assigned.** `IExampleDataAccess`'s IDENTIFIER RULE leaves that case deliberately unspecified and calls it *"the one place two conforming implementations may legitimately differ"*, naming both behaviors as legitimate and telling a caller writing against the interface to depend on neither. Revision 8 stated that disclaimer on [`Insert`](#inserttentity-item)'s `Side effects` row **and** made *"the generated key wins"* a `[C]` obligation — which cannot both stand. **Narrowing is the resolution**, and it is the move `IDepartmentDao` rule 1 already makes for `Department`, where a pre-assigned value is overwritten; that rule states in terms that a Data Access Object narrowing an unspecified point for its own entity is doing what rule 1 does rather than making an exception. The narrowing binds **this library's implementations only** and changes nothing upstream. **Applied on the `Contract Reviewer`'s recommendation (J3) and open to reversal by the owner** — reversing it means retagging that obligation `[X]`, not changing any behavior | [`Insert`](#inserttentity-item)'s `Side effects` row, and the pre-assigned-key obligation in [CRUD](#crud) |
 
 ### Design Decisions Made Here
 
@@ -390,7 +439,7 @@ decision meeting a contract this family already publishes.
 | **A10** | **A `TContext` — borrowed or owned — may back exactly one live `BaseEFDataAccess` instance.** Sharing one context across two DALs is unsupported | Transaction scope is *context*-level in EF Core, so two DALs over one context would silently share a transaction. That contradicts the parent's "scope is the instance, not the connection" rule outright, and no amount of care inside this library can restore it |
 | **A11** | The derived cleanup hook is **`protected virtual void DisposeCore()`**, not `Dispose(bool)`. `IsDisposed` is set **before** any teardown step, and each step is **swallowed and the next one still runs** | There is no finalizer in this class and no unmanaged handle, so the `disposing` parameter would always be `true` and would only invite a wrong `false` branch. Setting `IsDisposed` first is what makes disposal safe to re-enter from a failing teardown step |
 | **A12** | **`protected TKey? GetKey(TEntity item)`** resolves the identifier value, and `MatchRow(item)` is defined as `KeyEquals(GetKey(item))`. **Every keyed CRUD member calls `MatchRow` and nothing else** | Two locating paths — one for `Get`, one for `Update`/`Delete` — is how the two drift. One path means a `MatchRow` override changes every member at once, which is what an override of it is for |
-| **A13** | The soft bases add **`protected virtual DateTime NormalizeRetrievedTimestamp(DateTime value)`**, defaulting to `DateTime.SpecifyKind(value, DateTimeKind.Utc)`, applied to every timestamp on every soft entity **that Data Access Object's own reads** materialize | `IDepartmentDao` rule 18 requires `Kind == Utc` on a **retrieved** instance, and relational providers do not store `Kind`. Without this hook the default derivation cannot satisfy the Example contract — the clock hook alone only covers the write half. **The scope qualifier is load-bearing**: a soft entity materialized as an *include* on some other Data Access Object's query is not reached, because the hook belongs to the DAO that owns the query. See [Including a soft-delete entity bypasses its `ApplyReadFilter`](#including-a-soft-delete-entity-bypasses-its-applyreadfilter--and-that-is-correct) |
+| **A13** | The soft bases add **`protected virtual DateTime NormalizeRetrievedTimestamp(DateTime value)`**, defaulting to `DateTime.SpecifyKind(value, DateTimeKind.Utc)`, applied to every timestamp on every soft entity **that Data Access Object's own reads** materialize | `IDepartmentDao` rule 18 requires `Kind == Utc` on an instance retrieved by `Get`, `GetAll` or `GetPaged` **on that interface**, and relational providers do not store `Kind`. Without this hook the default derivation cannot satisfy the Example contract — the clock hook alone only covers the write half. **The scope qualifier is load-bearing, and it is the rule's own**: rule 18 expressly does not bind a soft entity materialized as an *include* on some other Data Access Object's query, because the hook belongs to the DAO that owns the query. This hook's reach and the rule's reach are therefore the same reach, not an approximation of it. See [Including a soft-delete entity bypasses its `ApplyReadFilter`](#including-a-soft-delete-entity-bypasses-its-applyreadfilter--and-that-is-correct) |
 | **A14** | **`RootSoftNonIdDao<TEntity>`** is added: soft-delete semantics with **no** capability interface. `BaseSoftNonIdDao<TEntity>` derives from it and adds `IBaseDao<TEntity>` | Without it a keyless soft DAO had to inherit `BaseNonIdDao`, i.e. publish `Get` and `Update` it does not support — the exact coercion S5 exists to prevent, reintroduced one level down |
 | **A15** | `ApplyStableOrder` is **`virtual` on every base**. Its keyless default **throws `NotSupportedException`**, and `GetAll`, `GetPaged` and `GetCount` therefore throw until it is overridden | An `abstract` hook taxes the write-only join DAO — the one shape S5 was written for — to buy a compile error for a member it never publishes. A `NotSupportedException` names the missing override precisely and costs the write-only DAO nothing |
 | **A16** | The **keyed** ordering default is `OrderBy(key)`, and it is a **total** order only when the resolved key is **unique and non-null**. A model whose key is nullable or duplicate-capable **must** override `ApplyStableOrder` with a deterministic tie-breaker | An identifier that is a real primary key satisfies both conditions, which is the normal case. S4's widened reach — `string`, `int?`, alternate-key identifiers — is exactly where it stops holding, and null ordering differs between providers |
@@ -1105,9 +1154,10 @@ namespace ProphetsWay.EFTools
 
 		/// <summary>
 		/// Restores the DateTimeKind a relational store did not preserve. Defaults to
-		/// DateTime.SpecifyKind(value, DateTimeKind.Utc), and is applied to every timestamp on every entity a
-		/// read materializes. Bound to GetCurrentTimestamp by the Timestamp Pair Rule (A13) — override both or
-		/// neither.
+		/// DateTime.SpecifyKind(value, DateTimeKind.Utc), and is applied to every timestamp on every soft
+		/// entity THIS Data Access Object's own reads materialize — not to one materialized as an include on
+		/// another DAO's query. Bound to GetCurrentTimestamp by the Timestamp Pair Rule (A13) — override both
+		/// or neither.
 		/// </summary>
 		protected virtual DateTime NormalizeRetrievedTimestamp(DateTime value);
 
@@ -1392,7 +1442,7 @@ Two consequences worth stating:
 |---|---|
 | **Nulls** | `item` null → `ArgumentNullException` |
 | **Returns** | `void` |
-| **Side effects** | **The store-generated identifier is written back onto `item`.** This is the **IDENTIFIER RULE** on `IExampleDataAccess` — a convention **elected in `ProphetsWay.Example`**, not one `ProphetsWay.BaseDataAccess` promises, which documents the write-back as *"a convention left to the implementation — this library neither performs it nor verifies that it happened."* Callers rely on it. Any key the caller pre-assigned is replaced by the generated one where the store generates keys; a client-generated key (`Guid`, `string`) is used as supplied — which the rule leaves deliberately unspecified, so a caller must depend on neither |
+| **Side effects** | **The store-generated identifier is written back onto `item`.** This is the **IDENTIFIER RULE** on `IExampleDataAccess` — a convention **elected in `ProphetsWay.Example`**, not one `ProphetsWay.BaseDataAccess` promises, which documents the write-back as *"a convention left to the implementation — this library neither performs it nor verifies that it happened."* Callers rely on it. Any key the caller pre-assigned is replaced by the generated one where the store generates keys; a client-generated key (`Guid`, `string`) is used as supplied. **The IDENTIFIER RULE leaves the pre-assigned case deliberately unspecified — *"the one place two conforming implementations may legitimately differ"* — and this library narrows it here for its own implementations**, which is what `IDepartmentDao` rule 1 does for `Department` and which that rule names as narrowing rather than as an exception. A caller of *this* library may depend on the sentence above; a caller writing against `IExampleDataAccess` in general may not. Recorded as [OD-11](#owner-decisions-taken-during-revision-8) |
 | **Mechanism** | **The root is added; everything reachable through `item`'s navigation properties is set `Unchanged` explicitly** (OD-4, A24). Related rows are read, never written. **`Dataset.Add(item)` is wrong, and so is `Attach`** — see [Writes and the Navigation Graph](#writes-and-the-navigation-graph) |
 | **Related entities** | Not inserted, not updated, and their keys are not reassigned. EF Core's relationship fix-up writes the foreign key onto the new row, so an association to a stored row is preserved |
 | **Detachment** | **In a `finally`, on success and on failure**, `item` and its whole reachable graph are detached from the context (A26, OD-7). Mutating any of them afterwards must not reach the store on a later `SaveChanges` — that is the "read rather than adopted" half of the SNAPSHOT RULE. **A failed `Insert` therefore leaves nothing pending**, and the caller may fix `item` and call again on the same instance |
@@ -1494,7 +1544,7 @@ statement of what soft delete means.
 | **`Get`** | **Returns soft-deleted rows.** `null` only when no row with that identifier was ever stored |
 | **`GetAll` / `GetPaged` / `GetCount`** | **Omit soft-deleted rows** and must agree with one another. With every row deleted: two empty lists and `0` |
 | **Exclusion** | **Soft deletion is the only exclusion rule.** `ApplyReadFilter` on this class adds `DeletedDate == null` and nothing else |
-| **Retrieved timestamps** | `Get`, `GetAll` and `GetPaged` pass every timestamp a read materializes through `NormalizeRetrievedTimestamp`, **after materialization**, so a retrieved instance carries a meaningful `DateTime.Kind`. `CreatedDate` is a non-nullable `DateTime` on `IBaseSoftEntity` and is **always** normalized; `UpdatedDate` and `DeletedDate` are `DateTime?` and are normalized **only when they hold a value** — a `null` stays `null` and is never normalized into one |
+| **Retrieved timestamps** | `Get`, `GetAll` and `GetPaged` pass every timestamp **this Data Access Object's own reads** materialize through `NormalizeRetrievedTimestamp`, **after materialization**, so a retrieved instance carries a meaningful `DateTime.Kind`. `CreatedDate` is a non-nullable `DateTime` on `IBaseSoftEntity` and is **always** normalized; `UpdatedDate` and `DeletedDate` are `DateTime?` and are normalized **only when they hold a value** — a `null` stays `null` and is never normalized into one. A soft entity arriving as an **include** on another DAO's query is outside this row, and outside rule 18's retrieval clause with it — see [Timestamp Policy](#timestamp-policy) |
 | **Restore** | **Not supplied.** Clearing `DeletedDate` is a consumer method — see [Writing a `Restore`](#writing-a-restore) |
 
 **Soft delete narrows what counts as a match; it does not change the counts.** Every `1` and `0` above is the
@@ -1518,7 +1568,7 @@ protected virtual DateTime GetCurrentTimestamp();
 
 /// <summary>
 /// Restores the <see cref="DateTimeKind"/> a relational store did not preserve, on a timestamp read back
-/// out of the store.
+/// out of the store by <b>this</b> Data Access Object.
 /// </summary>
 /// <param name="value">A timestamp as the provider materialized it — typically <c>Unspecified</c>.</param>
 /// <returns>The same instant, carrying the Kind this DAO's clock produces.</returns>
@@ -1534,17 +1584,28 @@ could not express a test clock at all.
 | **`GetCurrentTimestamp` default** | `DateTime.UtcNow`, whose `Kind` is `DateTimeKind.Utc` |
 | **Called** | **Once per stamping operation.** The same value is used for every field that operation stamps |
 | **`NormalizeRetrievedTimestamp` default** | `DateTime.SpecifyKind(value, DateTimeKind.Utc)` — a **relabel, not a conversion.** It changes no instant and adds no offset |
-| **Where it is applied** | To `CreatedDate`, `UpdatedDate` and `DeletedDate` on every entity **this Data Access Object's** `Get`, `GetAll` and `GetPaged` materialize, after materialization and before the instance is handed back. Never inside a predicate, so it cannot affect translation. **A soft entity materialized as an *include* on some other Data Access Object's query is not reached** — that DAO owns the query and cannot see this hook (G12); see [Including a soft-delete entity bypasses its `ApplyReadFilter`](#including-a-soft-delete-entity-bypasses-its-applyreadfilter--and-that-is-correct) |
+| **Where it is applied** | To `CreatedDate`, `UpdatedDate` and `DeletedDate` on every entity **this Data Access Object's** `Get`, `GetAll` and `GetPaged` materialize, after materialization and before the instance is handed back. Never inside a predicate, so it cannot affect translation. **A soft entity materialized as an *include* on some other Data Access Object's query is not reached** — that DAO owns the query and cannot see this hook (G12). **Rule 18 draws its retrieval clause at the same boundary**, so this is the specified reach and not a shortfall from it; see [Including a soft-delete entity bypasses its `ApplyReadFilter`](#including-a-soft-delete-entity-bypasses-its-applyreadfilter--and-that-is-correct) |
 | **Nulls** | **`CreatedDate` is a non-nullable `DateTime`** on `IBaseSoftEntity`, so it is always present and always normalized. `UpdatedDate` and `DeletedDate` are `DateTime?`; the hook is called only when they hold a value, and a `null` is left `null` |
 | **Values written back by a write** | Come from `GetCurrentTimestamp` directly and are **not** normalized — they never went to the store and never lost their `Kind` |
 
 **Why the second hook exists.** `IDepartmentDao` rule 18 requires every stamped timestamp to carry
 `Kind == Utc` **both** on the instance written back to the caller **and** on an instance later retrieved by
-`Get`, `GetAll` or `GetPaged`. Relational providers do not store `Kind`: SQL Server `datetime2` and SQLite's
-text/numeric date storage both round-trip a `DateTime` as `Unspecified`. So with the clock hook alone, a
-default-derived `BaseSoftDao` satisfies the write half of rule 18 and **fails the read half on both certified
-providers** — the Example suite would not pass against a conforming implementation of this library, which is
-not an acceptable state for the package whose job is to implement that contract.
+`Get`, `GetAll` or `GetPaged` **on `IDepartmentDao` itself**. Relational providers do not store `Kind`: SQL
+Server `datetime2` and SQLite's text/numeric date storage both round-trip a `DateTime` as `Unspecified`. So
+with the clock hook alone, a default-derived `BaseSoftDao` satisfies the write half of rule 18 and **fails
+the read half on both certified providers** — the Example suite would not pass against a conforming
+implementation of this library, which is not an acceptable state for the package whose job is to implement
+that contract.
+
+**What the hook is not required to reach, and deliberately does not.** Rule 18's retrieval clause was
+**narrowed by owner decision on 2026-08-16** to `IDepartmentDao`'s own reads. A `Department` reached as a
+navigation property of an entity retrieved through another Data Access Object — `User.Department` on a user
+returned by `IUserDao` — carries whatever `Kind` the provider supplied, typically `Unspecified`, and rule 18
+says so in terms. That is **stated behavior, not a gap this hook fails to close**: restoring a kind the
+provider does not persist is a per-Data-Access-Object mechanism, and the DAO that ran the read has none for
+these three timestamps. The reasoning is recorded upstream as
+[Example FR 14](../../ProphetsWay.Example/docs/feature-requests.md); the binding wording is the
+`<remarks>` on `IDepartmentDao`, not this paragraph.
 
 ##### The Timestamp Pair Rule — A13
 
@@ -1634,7 +1695,11 @@ consumers who happened to derive from that optional type, making conformance dep
 that is explicitly free (see [The Context Base](#the-context-base--baseefcontext)), and it would apply to
 *every* `DateTime` column in the model rather than the three this contract governs. The two mechanisms must
 not both exist — a value converter plus a normalization hook applied to the same value is how a double
-conversion ships.
+conversion ships. **The same alternative was put to the owner upstream as the way to keep rule 18's broad
+reading, and declined on the same two grounds** — indiscriminate reach across every mapped `DateTime`, and
+accidental reach depending on an unrelated base-class choice
+([Example FR 14](../../ProphetsWay.Example/docs/feature-requests.md)). The rule was narrowed
+instead. Both rejections stand; do not re-propose it as the fix for the include bypass.
 
 #### Writing a `Restore`
 
@@ -1813,7 +1878,17 @@ namespace ProphetsWay.EFTools
 		// The Timestamp Pair Rule (A13) binds these two here exactly as it does on BaseSoftDao.
 		// Same names, same defaults, same must-be-overridden-together obligation; the defaults are
 		// supplied by one internal helper so the two declaration sites cannot drift.
+
+		/// <summary>The clock every stamping member reads. Defaults to DateTime.UtcNow.</summary>
 		protected virtual DateTime GetCurrentTimestamp();
+
+		/// <summary>
+		/// Restores the DateTimeKind a relational store did not preserve. Defaults to
+		/// DateTime.SpecifyKind(value, DateTimeKind.Utc), and is applied to every timestamp on every soft
+		/// entity THIS Data Access Object's own reads materialize — not to one materialized as an include on
+		/// another DAO's query. Bound to GetCurrentTimestamp by the Timestamp Pair Rule (A13) — override both
+		/// or neither.
+		/// </summary>
 		protected virtual DateTime NormalizeRetrievedTimestamp(DateTime value);
 
 		public override void Insert(TEntity item);
@@ -2272,7 +2347,7 @@ Server, not `InMemory`, are the certification legs.
 **A cross-cutting rule at the same weight as [Stable Ordering](#stable-ordering).** It was absent from
 Revision 3 entirely, and its absence was the single largest defect in that revision.
 
-### The rule
+### The rule — OD-1, A18
 
 ```csharp
 /// <summary>
@@ -2344,6 +2419,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 | **The two compose** | `Include` is additive. A DAO that overrides `ApplyIncludes` *and* a model that declares `AutoInclude` produce the union, not a conflict |
 | **`IgnoreAutoIncludes()` is the per-query escape** | A custom DAO method that wants the scalars only calls it on its own query. This library never calls it |
 | **It reaches the `Update` and `Delete` locating fetches too** | Those are queries against the entity, and this library builds them (A22, and `Delete`'s implementation note) — so the row above admits no exception for them. For a consumer who declares `AutoInclude`, **a write's locating fetch materializes and tracks the whole auto-included graph**, which the `finally` then detaches (A26, OD-7). Stated plainly because the consequence is invisible from here: it **silently enlarges what a write tracks and detaches, per consumer, on a model this library cannot see**. It is also the *only* route by which a fetched row arrives carrying a graph, which is why [OD-8](#owner-decisions-taken-during-revision-8)'s replacement obligation is written against `AutoInclude` rather than against the plain fetch |
+| **…and that auto-included graph arrives with global query filters lifted** | A28 calls `IgnoreQueryFilters()` on every `MatchRow`-located path, and `IgnoreQueryFilters()` lifts filters on **included** navigation types too — the mechanism [Global Query Filters](#it-is-a-conflicting-mechanism-not-a-sanctioned-alternative) already states for reads. So a consumer who declares an `AutoInclude` on a navigation **and** a `HasQueryFilter` on the type it points at gets that navigation materialized on a write's locating fetch **unfiltered** — soft-deleted rows and all — while the same navigation reached through `GetAll` would honor the filter. **A second per-consumer consequence of the same mechanism**, stated here for the same reason as the row above: it is invisible from this library's side and cannot be discovered by reading this library's code |
 
 **Neither path is preferred by this document.** They differ in where the decision is written — the hook puts
 it in the Data Access Object next to the contract it satisfies, `AutoInclude` puts it in the model next to
@@ -2392,14 +2468,20 @@ therefore arrives populated on `User.Department`.** A reader will assume the opp
 stated: `User.cs` says of that property *"Because a department is soft-deleted rather than removed, this
 reference never dangles"* — a filtered include is precisely what would make it dangle.
 
-**It bypasses `NormalizeRetrievedTimestamp` as well — and *that* half nobody wants** (G12). The two hooks fail
-the same way for the same reason, and the document previously named only one of them.
+**It bypasses `NormalizeRetrievedTimestamp` as well — and rule 18 now says so itself** (G12). The two hooks
+fail the same way for the same reason, and the document previously named only one of them.
 `NormalizeRetrievedTimestamp` is declared on `BaseSoftDao` and `RootSoftNonIdDao` and applied by **those**
 Data Access Objects' own reads (A13). **`UserDao` is a *hard* Data Access Object and has no such hook**, so a
 `Department` materialized through `UserDao.ApplyIncludes` carries its three timestamps exactly as the provider
-handed them back — `DateTimeKind.Unspecified` on both certified providers, since neither stores `Kind` — while
-`IDepartmentDao` rule 18 requires `Kind == Utc` on a retrieved instance. **The same stored row satisfies rule
-18 when read through `DepartmentDao` and fails it when read through `User.Department`.**
+handed them back — `DateTimeKind.Unspecified` on both certified providers, since neither stores `Kind`.
+
+**Rule 18 was narrowed to match, by owner decision on 2026-08-16.** Its retrieval clause binds `Get`, `GetAll`
+and `GetPaged` **on `IDepartmentDao`** and expressly does not bind a `Department` reached as a navigation
+property of an entity retrieved through another Data Access Object. So the sentence an earlier revision put
+here — *"the same stored row satisfies rule 18 when read through `DepartmentDao` and fails it when read
+through `User.Department`"* — **is retracted.** The row through `User.Department` does not fail rule 18; it
+falls outside the clause. Reasoning upstream:
+[Example FR 14](../../ProphetsWay.Example/docs/feature-requests.md).
 
 **The earlier claim that normalization reaches *"every timestamp on every entity a read materializes"* is
 corrected**, here and in [Timestamp Policy](#timestamp-policy) and A13: it reaches every timestamp on every
@@ -2408,13 +2490,26 @@ DAO owns the query and has no access to the included type's hooks — neither it
 and giving it one would mean a hard Data Access Object knowing which of its included types are soft entities,
 knowledge it does not have and that this library will not synthesize.
 
-**The two halves differ only in verdict, and the difference is worth keeping straight.** The filter bypass is
-**wanted**: `User.cs` promises the reference never dangles, and filtering the include is what would break that
-promise. The timestamp bypass is **wanted by nobody**; it is a limitation, recorded rather than fixed. A
-consumer who needs rule 18 to hold through an include has three ordinary routes and no library support:
-normalize inside the including DAO's own custom method, map the column as `DateTimeOffset`, or read the
-department through `DepartmentDao`. It is pinned by an obligation beside N10's, scoped `Characterization`
-because the contract asks for the opposite of what the mechanism delivers.
+**The two halves are one policy: an include is outside the mechanisms the retrieving Data Access Object
+applies to its own reads.** Rule 18 states them as a pair and cites the soft-delete bypass as the same shape,
+so they are no longer a wanted half and an unwanted half — both are specified, and both are pinned by an
+obligation, N10's and G12's, tagged alike.
+
+**What differs is the cost to a caller, and only one half has one.** The filter bypass is what `User.cs`
+promises — the reference never dangles. The timestamp bypass costs a caller something, and rule 18 names it
+directly: an `Unspecified` `DateTime` handed to `.ToLocalTime()` is **taken for local time and shifted by the
+machine's offset**, so the failure is a **silently wrong value, not an exception** — invisible on a machine
+running in UTC and wrong everywhere else. **A caller reading a timestamp off an included department must
+apply `DateTime.SpecifyKind` explicitly** rather than trust the `Kind` it finds. Three routes avoid the
+question entirely, none of them library support: normalize inside the including DAO's own custom method, map
+the column as `DateTimeOffset`, or read the department through `DepartmentDao`.
+
+**The alternative that would have kept the broad reading was rejected twice, on the same grounds.** A global
+`DateTimeKind`-restoring value converter on the context is indiscriminate — it reaches every mapped `DateTime`
+column, not the three this contract governs — and its reach is accidental, taking effect only for consumers
+who derive from an optional base type. This document rejects it at
+[The Context Base](#the-context-base--baseefcontext) and again in
+[Timestamp Policy](#timestamp-policy); the owner declined it upstream. Do not re-propose it here.
 
 ### Split queries — A29
 
@@ -2687,12 +2782,26 @@ Declare it in the test model, as the collation obligations declare `Country`:
 ```csharp
 // Assignment — purpose-built for this rule and for the obligation that pins it.
 // Three properties, and each one is load-bearing.
+// Written for <Nullable>enable</Nullable> (S6): the navigation is declared nullable because
+// ApplyIncludes is opt-in and it IS null on any read that does not include it (OD-1, A18);
+// the string column is non-nullable and initialized, which is what a mapped scalar wants.
 public class Assignment : IBaseIdEntity<int>
 {
-	public int Id { get; set; }             // the identifier, and the only thing MatchRow locates by
-	public int CompanyId { get; set; }      // the foreign key, declared explicitly as a mapped scalar
-	public Company Company { get; set; }    // the navigation that scalar backs
-	public string Note { get; set; }        // a third column: writable, and part of no key
+	public int Id { get; set; }                  // the identifier, and the only thing MatchRow locates by
+	public int CompanyId { get; set; }           // the foreign key, declared explicitly as a mapped scalar
+	public Company? Company { get; set; }        // the navigation that scalar backs
+	public string Note { get; set; } = string.Empty;  // a third column: writable, and part of no key
+}
+
+// The instrument the obligation is written against, named here so it is not left to be guessed.
+// A plain keyed DAO — nothing about the rule needs a soft, get-all or paged family — plus the one
+// include route the obligation re-reads through to observe that the foreign key moved.
+public class AssignmentDao : BaseDao<Assignment, int>
+{
+	public AssignmentDao(DbContext context) : base(context) { }
+
+	protected override IQueryable<Assignment> ApplyIncludes(IQueryable<Assignment> query)
+		=> query.Include(a => a.Company);
 }
 ```
 
@@ -2764,8 +2873,8 @@ clause is withdrawn.** It described something this design does not produce.
 
 `Update` and `Delete` locate a row with a tracked fetch that applies **neither `ApplyReadFilter` nor
 `ApplyIncludes`** — stated on [`Update`](#updatetentity-item)'s `Mechanism` row, and by the *Who applies it*
-row in [Navigation Loading](#the-rule), which lists `Get`, `GetCore`, `GetAll` and `GetPaged` and nothing
-else. `item` is **never tracked**, so there is no relationship fix-up partner to populate anything either.
+row in [Navigation Loading](#the-rule--od-1-a18), which lists `Get`, `GetCore`, `GetAll` and `GetPaged` and
+nothing else. `item` is **never tracked**, so there is no relationship fix-up partner to populate anything either.
 **Every navigation on the fetched row is `null`.** There was no graph, and the obligation written against one
 could not have been authored.
 
@@ -2885,9 +2994,9 @@ cascade-dependent one included — it is written against root-only behavior, whi
 
 ## Snapshot and Tracking
 
-The `ProphetsWay.Example` 3.1 snapshot rule is binding: **reads return snapshots; writes read their argument
-rather than adopting it.** EF Core's default change tracking violates both halves, so satisfying the rule is
-an explicit design obligation, not a default.
+The `ProphetsWay.Example` **3.1.1** snapshot rule is binding: **reads return snapshots; writes read their
+argument rather than adopting it.** EF Core's default change tracking violates both halves, so satisfying the
+rule is an explicit design obligation, not a default.
 
 | Rule | How the design meets it |
 |---|---|
@@ -3223,9 +3332,12 @@ public class CompanyResourceDao : RootNonIdDao<CompanyResource>, ICompanyResourc
 
 For `Test Designer`. **The groups below are subject-area groups** — key predicate, hooks, navigation loading,
 CRUD, soft delete, and the rest. **They are not the `Scope` trait partition**, and Revisions 3 through 7 said
-they were: *"Grouped to match the `Scope` trait partition in `ProphetsWay.Example.Tests`."* They are not, only
-one of them names a scope, and about 125 of the obligations had no assignable scope at all. **Scope is stated
-per obligation instead**, because almost every group below mixes.
+they were: *"Grouped to match the `Scope` trait partition in `ProphetsWay.Example.Tests`."* They are not —
+**only one of them names a scope**, so every obligation outside that one group, which is the great majority of
+them, carried no scope at all. **Scope is stated per obligation instead**, because almost every group below
+mixes. Each tag was assigned individually against the traceability rule below; **none was assigned by
+default**, and the `Contract` tally further down is what that assignment produced, not a carry-over of the
+previously untagged.
 
 **Scope notation.** Every obligation carries exactly one leading tag:
 
@@ -3239,10 +3351,25 @@ per obligation instead**, because almost every group below mixes.
 rule or decision in this document states the behavior being asserted, the obligation is `[X]` and not `[C]`.
 A `Contract` assertion is an obligation placed on every future implementation of this design, and making one
 in the name of a specification that does not make it is the failure `ProphetsWay.Example`'s own traceability
-convention exists to prevent. Two obligations below are `[X]` precisely because the stated contract asks for
-the *opposite* of what this mechanism delivers — the global-filter include divergence, and the
-`NormalizeRetrievedTimestamp` bypass (G12). Marking either `[C]` would oblige every future implementer to
-reproduce a gap.
+convention exists to prevent. **One** obligation below is `[X]` precisely because the stated contract asks for
+the *opposite* of what this mechanism delivers — the global-filter include divergence. Marking it `[C]` would
+oblige every future implementer to reproduce a gap.
+
+**And the tie-breaker for a multi-clause obligation, because several below have more than one assertion: an
+obligation whose assertions do not all trace to a stated rule is either split, or tagged `[X]` whole. `[C]` is
+not assignable to a mixed obligation.** A `[C]` tag is read as a promise about *every* assertion under it, so
+one untraceable clause inside an otherwise traceable obligation quietly obliges every future implementation to
+reproduce something nothing states. Splitting is the better move where the clauses stand alone; where they do
+not — where the untraceable clause is the arrangement that makes the traceable one observable — rewrite it
+against a mechanism this document *does* state, and only tag `[X]` if that is impossible. **This is the rule
+that J1 was decided under**, and having it written down is what makes that decision checkable rather than a
+judgment call.
+
+> **Revision 8 amendment.** The `NormalizeRetrievedTimestamp` include bypass (G12) was the second such
+> obligation and is no longer one. `IDepartmentDao` rule 18's retrieval clause was **narrowed by owner
+> decision** to that interface's own reads, so the bypass is what the contract specifies rather than a
+> divergence from it, and the obligation is **`[C]`** — matching N10's, which pins the sibling
+> `ApplyReadFilter` bypass and which rule 18 now names as the same policy.
 
 **And the counts have to sum.** `ProphetsWay.Example` enforces that every test carries exactly one `Scope`
 trait and that the three counts **sum to the suite total** — that sum *is* the integrity check, and **there is
@@ -3251,14 +3378,22 @@ told. This document's own tally is therefore published, so a translated suite ca
 
 | Scope | Obligations |
 |---|---|
-| `Contract` | 124 |
-| `Characterization` | 11 |
+| `Contract` | 123 |
+| `Characterization` | 10 |
 | `Dispatcher` | 8 |
-| **Total** | **143** |
+| **Total** | **141** |
 
-A suite whose traits do not sum to 143 has dropped or doubled one. **These are this document's obligations,
+A suite whose traits do not sum to 141 has dropped or doubled one. **These are this document's obligations,
 not `ProphetsWay.Example`'s suite**, whose own partition stands separately at 164 tests — Contract 139,
 Characterization 5, Dispatcher 20 — over two legs, 328 executions. The two must not be added together.
+
+**141, not 143 — and the difference is exactly what this check exists to catch.** Revision 8 restated two
+SQL Server-only obligations in the [Provider fidelity](#provider-fidelity-sql-server-leg-only) group that were
+already stated, with the same leg scoping, in [CRUD](#crud) and [Transactions](#transactions). The tally
+counted both twice. The duplicates are gone, replaced by pointers to where each obligation actually lives, and
+the total is recounted item by item rather than adjusted: **123 + 10 + 8 = 141**. **The integrity check found a
+defect in the tally it was published to protect, which is the argument for publishing it.** Any earlier figure
+of 143, or of `Contract` 125, is superseded.
 
 Per [D4](purpose-and-scope.md#owner-decisions--2026-08-15), everything below runs on **both** certified legs
 — SQLite in-memory and a SQL Server container. Several of these **cannot fail on SQLite and can on SQL
@@ -3400,17 +3535,44 @@ pinned as firmly as the override, or a later change to the default goes unnotice
 	`UserDao.ApplyIncludes` including `User.Department` and that department soft-deleted, `Get`, `GetAll` and
 	`GetPaged` all return the user with `Department` **populated**. This is the stated behavior, not a defect;
 	pin it so nobody "fixes" it into a dangling reference.
-- [ ] **[X]** **…and it bypasses `NormalizeRetrievedTimestamp` with it** (G12). Same arrangement: soft-delete
-	nothing, read a `User` through a Data Access Object that includes `Department`, and require the **included**
-	department's `CreatedDate` to carry `DateTimeKind.Unspecified`, while the **same stored row** read through
-	`DepartmentDao.Get` carries `DateTimeKind.Utc`. The hook is declared on `BaseSoftDao` and
-	`RootSoftNonIdDao` and applied by those Data Access Objects' own reads (A13); `UserDao` is a **hard** DAO
-	and has none, so the including query hands back whatever the provider stored — and neither certified
-	provider stores `Kind`. **`Characterization`, deliberately, and this is the one place in the group where
-	the tag carries an argument**: `IDepartmentDao` rule 18 requires `Kind == Utc` on a retrieved instance, so
-	this pins a **divergence from the stated contract**, not conformance to it. Tagging it `[C]` would oblige
-	every future implementation to reproduce a gap. Pin it so the divergence is visible in a test run rather
-	than discovered in a consumer's logs — see
+- [ ] **[C]** **…and it bypasses `NormalizeRetrievedTimestamp` with it** (G12). Same include, no soft delete
+	needed. **The subject is a purpose-built pair, not `Department`** — declare them in the test model as the
+	collation obligations declare `Country`: a soft entity `Label : IBaseSoftIdEntity<int>`, a hard entity
+	`Article` carrying an `Article.Label` navigation, a `LabelDao : BaseSoftDao<Label, int>`, and an
+	`ArticleDao : BaseDao<Article, int>` whose `ApplyIncludes` includes `Label`. **`Department` cannot serve**:
+	`IDepartmentDao` rule 18 pins *both* halves of its timestamp policy, so there is no legitimate way to
+	perturb `DepartmentDao`'s hooks, and N9 already moved a local-time sample off `Department` for the same
+	reason.
+	**Arrange a distinguishable sentinel on `LabelDao`**: override **both** timestamp hooks together, per the
+	Timestamp Pair Rule (A13), to a local-time policy — `GetCurrentTimestamp` returning `DateTime.Now` and
+	`NormalizeRetrievedTimestamp` returning `DateTime.SpecifyKind(value, DateTimeKind.Local)`. That is the
+	sanctioned shape the custom-timezone obligation in [Soft delete](#soft-delete) already contemplates.
+	Then read an `Article` through `ArticleDao` and require the **included** label's `CreatedDate` to carry a
+	`Kind` that is **not** `DateTimeKind.Local` — asserted directly on the included instance, not merely noted —
+	while the **same stored row** read through `LabelDao.Get` **does** carry `DateTimeKind.Local`. Both halves
+	are required: the divergence is the assertion, and one reading without the other proves nothing.
+	**What is being asserted is that the hook did not run**, which is exactly what rule 18's negative clause and
+	A13 state. **Do not assert `DateTimeKind.Unspecified` on the included instance.** Rule 18 says only that it
+	carries *whatever* `Kind` the provider supplied, *"typically `Unspecified`"* — a disclaimer of coverage, not
+	a requirement — and S13 makes this design relational-provider-neutral, so an assertion resting on a
+	certified provider's storage behavior would fail a conforming implementation elsewhere. **A `[C]` obligation
+	may not depend on a certified-provider fact** (see the mixed-traceability rule in
+	[Scope notation](#test-obligations)). `DateTimeKind.Local` is the one `Kind` no relational provider
+	materializes, so the sentinel is a **library** mechanism — a value this library's own hook produced — and
+	the assertion is provider-independent.
+	The hook is declared on `BaseSoftDao` and `RootSoftNonIdDao` and applied by those Data Access Objects' own
+	reads (A13); `ArticleDao` is a **hard** DAO and has none, so the including query applies none of the
+	included type's own hooks. **`Contract`, and the tag carries an argument, so read it before changing it**:
+	`IDepartmentDao` rule 18's retrieval clause binds `Get`, `GetAll` and `GetPaged` **on that interface** and
+	expressly does not bind a soft entity reached as a navigation property through another Data Access Object;
+	this library generalizes that boundary to every soft family, which is what
+	[Timestamp Policy](#timestamp-policy)'s *Where it is applied* row states.
+	**This pins stated behavior, exactly as N10's obligation immediately above does** — rule 18 names the two as
+	one policy, and as rewritten the two pin the *same* thing: **the including Data Access Object applies none
+	of the included type's own hooks.** So the two are tagged alike. It was `[X]` in an earlier draft of
+	Revision 8, when the broad reading of rule 18 made this a divergence; **the owner's narrowing removed the
+	divergence, and the tag follows.** Pin it so the boundary is visible in a test run rather than discovered in
+	a consumer's logs, where it surfaces as a silently shifted local time and not as an exception — see
 	[Including a soft-delete entity bypasses its `ApplyReadFilter`](#including-a-soft-delete-entity-bypasses-its-applyreadfilter--and-that-is-correct).
 - [ ] **[C]** **The library emits neither split nor forced-single queries** (A29): a DAO that overrides `ApplyIncludes`
 	without calling either produces **one** command; the same DAO with `AsSplitQuery()` in its override produces
@@ -3464,7 +3626,10 @@ The group that pins the defense. Every obligation runs on **both** legs, and eac
 - [ ] **[C]** `Delete` on an absent row returns `0`; a second `Delete` returns `0`; neither throws.
 - [ ] **[C]** `Insert` writes the generated key back onto the argument — the **IDENTIFIER RULE**, elected in
 	`ProphetsWay.Example` rather than promised by `ProphetsWay.BaseDataAccess`.
-- [ ] **[C]** `Insert` with a caller-assigned key on a store-generated column: the generated key wins.
+- [ ] **[C]** `Insert` with a caller-assigned key on a store-generated column: **the generated key wins**. `Contract`
+	against *this* library's narrowing of the IDENTIFIER RULE's deliberately-unspecified case, stated on
+	[`Insert`](#inserttentity-item)'s `Side effects` row and recorded as
+	[OD-11](#owner-decisions-taken-during-revision-8) — not against `IExampleDataAccess`, which leaves it open.
 - [ ] **[C]** `Get` on a missing row returns `null`.
 - [ ] **[C]** A duplicate keyed match and an under-specified keyless `MatchRow` each make `SingleOrDefault` throw
 	`InvalidOperationException`; neither path silently chooses a row.
@@ -3528,8 +3693,11 @@ company, job and department first, then hang them off the user.
 	**moved** — re-read through a Data Access Object that includes `Company` and require `Company.Id` to be the
 	second. That is the positive half of A25: where the foreign key is a mapped scalar, `SetValues` repoints the
 	relationship like any other column. **`Assignment` is purpose-built and is not present in
-	`ProphetsWay.Example`** — declare it in the test model, as the collation obligations declare `Country`:
-	`int Id`, `int CompanyId`, `Company Company`, `string Note`. **`CompanyResource` will not serve**, and the
+	`ProphetsWay.Example`** — declare it in the test model, as the collation obligations declare `Country`,
+	**together with the `AssignmentDao : BaseDao<Assignment, int>` that carries the `ApplyIncludes` override the
+	re-read goes through**. Both are written out in
+	[`Update` writes scalars](#update-writes-scalars-and-cannot-repoint-a-relationship--a25); take them from
+	there rather than re-deriving them. **`CompanyResource` will not serve**, and the
 	reason is worth carrying into the test file so nobody substitutes it: both of its mapped scalars sit in its
 	`MatchRow` predicate, so an `Update` changing either would locate nothing and return `0`, and it declares no
 	navigation property to repoint. See
@@ -3745,10 +3913,18 @@ company, job and department first, then hang them off the user.
 - [ ] **[C]** Every key-predicate case translates on SQL Server, not only SQLite.
 - [ ] **[X]** `DateTime` precision differences between the two do not make a timestamp assertion pass on one and fail
       on the other.
-- [ ] **[C]** **`Update` and `Delete` against a row removed by a second connection mid-operation throw
-	`DbUpdateConcurrencyException`** (R4-S7). Not authorable on SQLite — see below.
-- [ ] **[C]** **Two Data Access Layer instances over the same database do not share a transaction.** Not authorable
-	on SQLite — see below.
+
+**Two further SQL Server-only obligations live in the groups whose subject they belong to, and are *not*
+restated here as checkboxes.** They were duplicated into this group through Revision 8, which doubled two
+items in a tally the preamble makes the integrity check:
+
+- **`Update` and `Delete` against a row removed by a second connection throw `DbUpdateConcurrencyException`**
+  (R4-S7) — the pair in [CRUD](#crud), each already marked *SQL Server leg only*.
+- **Two Data Access Layer instances over the same database do not share a transaction** — in
+  [Transactions](#transactions), already marked *SQL Server leg only*.
+
+Both are unauthorable on SQLite for the reasons in [SQLite leg limitations](#sqlite-leg-limitations). This
+group's heading already scopes the leg; the obligations themselves are counted once, where they are stated.
 
 ### String-key collation — a per-provider characterization, with a stated expectation on each leg
 
@@ -3922,6 +4098,12 @@ replacement of A25's counter-example during Revision 8
 [does `Update` cascade into the navigation graph?](#the-update-cascade-question--resolved-by-od-6) — was open
 when Revision 5 was written and is now closed in favor of the design; the fix it implies lands in
 `ProphetsWay.Example`, and **nothing in that repository was edited or proposed by this document.**
+
+**One term is recorded and awaiting the owner rather than answered by him.**
+[**OD-11**](#owner-decisions-taken-during-revision-8) — this library narrowing the IDENTIFIER RULE's
+deliberately-unspecified pre-assigned-key case — was applied on the `Contract Reviewer`'s recommendation
+(J3), not put to the owner first, and it is **open to reversal by him**. It is implemented above and it is
+not a question waiting on an answer; it is a decision waiting on a ratification.
 
 **That is not the same as this document being finished.** It is Revision 8 and its status is *under review*.
 Revision 7 passed `Contract Reviewer` **with findings**, and Revision 8 closes them — but **no pass has run

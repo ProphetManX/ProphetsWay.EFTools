@@ -11,7 +11,8 @@ weighed, so your proposal can start from the open questions rather than from the
 **Numbering is per-repository and starts at 1.** It does not continue, mirror, or correspond to the indexes
 in [ProphetsWay.BaseDataAccess/docs/feature-requests.md](../../ProphetsWay.BaseDataAccess/docs/feature-requests.md)
 or [ProphetsWay.Example/docs/feature-requests.md](../../ProphetsWay.Example/docs/feature-requests.md)
-(**1–13** as of 2026-08-16; this preamble previously said 1–9 and was stale). Those are separate indexes.
+(**1–14** as of 2026-08-16; this preamble previously said 1–9, then 1–13, and both are stale). Those are
+separate indexes.
 This file follows their *format*; where an entry genuinely depends on one of theirs, it is cited by
 repository and number.
 
@@ -22,18 +23,24 @@ does not duplicate them, because duplicated rules drift.
 
 The scope bar every entry below is judged against is in
 [purpose-and-scope.md](purpose-and-scope.md#settled-one-sentence-purpose), and the owner decisions that set
-the statuses below are recorded as **D1–D9** in
-[purpose-and-scope.md § Owner Decisions](purpose-and-scope.md#owner-decisions--2026-08-15).
+the statuses below are recorded as **D1–D10** in
+[purpose-and-scope.md § Owner Decisions](purpose-and-scope.md#owner-decisions--2026-08-15). **D1–D9 were
+taken 2026-08-15 and D10 on 2026-08-16**; the section heading carries the earlier date only.
 
 **Stage 1 is closed as of 2026-08-15.** The two questions that needed the owner — **Q1** (the TFM
 exception) and **Q4** (whether the certification scope is stated publicly) — were answered as **D7** and
 **D8**. **Q2** and **Q3** remain open and are answerable by whoever implements v3.0.0.
 
-**One owner question has since reopened — 2026-08-16.** The sentence "no status in this file is waiting on
-an owner decision" stood until the `ProphetsWay.Example` submodule pointer advanced. It no longer does:
+**One owner question has since reopened, and has now been answered — 2026-08-16.** The sentence "no status in
+this file is waiting on an owner decision" stopped being true when the `ProphetsWay.Example` submodule
+pointer advanced:
 [entry 6](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits) was rescoped on that date
-and now carries a genuine fork — a local suite here, or a seam upstream — that this agent may not choose.
-**No status is blocked on it**; the entry stays `Scheduled` either way. Its *deliverable* is what waits.
+and carried a genuine fork — a local suite here, or a seam upstream — that this agent could not choose.
+**The owner chose the seam (shape B) later the same day**, and the question is closed; see
+[the resolution](#the-resolution--2026-08-16-shape-b-the-direction-only). **It is again true that no status
+here waits on the owner.** What entry 6 now waits on is *another repository* —
+[ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation)
+— which is a dependency, not an open question.
 
 ## Index
 
@@ -44,7 +51,7 @@ and now carries a genuine fork — a local suite here, or a seam upstream — th
 | 3 | [Implement the 3.x disposal contract in `BaseEFDataAccess`](#3--implement-the-3x-disposal-contract-in-baseefdataaccess) | **Scheduled** — v3.0.0; carries open question **Q2** |
 | 4 | [Make 3.x Entity Framework Core-only — retire EF6 and .NET Framework](#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework) | **Scheduled** — v3.0.0; **approved by D1** |
 | 5 | [Retarget to the house TFM standard](#5--retarget-to-the-house-tfm-standard) | **Scheduled** — v3.0.0; unblocked by 4; destination settled by **D7** as **`net10.0` only** |
-| 6 | [Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory and `Scope` traits](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits) | **Scheduled** — v3.0.0; forced by 1; **rescoped 2026-08-16** — there is no adapter to rebuild, and the seam it needs is upstream |
+| 6 | [Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory and `Scope` traits](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits) | **Scheduled** — v3.0.0; forced by 1; rescoped 2026-08-16 and **resolved to shape B the same day** — the six adapters are **deleted, not rebuilt**, and the entry now depends on **ProphetsWay.Example FR 13** |
 | 7 | [Stop forcing a database provider on every consumer](#7--stop-forcing-a-database-provider-on-every-consumer) | **Scheduled** — v3.0.0; **approved by D2** |
 | 8 | [Remove `FluentAssertions` from `ProphetsWay.Example.DataAccess.EF`](#8--remove-fluentassertions-from-prophetswayexampledataaccessef) | **Scheduled** — v3.0.0; trivial, and **eligible to land ahead of the rest** — 2026-08-16 |
 | 9 | [Delete the stray `[submodule "Submod"]` block from `.gitmodules`](#9--delete-the-stray-submodule-submod-block-from-gitmodules) | **Scheduled** — v3.0.0; trivial |
@@ -70,7 +77,7 @@ independently breaking. `app-variables.yml` currently reads `Major: '2' / Minor:
 | 3 | Scheduled | **Yes — forced by 2** | The code does not compile against 3.1.0 without it |
 | 4 | Scheduled | **Yes — approved (D1)** | Only a major may drop targets, and this is the only major on the horizon |
 | 5 | Scheduled | **Yes — strictly after 4** | The `#if` conditions go with 4; the destination is **`net10.0` alone**, a ratified exception to the house standard — see **D7** |
-| 6 | Scheduled | **Yes — forced by 1** | The upstream base class it derives from no longer exists in that shape. **Rescoped 2026-08-16:** the deliverable is a suite that constructs the Entity Framework Data Access Layer itself, not a rebuilt set of adapters |
+| 6 | Scheduled | **Yes — forced by 1** | The upstream base class it derives from no longer exists in that shape. **Rescoped 2026-08-16:** the deliverable is a suite that constructs the Entity Framework Data Access Layer itself, not a rebuilt set of adapters. **Resolved to shape B the same day** — so the deletion of the six adapters is in this release, while the *completion* of the entry additionally needs [ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation), whose design is deferred until Lap 1 |
 | 7 | Scheduled | **Yes — approved (D2), and only in a major** | Removing a transitive package reference is breaking. Postponing costs a second major |
 | 8 | Scheduled | **Yes — and it need not wait for the rest** | Trivial, isolated to a non-packaged project, no reason to wait. **It is a licence item rather than hygiene**, and the reference is statically verified unused, so removing it cannot break a build that the other entries have not already broken |
 | 9 | Scheduled | **Yes** | Trivial, no build impact |
@@ -98,8 +105,8 @@ highest-consequence open item in that repository. **The work is entirely in this
 **Partially landed — 2026-08-16.** Step 1 of six is done and the entry stays `Scheduled` because the other
 five are not. It is deliberately **not** `Done`: the pointer move on its own delivers none of this entry's
 value and costs the repository its build. Re-verified this date by opening
-`.git/modules/ProphetsWay.Example/HEAD`, all six files in `ProphetsWay.EFTools.Tests/`,
-`ProphetsWay.EFTools.Tests.csproj`, `ProphetsWay.Example.DataAccess.EF.csproj` and
+`.git/modules/ProphetsWay.Example/HEAD`, `ProphetsWay.EFTools.Tests/` (which now holds only `Constants.cs`
+and its `.csproj`), `ProphetsWay.EFTools.Tests.csproj`, `ProphetsWay.Example.DataAccess.EF.csproj` and
 `ProphetsWay.Example/ProphetsWay.Example.DataAccess/IExampleDataAccess.cs`.
 
 ### The situation, verified rather than inherited
@@ -128,28 +135,36 @@ the pointer as it stood before 2026-08-16**; every "absent" in the left column i
 | `BaseUnitTests<T>` | `protected abstract T GetIExampleDataAccess { get; }` | `TestDataAccessFactory.CreateAs<T>()`, and the class is `IDisposable` |
 | `docs/` | **absent** | three documents |
 
-That last row is the one with teeth. `ProphetsWay.EFTools.Tests` supplies the implementation by
-**overriding an abstract property** — verified 2026-08-16 by opening all six adapters
-([EFBaseDataAccessTests.cs](../ProphetsWay.EFTools.Tests/EFBaseDataAccessTests.cs),
-`EFCompanyDaoTests`, `EFJobDaoTests`, `EFResourceDaoTests`, `EFTransactionDaoTests`, `EFUserDaoTests`) and
-[Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs); each still declares
-`protected override … GetIExampleDataAccess => Constants.GetExampleDataAccess;`. Upstream, that hook was
-replaced by a static factory. **Advancing the pointer broke this repository's test project structurally,
-not just semantically** — every test class here has lost the member it overrides. That is entry 6, and it
-is not optional.
+That last row is the one with teeth. `ProphetsWay.EFTools.Tests` used to supply the implementation by
+**overriding an abstract property**: six adapter classes — `EFBaseDataAccessTests`, `EFCompanyDaoTests`,
+`EFJobDaoTests`, `EFResourceDaoTests`, `EFTransactionDaoTests` and `EFUserDaoTests` — each declaring
+`protected override … GetIExampleDataAccess => Constants.GetExampleDataAccess;` against
+[Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs) and containing no test logic. Upstream, that hook
+was replaced by a static factory. **Advancing the pointer broke this repository's test project
+structurally, not just semantically** — every test class here lost the member it overrode. That is entry 6,
+and it is not optional. **All six files were deleted on 2026-08-16**, so they are named here rather than
+linked; the deletion is recorded in
+[entry 6](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits).
 
-### The build break the advance created — verified 2026-08-16
+### The build break the advance created — two of three now closed
 
 Recorded here rather than left to be rediscovered, because a future agent meeting a red build needs to know
-it is this entry's mid-flight state and not a regression. Three independent breaks:
+it is this entry's mid-flight state and not a regression. Three independent breaks were found on
+2026-08-16; **one remains at the end of that day.**
 
-1. **TFM mismatch.** [ProphetsWay.EFTools.Tests.csproj](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj)
-   targets `net472;net48;net80;net90` and references `ProphetsWay.Example.Tests`, which the 3.1.0 pointer
-   retargeted to `net48;net10.0`. Three of the four legs have no compatible asset. Resolved by
+1. ~~**TFM mismatch.**~~ **Closed 2026-08-16.**
+   [ProphetsWay.EFTools.Tests.csproj](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj)
+   targeted `net472;net48;net80;net90` against a `ProphetsWay.Example.Tests` the 3.1.0 pointer had
+   retargeted to `net48;net10.0`, leaving three of four legs with no compatible asset. All three EFTools
+   projects are now `net10.0` alone, which binds. Delivered by
    [entry 5](#5--retarget-to-the-house-tfm-standard).
-2. **The missing hook**, above. Resolved by [entry 6](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits).
-3. **`ExampleDataAccess` no longer satisfies `IExampleDataAccess`.** At 3.1.0 that interface aggregates
-   `IDepartmentDao` and `ICompanyResourceDao` and inherits `IDisposable` — verified by opening
+2. ~~**The missing hook**, above.~~ **Closed 2026-08-16** by deleting the six adapters —
+   [entry 6](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits). The project now
+   contains no tests, which is the intended temporary state under **D10**, not a loss: the 35 upstream
+   facts are parked awaiting the seam.
+3. **`ExampleDataAccess` no longer satisfies `IExampleDataAccess`. — STILL OPEN, and now the only break.**
+   At 3.1.0 that interface aggregates `IDepartmentDao` and `ICompanyResourceDao` and inherits `IDisposable`
+   — verified by opening
    `ProphetsWay.Example/ProphetsWay.Example.DataAccess/IExampleDataAccess.cs`, whose declaration reads
    `: IBaseDataAccess, ICompanyDao, IJobDao, IUserDao, ITransactionDao, IResourceDao, IDepartmentDao, ICompanyResourceDao`.
    `ProphetsWay.Example.DataAccess.EF/ExampleDataAccess.cs` supplies none of the three. Resolved by steps 2
@@ -213,9 +228,12 @@ approved work with its own scope rather than a question downstream of
 [D6](purpose-and-scope.md#owner-decisions--2026-08-15). Previously `Proposed`. A one-line edit with the
 largest consequence in the file.
 
+**Landed — 2026-08-16. The status line above is untouched; only the facts below are.**
 [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) and
 [ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj)
-both reference `ProphetsWay.BaseDataAccess` **2.5.0**. The published parent is **3.1.0**.
+**now both reference `ProphetsWay.BaseDataAccess` 3.1.0** — verified by opening both files. The sentence
+this paragraph replaced said they were on **2.5.0**, which was true when written. Whether the entry is
+therefore `Done` is `Purpose Refiner`'s call, not this agent's.
 
 **This is not a version-hygiene item.** A library whose stated purpose is "implements the
 `ProphetsWay.BaseDataAccess` contracts" and which references a superseded major is not implementing the
@@ -227,8 +245,9 @@ What 3.0.0 changed that lands directly on this package:
   ([IBaseDataAccess.cs](../../ProphetsWay.BaseDataAccess/ProphetsWay.BaseDataAccess/IBaseDataAccess.cs) line 164)
   and `BaseDataAccess` declares `public abstract void Dispose();`
   ([BaseDataAccess.cs](../../ProphetsWay.BaseDataAccess/ProphetsWay.BaseDataAccess/BaseDataAccess.cs) line 112).
-  [BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs) overrides the three transaction members
-  and nothing else, so **it will not compile.** That is [entry 3](#3--implement-the-3x-disposal-contract-in-baseefdataaccess).
+  [BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs) overrode the three transaction members
+  and nothing else, so it would not have compiled. **`Dispose` has since been implemented there — verified
+  2026-08-16 by opening the file** — which is [entry 3](#3--implement-the-3x-disposal-contract-in-baseefdataaccess).
 - Exceptions from derived DAL methods now propagate **unwrapped** — no `TargetInvocationException`. Any
   consumer catching the wrapper breaks.
 - The identifier property must be **public**; an explicit interface implementation now throws
@@ -299,10 +318,21 @@ behaviour is the expensive order.
 ### Appended 2026-08-15 — this is a shipped defect, not only a forward-compatibility gap
 
 The framing above reads as *"3.1.0 will require a `Dispose` we do not have yet."* That understates it.
-[BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs) contains **no `Dispose`, no `IDisposable`,
-and no finalizer** — its only members are `Context`, two constructors, and three transaction forwarders — and
-both constructors build the context with `Activator.CreateInstance`. **Nothing ever disposes it.** That is a
-live resource leak in the *published* 2.2.0 package, independent of any 3.x contract.
+At the time this was written, [BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs) contained
+**no `Dispose`, no `IDisposable`, and no finalizer** — its only members were `Context`, two constructors,
+and three transaction forwarders — and both constructors built the context with `Activator.CreateInstance`.
+**Nothing ever disposed it.** That is a live resource leak in the **published 2.2.0 package**, independent
+of any 3.x contract, and that half of this note remains true for as long as 2.2.0 is the published version.
+
+> **Factual correction — 2026-08-16.** The description of the *file* above is now history. Opening
+> `BaseEFDataAccess.cs` on this date shows `public override void Dispose()` present: it sets a `_disposed`
+> flag and returns early when already set, rolls back `Context.Database.CurrentTransaction` inside a
+> `try`/`catch` that swallows the failure, then disposes the context in a second guarded `try`/`catch`, with
+> `<remarks>` stating that the context is disposed because both constructors construct it. **The published
+> package is unchanged; the working tree is not.** `_disposed` is set but not yet consulted by the three
+> transaction members, so the second open question below — `ObjectDisposedException` guarding — is still
+> open on the evidence of the file. **Status untouched:** whether this makes the entry `Done` is
+> `Purpose Refiner`'s call.
 
 Two consequences:
 
@@ -378,10 +408,14 @@ installable 2.2.x package. But the owner should weigh it rather than be told it 
 - The README's `DbModelBuilder` example goes. **`README Author`'s file, not this agent's.**
 - `CHANGELOG.md` carries a breaking-change entry pointing EF6 consumers at 2.2.x. **`Changelog Author`'s
   file.**
-- The `EntityFramework` 6.5.1 `PackageReference` and the `$(TargetFramework.StartsWith('net4'))` item group
-  go. **`Modernizer`'s file.**
+- ~~The `EntityFramework` 6.5.1 `PackageReference` and the `$(TargetFramework.StartsWith('net4'))` item group
+  go.~~ **Done 2026-08-16 by `Modernizer`** — verified by opening all three `.csproj` files, none of which
+  now contains an `EntityFramework` reference or a `net4`-conditional `ItemGroup`. **EF6 is unreferenced by
+  this repository.**
 - Roughly 60 `#if NET461 || NET471 || NET48` / `#if NET8_0_OR_GREATER` blocks across 26 files collapse to
   unconditional EF Core code, which is what unblocks [entry 5](#5--retarget-to-the-house-tfm-standard).
+  **Not done** — the blocks are still in the C# sources, where they are now dead under a `net10.0`-only
+  build. `Implementer`'s work.
 
 ### The consequence the approval created — `netstandard2.0` is unreachable, and that is now ratified
 
@@ -389,8 +423,11 @@ Not foreseen when this entry was written, and it is a **conflict with a family-w
 recorded here rather than left to be rediscovered during the retarget. **It has since been settled** by
 owner decision [D7](purpose-and-scope.md#owner-decisions--2026-08-15), which closed **Q1**.
 
-[ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) pins
-`Microsoft.EntityFrameworkCore` **9.0.4**. EF Core has shipped no `netstandard2.0` asset since 3.1 — 5.0
+[ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) pins a single
+`Microsoft.EntityFrameworkCore` version across the package. **The version is deliberately not quoted here** —
+`Modernizer` was bumping it on 2026-08-16 while this correction pass ran, and a number written from a
+mid-flight file is a claim nobody can stand behind. Read it from the csproj. What matters to this entry is
+unaffected by the number: EF Core has shipped no `netstandard2.0` asset since 3.1 — 5.0
 onward are runtime-targeted, and **EF Core 10 exposes only `net10.0`**. So an EF Core-only
 `ProphetsWay.EFTools` **cannot carry the house standard's permanent reach floor**; a `netstandard2.0`
 target would be one that cannot restore its own primary dependency.
@@ -418,15 +455,18 @@ added without breaking both branches — and, per the paragraph above, it is now
 last open part of this entry; it is **settled by [D7](purpose-and-scope.md#owner-decisions--2026-08-15)**,
 which closed **Q1**.
 
-Current, from the two csproj files:
+**The retarget landed on 2026-08-16.** The status line above is untouched — triage is `Purpose Refiner`'s —
+but the table below now records history in its left column. All three EFTools-owned projects read
+`<TargetFrameworks>net10.0</TargetFrameworks>`, verified by opening each `.csproj`.
 
-| Project | TFMs today | House standard | **Approved destination (D7)** |
-|---|---|---|---|
-| `ProphetsWay.EFTools` | `net461;net471;net48;net80;net90` | `netstandard2.0;net10.0` | **`net10.0`** |
-| `ProphetsWay.EFTools.Tests` | `net472;net48;net80;net90` | `net48;net10.0` | **`net10.0`** — the `net48` leg has nothing to bind |
-| `ProphetsWay.Example.DataAccess.EF` | `net471;net48;net80;net90` | `netstandard2.0;net10.0` | **`net10.0`** |
+| Project | TFMs before 2026-08-16 | House standard | **Approved destination (D7)** | On disk now |
+|---|---|---|---|---|
+| `ProphetsWay.EFTools` | `net461;net471;net48;net80;net90` | `netstandard2.0;net10.0` | **`net10.0`** | **`net10.0`** |
+| `ProphetsWay.EFTools.Tests` | `net472;net48;net80;net90` | `net48;net10.0` | **`net10.0`** — the `net48` leg has nothing to bind | **`net10.0`** |
+| `ProphetsWay.Example.DataAccess.EF` | `net471;net48;net80;net90` | `netstandard2.0;net10.0` | **`net10.0`** | **`net10.0`** |
 
-Four separate problems, worth separating because they have different fixes:
+Four separate problems, worth separating because they have different fixes — **all four are about the
+left-hand column, and the retarget addressed them together**:
 
 1. **`net461` and `net471` are end of life**, and `net472` appears only in the test project.
 2. **`net80`/`net90` are non-canonical monikers** — the dotted form `net10.0` is the convention.
@@ -443,8 +483,9 @@ class bodies**. [Entry 4](#4--make-3x-entity-framework-core-only--retire-ef6-and
 deletes roughly 60 conditional blocks rather than auditing them.
 
 **The destination is not the house standard, and that is now a decision rather than a question.**
-`Microsoft.EntityFrameworkCore` 9.0.4 ships no `netstandard2.0` asset — EF Core has been runtime-targeted
-since 5.0, and **EF Core 10 exposes only `net10.0`** — so an EF Core-only library cannot carry the family's
+No `Microsoft.EntityFrameworkCore` version this package could reference ships a `netstandard2.0` asset — EF
+Core has been runtime-targeted since 5.0, and **EF Core 10 exposes only `net10.0`** — so an EF Core-only
+library cannot carry the family's
 reach floor at all. **[D7](purpose-and-scope.md#owner-decisions--2026-08-15) approves `net10.0` alone**, for
 the library, the test project and `ProphetsWay.Example.DataAccess.EF` alike, and keeps existing
 `net4x`/`net8.0`/`net9.0` consumers on the published 2.2.x line.
@@ -474,18 +515,22 @@ and verify .NET Framework behaviour; here there will be no such asset to bind.
 
 **Status:** **Scheduled for v3.0.0** — 2026-08-15. Forced by
 [entry 1](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts), not chosen.
-**Rescoped 2026-08-16 — see [The rescope](#the-rescope--2026-08-16) below.** The status does not change;
-the deliverable does.
+**Rescoped 2026-08-16 — see [The rescope](#the-rescope--2026-08-16) below — and the fork that rescope opened
+was resolved the same day; see [The resolution](#the-resolution--2026-08-16-shape-b-the-direction-only).**
+The status does not change; the deliverable does. **The status was re-examined against the resolution and
+deliberately left at `Scheduled`:** the deletion of the six adapters is real work in this release, and the
+entry was already `Scheduled` before the fork existed. Choosing between two shapes never blocked the status,
+only the estimate.
 
-`ProphetsWay.EFTools.Tests` derives from the upstream test classes and supplies the implementation by
-overriding `protected abstract T GetIExampleDataAccess { get; }` — six files, all following
-[EFBaseDataAccessTests.cs](../ProphetsWay.EFTools.Tests/EFBaseDataAccessTests.cs). Upstream, that hook no
-longer exists: `BaseUnitTests<T>` now calls `TestDataAccessFactory.CreateAs<T>()` and implements
-`IDisposable`.
+`ProphetsWay.EFTools.Tests` derived from the upstream test classes and supplied the implementation by
+overriding `protected abstract T GetIExampleDataAccess { get; }` — six files, all following the same four-
+to five-line shape. Upstream, that hook no longer exists: `BaseUnitTests<T>` now calls
+`TestDataAccessFactory.CreateAs<T>()` and implements `IDisposable`.
 
-**Advancing the pointer therefore breaks every test class in this project at compile time.** The rebuild
+**Advancing the pointer therefore broke every test class in this project at compile time.** The rebuild
 is not cleanup; it is the cost of entry 1. **As of 2026-08-16 that is past tense** — the pointer has
-advanced and the project no longer compiles.
+advanced, and **the six adapters have since been deleted**; see
+[What has landed](#what-has-landed--2026-08-16) below.
 
 ### The rescope — 2026-08-16
 
@@ -517,17 +562,19 @@ it takes no parameter. So:
   not available, because the subject is chosen by a `static` method that neither accepts an argument nor
   consults one.
 
-**What the deliverable becomes.** One of two shapes, and the choice is the open question below:
+**What the deliverable becomes.** One of two shapes — **and the choice has been made; the table is kept
+because the rejected half is the reasoning:**
 
 | Shape | What it means here |
 |---|---|
-| **A — a local suite** | This repository writes its own `Scope`-traited tests against `IExampleDataAccess`, constructing `ProphetsWay.Example.DataAccess.EF.ExampleDataAccess` itself. No dependency on `ProphetsWay.Example.Tests` at all; the `ProjectReference` to it goes. Costs a permanent second copy of the assertions, which is exactly what the upstream suite exists to avoid |
-| **B — an upstream seam** | `ProphetsWay.Example` grows a way for a consuming repository to supply the implementation, and this repository provides it. Preserves the "same tests, different implementation" property that is the entire argument. **Requires a change in the other repository**, which is why it is filed there as [ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md) |
+| ~~**A — a local suite**~~ | ~~This repository writes its own `Scope`-traited tests against `IExampleDataAccess`, constructing `ProphetsWay.Example.DataAccess.EF.ExampleDataAccess` itself. No dependency on `ProphetsWay.Example.Tests` at all; the `ProjectReference` to it goes.~~ **Declined by the owner, 2026-08-16.** It costs a permanent second copy of the assertions, which is exactly what the upstream suite exists to avoid |
+| **B — an upstream seam** | **Chosen, 2026-08-16.** `ProphetsWay.Example` grows a way for a consuming repository to supply the implementation, and this repository provides it. Preserves the "same tests, different implementation" property that is the entire argument. **Requires a change in the other repository**, which is why it is filed there as [ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation) |
 
-**Shape B is the one that keeps the paradigm claim true**, and A is the one that can be done unilaterally.
+**Shape B is the one that keeps the paradigm claim true**, and A is the one that could be done unilaterally.
 A is also the one that quietly destroys the demonstration: two copies of the suite that must be kept in
 step is the duplication problem the submodule arrangement exists to prevent, and the moment they diverge
-the sentence "the tests do not change to accommodate it" stops being checkable.
+the sentence "the tests do not change to accommodate it" stops being checkable. **That is the reasoning the
+owner accepted.**
 
 **Note the interaction with [ProphetsWay.Example FR 8](../../ProphetsWay.Example/docs/feature-requests.md),
 which is `Rejected`.** That entry declines reading the implementation choice from an environment variable
@@ -535,8 +582,65 @@ or `.runsettings`, on the grounds that one obvious line beats a lookup. **Shape 
 it does not ask for configuration-driven selection, and the single obvious line can stay exactly where it
 is as the default. It asks only that the line be *reachable* from a repository that cannot edit it. Do not
 let FR 8's rejection be read as having already declined this; it was answering a different question.
+**Choosing shape B does not reopen FR 8, and this distinction must survive any future summary of either.**
 
-**Open question for the owner:** A or B? Nothing else in entry 6 can be estimated until it is answered.
+### The resolution — 2026-08-16: shape B, the direction only
+
+**~~Open question for the owner: A or B?~~ Answered: B.** The open half of the rescope is closed, and what
+follows is the whole of what the answer settles.
+
+- **Shape A is foreclosed.** A duplicate local suite in this repository is declined, on the grounds stated
+  above: it ends the demonstration `ProphetsWay.Example` exists to provide.
+- **The six adapter classes were to be *deleted*, not rebuilt — and they have been.**
+  `EFBaseDataAccessTests`, `EFCompanyDaoTests`, `EFJobDaoTests`, `EFResourceDaoTests`,
+  `EFTransactionDaoTests` and `EFUserDaoTests` contained an override of a member that no longer exists
+  upstream and nothing else. There was no repair; the concept is gone. Anything worth keeping is
+  [Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs)'s connection handling, and that is provider
+  wiring rather than a test hook. **Deleted 2026-08-16** — see
+  [What has landed](#what-has-landed--2026-08-16).
+- **The direction is committed; the seam's design is deliberately deferred.** Nobody has yet attempted to
+  satisfy the 3.1.0 contracts in Entity Framework, so **the seam's requirements are unknown.** The decision
+  forecloses shape A and **nothing else**. The seam is to be designed once **Lap 1** has shown what it must
+  carry.
+- **Do not read a committed direction as an approved design, and do not read the absence of a seam design as
+  unfinished work.** There is no design owed by anyone at this date. The trigger is Lap 1.
+
+**A mechanism was proposed for the seam and it cannot compile.** It is recorded in full — with the reason and
+with the viable shape that was sketched against it as a *sketch only* — in
+[ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation),
+because every file it concerns lives there. The short form, so nobody re-derives it from this side: making
+`TestDataAccessFactory.Create()` `protected` and overriding it is impossible — the type is a `public static
+class`, a static class cannot declare a `protected` member, and a static method is never virtual.
+
+### What has landed — 2026-08-16
+
+**The deletion half of this entry is done. The status line is untouched** — only `Purpose Refiner` triages,
+and the entry cannot be `Done` while its second deliverable waits on another repository.
+
+Verified by listing `ProphetsWay.EFTools.Tests/`: it now contains **`Constants.cs` and
+`ProphetsWay.EFTools.Tests.csproj`, and nothing else.** The six adapters are gone.
+
+Three things worth stating plainly, because a future reader will otherwise read "a test project with no
+tests" as damage:
+
+- **The project containing no tests is correct and temporary.** It is the intended resting state under
+  **D10** until the upstream seam exists.
+- **The 35 upstream tests are parked, not lost.** They live in `ProphetsWay.Example.Tests` and are
+  unaffected by anything done here.
+- **Nothing green went red.** `LocalTestsOnly: 'yes'` already skipped them in CI, and the project had not
+  compiled since the submodule advance. The deletion removed something that was already not running.
+
+### What this entry can and cannot deliver from inside this repository
+
+**It cannot be *completed* here.** That was already the finding of the rescope, and the resolution confirms
+rather than removes it. This entry now has an explicit cross-repository dependency:
+
+| Deliverable | Where it lands | Blocked on |
+|---|---|---|
+| ~~Deleting the six adapters~~ | **Here** | **Done 2026-08-16** |
+| Deleting the dead `#if` branches in `Constants.cs` | **Here** | Nothing — still outstanding; `Implementer`'s file |
+| A run of the upstream suite against the Entity Framework Data Access Layer | **Here**, once the seam exists | **[ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation)** — `Scheduled`, design deferred until Lap 1 |
+| The seam itself | **`ProphetsWay.Example`** — never edited from this side | Lap 1 showing what it must carry |
 
 What the rebuilt suite gains, and why it is worth having rather than merely unavoidable:
 
@@ -550,7 +654,9 @@ What the rebuilt suite gains, and why it is worth having rather than merely unav
 
 [Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs) also carries `#if` branches for `NET45`
 through `NETCOREAPP3_1` and `NET5_0` — targets this project has not had in some time. Dead conditions, to
-be removed with the rest.
+be removed. **Still present as of 2026-08-16**, and now more clearly dead than before: under the single
+`net10.0` target only the `NET6_0_OR_GREATER` arm compiles, so the `Data Source=localhost` connection
+string the other two arms reach is unreachable.
 
 **Open question — answered.** Does the EF suite point at a real SQL Server (keeping
 `LocalTestsOnly: 'yes'`), or at a provider CI can run? **Both**, per
@@ -568,16 +674,17 @@ arrangement is structurally unable to verify part of the contract this package n
 [D2](purpose-and-scope.md#owner-decisions--2026-08-15).** Previously `Proposed`. The clearest scope
 violation in the package, and the one nobody had reported.
 
-[ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) declares, unconditionally
-for every non-`net4x` target:
+[ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) declares, in an `ItemGroup`
+whose `net4`-excluding condition is now unconditionally true given the single `net10.0` target (versions
+omitted — mid-flight, see [entry 4](#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework)):
 
 ```xml
-<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
-<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.4" />
-<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.4" />
+<PackageReference Include="Microsoft.EntityFrameworkCore" Version="..." />
+<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="..." />
+<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="..." />
 ```
 
-and [BaseEFContext.cs](../ProphetsWay.EFTools/BaseEFContext.cs) hardcodes the provider:
+**All three are still present as of 2026-08-16** — this entry is untouched by that day's changes — and [BaseEFContext.cs](../ProphetsWay.EFTools/BaseEFContext.cs) hardcodes the provider:
 
 ```csharp
 protected BaseEFContext(string connectionString)
@@ -660,7 +767,7 @@ anything. **Re-triaged 2026-08-16 — status unchanged, sequencing sharpened; se
 [Why it stays Scheduled](#why-it-stays-scheduled-rather-than-moving--2026-08-16).**
 
 [ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj)
-carries `<PackageReference Include="FluentAssertions" Version="8.2.0" />`. Two independent problems:
+carried `<PackageReference Include="FluentAssertions" Version="8.2.0" />`. Two independent problems:
 
 1. **It is a test-assertion library in a non-test project.** That project is a DAL implementation. Nothing
    in it should assert anything.
@@ -702,6 +809,19 @@ v3.0.0 and into something sooner. **It should not move status, but its sequencin
   that is sufficient reason on its own.
 
 **Not this agent's edit.** `Modernizer` owns csproj changes.
+
+### Landed — 2026-08-16
+
+**The reference is gone.** Verified by opening
+[ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj)
+on that date: it contains no `FluentAssertions` line, and its only `PackageReference` entries are the two EF
+Core packages and `ProphetsWay.BaseDataAccess`. **The substance of this entry is satisfied and the licence
+exposure is closed.**
+
+**The status line is untouched, and this is the one place in this file where that most needs saying.** The
+entry above reasons at length about *when* this should land relative to v3.0.0 — and it landed early, exactly
+as "eligible to land ahead of the rest" anticipated. Whether that makes the entry `Done`, or whether it stays
+`Scheduled` until v3.0.0 actually ships, is a triage question. **Only `Purpose Refiner` may answer it.**
 
 ---
 
@@ -930,8 +1050,9 @@ both reach it through `?.`, so **both quietly do nothing**. The caller receives 
 value indicating anything was skipped. A write intended to be committed by that path is left to whatever the
 outer transaction decides, and a rollback intended to reverse it does not run.
 
-No existing test would catch it: the 35 inherited tests exercise no nested or pre-existing transaction case,
-and `LocalTestsOnly: 'yes'` skips all of them in CI regardless.
+No existing test would catch it: the 35 upstream tests exercise no nested or pre-existing transaction case,
+and nothing in this repository runs them — `LocalTestsOnly: 'yes'` skipped them in CI even before the six
+adapters that reached them were deleted on 2026-08-16.
 
 ### Why it is `Proposed` rather than `Scheduled`
 

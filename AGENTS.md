@@ -290,14 +290,15 @@ the project header and sidecars are what change.
 
 **Family:** Data Access · **Published:** yes, as `ProphetsWay.EFTools`
 
-The current 2.2.0 line implements `ProphetsWay.BaseDataAccess` 2.5.0 with abstract Entity Framework
+The published 2.2.0 line implements `ProphetsWay.BaseDataAccess` 2.5.0 with abstract Entity Framework
 DAO, context, and DAL bases. It ships two implementations selected by target framework: EF6 6.5.1
-on .NET Framework and EF Core 9.0.4 on .NET 8/9. The branches differ in API and behavior; notably,
+on .NET Framework and EF Core on .NET 8/9. The branches differ in API and behavior; notably,
 EF6 `Update` is an upsert while EF Core requires an existing row.
 
-This repo is **not** the family's modern reference. `ProphetsWay.BaseDataAccess` and
-`ProphetsWay.Example` are already on 3.1.0 and the house TFM standard; this package still uses old,
-undotted TFMs and the 2.x contract.
+**The working tree is no longer that package.** As of 2026-08-16 all three projects target `net10.0`
+alone and reference `ProphetsWay.BaseDataAccess` 3.1.0, nothing references EF6, and `BaseEFDataAccess`
+implements the 3.x `Dispose`. `app-variables.yml` still reads `2` / `2` / `0` — **never change it** — so
+the published package and the tree describe different things until the owner cuts 3.0.0.
 
 ### Planned 3.x Direction — Not Current State
 
@@ -306,13 +307,19 @@ root-namespace DAO families and no compatibility wrappers. SQLite in-memory will
 with a SQL Server container for provider fidelity. The cycle also adopts `ProphetsWay.BaseDataAccess`
 3.1.0. Do not describe those choices as current package behavior.
 
-**One step of that cycle has landed: the `ProphetsWay.Example` submodule has been advanced to 3.1.0**
-(`d845863`) — verified by reading `.git/modules/ProphetsWay.Example/HEAD` and the checked-out tree.
-Nothing else has. No `.cs` file in `ProphetsWay.EFTools/`, `ProphetsWay.EFTools.Tests/`, or
-`ProphetsWay.Example.DataAccess.EF/` has been changed to match: the library still references
-`ProphetsWay.BaseDataAccess` 2.5.0, still carries its EF6 `#if` branches, still declares no `Dispose`,
-and still exposes the 18 key-specific DAO classes. **The consequence is that the repository does not
-currently compile — see Known Deviation 8.** Implementation of the redesign itself has not started.
+**Several steps of that cycle have now landed — 2026-08-16.** The `ProphetsWay.Example` submodule was
+advanced to 3.1.0 (`d845863`); all three projects were retargeted to `net10.0`; the
+`ProphetsWay.BaseDataAccess` reference moved 2.5.0 → 3.1.0; the EF6 conditional `ItemGroup`s and the
+unused FluentAssertions reference were removed; the six test adapters were deleted; and
+`BaseEFDataAccess` gained its `Dispose`. **Verified by opening `ProphetsWay.EFTools.csproj`,
+`ProphetsWay.EFTools.Tests.csproj`, `ProphetsWay.Example.DataAccess.EF.csproj`, `BaseEFDataAccess.cs`
+and the `ProphetsWay.EFTools.Tests/` directory listing.**
+
+**What has not landed:** provider neutrality (the SQL Server and InMemory references are still in the
+library), the collapse of the 18 key-specific DAO classes, the SQLite/SQL Server certification legs,
+and the removal of the now-dead `#if NET461 || NET471 || NET48` blocks from the C# sources. Earlier
+revisions of this file said the library "still references 2.5.0, still carries its EF6 `#if` branches,
+still declares no `Dispose`" — **only the `#if` half of that is still true.** Do not restate the rest.
 
 ### Ratified TFM Exception — this repo targets `net10.0` only
 
@@ -324,8 +331,9 @@ therefore also loses its `net48` leg. Existing `net4x` / `net8.0` / `net9.0` con
 published 2.2.x line.
 
 Do not "correct" this repo toward the house default, and do not re-derive the reasoning — it is
-settled in that document under **The `net10.0`-Only Exception**. The exception applies to the
-*approved target state*; the TFM list in the tree today is still debt (Known Deviation 2).
+settled in that document under **The `net10.0`-Only Exception**. **The tree now matches the approved
+target state**: all three projects read `<TargetFrameworks>net10.0</TargetFrameworks>` as of
+2026-08-16. Earlier text here called the tree's TFM list debt; that is no longer true.
 
 ### Layout
 
@@ -333,7 +341,7 @@ settled in that document under **The `net10.0`-Only Exception**. The exception a
 | --- | --- |
 | `ProphetsWay.EFTools/` | Published library; 26 source files and 24 public classes (23 abstract) |
 | `ProphetsWay.Example.DataAccess.EF/` | Non-packaged EF proving-ground implementation; 7 source files |
-| `ProphetsWay.EFTools.Tests/` | Six xUnit adapter classes plus `Constants.cs`. They **no longer compile** — see deviation 8 |
+| `ProphetsWay.EFTools.Tests/` | **`Constants.cs` and the `.csproj`, and nothing else.** The six adapter classes were deleted 2026-08-16; the project holds **no tests**, which is correct and temporary — see deviation 4 |
 | `ProphetsWay.Example/` | Git submodule tracking the standalone Example repo; never edit it here |
 
 The submodule pointer is at **`d845863` — `ProphetsWay.Example` 3.1.0**, advanced 2026-08-16. Earlier
@@ -354,7 +362,7 @@ with `HasSqlProj` commented out in `app-variables.yml`, it does not build the `.
 | Type | Kind | Role |
 | --- | --- | --- |
 | `BaseEFContext` | public abstract class | EF6/EF Core `DbContext` construction; Core string construction hardcodes SQL Server |
-| `BaseEFDataAccess<TContextType,TIdType>` | public class | Creates the context and forwards DAL transaction operations; does not implement the 3.x disposal contract |
+| `BaseEFDataAccess<TContextType,TIdType>` | public class | Creates the context, forwards DAL transaction operations, and **implements the 3.x disposal contract as of 2026-08-16** — idempotent, non-throwing, rolls back an open transaction, disposes the context it created. `ObjectDisposedException` guarding on the transaction members is **not** yet in place |
 | `RootBaseDao<T,TIdType>` | public abstract bridge | CRUD, all/count/paged reads, datasets, and local transaction helpers |
 | `RootBaseSoftDao<T,TIdType>` | public abstract bridge | Timestamped soft delete and filtering over the root DAO |
 | `BaseNonIdDao<T>` / `BaseSoftNonIdDao<T>` | public abstract classes | Keyless/composite-key extension points |
@@ -364,14 +372,14 @@ with `HasSqlProj` commented out in `app-variables.yml`, it does not build the `.
 
 | # | Deviation | Severity / notes |
 | --- | --- | --- |
-| 1 | Package and EF example reference `ProphetsWay.BaseDataAccess` 2.5.0 | **High, breaking to fix.** Verified in both `ProphetsWay.EFTools.csproj` and `ProphetsWay.Example.DataAccess.EF.csproj`. Current family contract is 3.1.0; adoption requires disposal and test changes. **This is now an active build break, not latent debt** — the submodule advance brought in `ProphetsWay.Example.DataAccess` referencing 3.1.0 alongside these two at 2.5.0. |
-| 2 | Library TFMs are `net461;net471;net48;net80;net90` | **High, breaking to fix.** No current LTS target; old Framework targets and undotted .NET 8/9 monikers remain. **The gap is the current list, not the destination:** the approved target state is **`net10.0` only** — a ratified exception to the house standard, not drift. See the section above and D7 in [docs/purpose-and-scope.md](docs/purpose-and-scope.md#owner-decisions--2026-08-15). The same applies to `ProphetsWay.EFTools.Tests` (`net472;net48;net80;net90`) and `ProphetsWay.Example.DataAccess.EF` (`net471;net48;net80;net90`). |
+| 1 | ~~Package and EF example reference `ProphetsWay.BaseDataAccess` 2.5.0~~ **CLOSED 2026-08-16** | **The reference is now 3.1.0 in both `ProphetsWay.EFTools.csproj` and `ProphetsWay.Example.DataAccess.EF.csproj`** — verified by opening both. The row is kept rather than deleted because the *published* 2.2.0 package still carries 2.5.0, so a consumer reading nuget.org sees the old contract until 3.0.0 ships. Do not re-report the tree as being on 2.5.0. |
+| 2 | ~~Library TFMs are `net461;net471;net48;net80;net90`~~ **CLOSED 2026-08-16** | **All three projects now read `net10.0` alone** — the library, `ProphetsWay.EFTools.Tests` and `ProphetsWay.Example.DataAccess.EF` — verified by opening each `.csproj`. That is the approved target state under **D7**, a ratified exception to the house standard, **not drift**: see the section above and D7 in [docs/purpose-and-scope.md](docs/purpose-and-scope.md#owner-decisions--2026-08-15). Do not "fix" it toward `netstandard2.0;net10.0`, and do not re-report the old `net4*`/`net80`/`net90` lists as current. |
 | 3 | Runtime package forces SQL Server and InMemory providers | **High, breaking to fix.** Provider packages and `UseSqlServer` live in the published library. |
-| 4 | Tests are skipped by CI, and no longer compile at all | **High.** `LocalTestsOnly: 'yes'` verified in `app-variables.yml`. The six adapters override `GetIExampleDataAccess`, a hook the 3.1.0 submodule replaced with `TestDataAccessFactory` — so they no longer build. The six upstream classes they derive from still hold exactly 35 `[Fact]` methods, but even if the adapters compiled, `BaseUnitTests<T>` now constructs from `TestDataAccessFactory.CreateAs<T>()`, which returns the **NoDB** implementation — so nothing here would exercise EF. Soft delete, keyless DAOs, transactions, disposal, and provider portability remain uncovered. |
+| 4 | **There is no test suite in this repository at all** | **High, and a known waypoint rather than damage.** `LocalTestsOnly: 'yes'` verified in `app-variables.yml`. The six adapters were **deleted 2026-08-16**: each was four to five lines holding a `GetIExampleDataAccess` override and no test logic, and the 3.1.0 submodule replaced that hook with `TestDataAccessFactory`, a `static` method with nothing to override — the concept was gone, not merely broken. **The 35 upstream `[Fact]` methods are parked, not lost**; they live in `ProphetsWay.Example.Tests` and become reachable once the shape B seam exists (owner decision **D10**, [FR 6](docs/feature-requests.md)). **Nothing green went red** — CI already skipped them and the project had not compiled since the submodule advance. Soft delete, keyless DAOs, transactions, disposal, and provider portability remain uncovered. |
 | 5 | Package homepage/tags and source/symbol/reproducibility settings are empty or missing | **Medium.** Verified field by field in `ProphetsWay.EFTools.csproj`. Present with values: `PackageId`, `Description`, `Authors`, `Company`, `Product`, `RepositoryUrl`, `RepositoryType` (`GitHub`, where the convention is `git`), `PackageIcon`, `PackageReadmeFile`, `PackageLicenseExpression`, `PackageRequireLicenseAcceptance`, and the `ItemGroup` packing README, CHANGELOG and `profile.png`. Empty self-closing stubs: `PackageProjectUrl`, `PackageTags`, `PackageReleaseNotes`, `Copyright`, `NeutralLanguage` (plus the pipeline-owned `Version`/`AssemblyVersion`/`FileVersion`/`InformationalVersion`, correctly empty). Absent entirely: SourceLink, `PublishRepositoryUrl`, `EmbedUntrackedSources`, `IncludeSymbols`, `SymbolPackageFormat`, `ContinuousIntegrationBuild`. |
-| 6 | `ProphetsWay.Example.DataAccess.EF` references unused FluentAssertions 8.2.0 | **Medium, and more than cosmetic — 8.x requires a paid commercial licence.** Still present in the csproj; a repo-wide search of all seven source files in that project for `FluentAssertions` and `Should()` returns nothing, so it is unused. |
+| 6 | ~~`ProphetsWay.Example.DataAccess.EF` references unused FluentAssertions 8.2.0~~ **CLOSED 2026-08-16** | **The reference has been removed** — verified by opening `ProphetsWay.Example.DataAccess.EF.csproj`, whose only `PackageReference` entries are now the two EF Core packages and `ProphetsWay.BaseDataAccess`. The paid-commercial-licence exposure is closed. Kept as a row so the reason it mattered survives: 8.x requires a paid licence and house convention names Shouldly. |
 | 7 | `.gitmodules` contains an incomplete `[submodule "Submod"]` block | **Low.** Still present — it carries `branch = main` and neither `path` nor `url`. The real `ProphetsWay.Example` declaration is valid. |
-| 8 | **The repository does not currently build** | **High, and expected — it is the mid-flight state of [FR 1](docs/feature-requests.md), whose step 1 landed and whose steps 2–6 have not.** Three independent breaks, all caused by advancing the submodule ahead of the code: (a) `ProphetsWay.EFTools.Tests` targets `net472;net48;net80;net90` but references `ProphetsWay.Example.Tests`, which the 3.1.0 pointer retargeted to `net48;net10.0` — three of the four legs have no compatible asset; (b) the same project's six adapters override a member that no longer exists upstream; (c) `ExampleDataAccess` implements `IExampleDataAccess`, which at 3.1.0 also aggregates `IDepartmentDao` and `ICompanyResourceDao` and inherits `IDisposable`, none of which it supplies. Recorded so a future agent meeting a red build knows it is a known waypoint rather than a regression. |
+| 8 | **The repository is mid-flight on the 3.x redesign** | **High, and expected — it is the state of [FR 1](docs/feature-requests.md), whose step 1 landed and whose remaining steps are in progress.** Three independent breaks were recorded on 2026-08-16 when the submodule was advanced ahead of the code. **Two are now closed:** (a) ~~`ProphetsWay.EFTools.Tests` targeted `net472;net48;net80;net90` against a `ProphetsWay.Example.Tests` retargeted to `net48;net10.0`~~ — closed by the `net10.0` retarget; (b) ~~the same project's six adapters overrode a member that no longer exists upstream~~ — closed by deleting them. **(c) was the last outstanding:** `ExampleDataAccess` implements `IExampleDataAccess`, which at 3.1.0 also aggregates `IDepartmentDao` and `ICompanyResourceDao` and inherits `IDisposable`. As of 2026-08-16 `Implementer` has added member groups for both DAOs as deliberately-throwing "not written yet" stubs, and `Dispose` is inherited from `BaseEFDataAccess`. **No agent has verified a build**, and `.cs` files were being edited concurrently — so treat a red build as a known waypoint, open the files, and do not assume either state. |
 
 `docs/architecture.md`, per-project `docs/requirements.md`, and
 `docs/nuget-extraction-proposal.md` are **n/a by owner decision**, not missing documentation.

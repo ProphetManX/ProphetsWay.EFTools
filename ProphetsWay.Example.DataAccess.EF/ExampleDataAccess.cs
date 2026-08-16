@@ -6,6 +6,7 @@ using ProphetsWay.EFTools;
 using ProphetsWay.Example.DataAccess.EF.Daos;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.IDaos;
+using System;
 using System.Collections.Generic;
 
 namespace ProphetsWay.Example.DataAccess.EF
@@ -203,6 +204,76 @@ public ExampleDataAccess(string connectionString) : base(connectionString) {
 
 #endregion
 
+#region DepartmentDao - NOT IMPLEMENTED
 
-    }
+		public Department Get(Department item)
+		{
+			throw NotWrittenYet("IDepartmentDao.Get(Department)");
+		}
+
+		public void Insert(Department item)
+		{
+			throw NotWrittenYet("IDepartmentDao.Insert(Department)");
+		}
+
+		public int Update(Department item)
+		{
+			throw NotWrittenYet("IDepartmentDao.Update(Department)");
+		}
+
+		public int Delete(Department item)
+		{
+			throw NotWrittenYet("IDepartmentDao.Delete(Department)");
+		}
+
+		public IList<Department> GetAll(Department item)
+		{
+			throw NotWrittenYet("IDepartmentDao.GetAll(Department)");
+		}
+
+		public IList<Department> GetPaged(Department item, int skip, int take)
+		{
+			throw NotWrittenYet("IDepartmentDao.GetPaged(Department, int, int)");
+		}
+
+		public int GetCount(Department item)
+		{
+			throw NotWrittenYet("IDepartmentDao.GetCount(Department)");
+		}
+
+		public int Restore(Department item)
+		{
+			throw NotWrittenYet("IDepartmentDao.Restore(Department)");
+		}
+
+#endregion
+
+#region CompanyResourceDao - NOT IMPLEMENTED
+
+		public void Insert(CompanyResource item)
+		{
+			throw NotWrittenYet("ICompanyResourceDao.Insert(CompanyResource)");
+		}
+
+		public int Delete(CompanyResource item)
+		{
+			throw NotWrittenYet("ICompanyResourceDao.Delete(CompanyResource)");
+		}
+
+		public IList<CompanyResource> GetAll(CompanyResource item)
+		{
+			throw NotWrittenYet("ICompanyResourceDao.GetAll(CompanyResource)");
+		}
+
+#endregion
+
+		private static NotImplementedException NotWrittenYet(string member)
+		{
+			return new NotImplementedException(
+				member + " has NOT been implemented. The ProphetsWay.EFTools 3.x lap 1 was scoped to making this " +
+				"repository compile against ProphetsWay.Example 3.1.0 and nothing else. Department (soft-delete) and " +
+				"CompanyResource (keyless) have no Entity Framework Data Access Object, and ExampleContext maps " +
+				"neither entity. See docs/api-contract.md for the specification this member must satisfy.");
+		}
+	}
 }

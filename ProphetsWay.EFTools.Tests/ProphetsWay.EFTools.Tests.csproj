@@ -1,10 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFrameworks>
-		  net472;net48;
-		  net80;net90;
-	  </TargetFrameworks>
+	  <TargetFrameworks>net10.0</TargetFrameworks>
 	  
 	<IsPackable>false</IsPackable>
   </PropertyGroup>
