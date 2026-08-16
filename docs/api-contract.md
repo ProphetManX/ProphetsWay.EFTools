@@ -3634,9 +3634,10 @@ as unfinished work.
 ## Implementer-Only Questions
 
 None of these needs the owner. Each is answerable with a keyboard and a test run, and each is small enough
-that guessing wrong is cheap to correct. Record the answers here when they are settled.
-
-1. **Closure carrier for the key parameter.** A one-field private class, a captured local in a helper method,
+that guessing wrong is cheap to correct. Record the answers here when the7 and its status is *under review*.
+Revision 6 passed a focused `Contract Reviewer` delta review **with findings**, and Revision 7 closes them —
+but **no pass has run against this text**, and Revision 7 claims nothing on its own account. Revision 3
+d local in a helper method,
    or `Expression.Convert` over a boxed constant — whichever produces a parameterized query on **both**
    certified providers. Verify by inspecting generated SQL, not by inspecting the expression tree.
 2. **Where the resolved identifier `PropertyInfo` is cached.** A `static readonly` on the closed generic
