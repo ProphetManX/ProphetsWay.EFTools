@@ -307,6 +307,19 @@ with a SQL Server container for provider fidelity. The cycle also adopts `Prophe
 3.1.0 and advances the `ProphetsWay.Example` submodule to 3.1.0. None of that is implemented yet. Do
 not describe those choices as current package behavior.
 
+### Ratified TFM Exception — this repo targets `net10.0` only
+
+**This repo is exempt from the shared block's `netstandard2.0;net10.0` default.** Owner decision
+**D7**, recorded in [docs/purpose-and-scope.md](docs/purpose-and-scope.md#owner-decisions--2026-08-15),
+ratifies **`net10.0` alone** as the approved target state for the library,
+`ProphetsWay.EFTools.Tests`, and `ProphetsWay.Example.DataAccess.EF` alike. The test project
+therefore also loses its `net48` leg. Existing `net4x` / `net8.0` / `net9.0` consumers stay on the
+published 2.2.x line.
+
+Do not "correct" this repo toward the house default, and do not re-derive the reasoning — it is
+settled in that document under **The `net10.0`-Only Exception**. The exception applies to the
+*approved target state*; the TFM list in the tree today is still debt (Known Deviation 2).
+
 ### Layout
 
 | Project | Role |
@@ -336,7 +349,7 @@ the legacy SSDT Database project. The pipeline builds `**/*.csproj`, not the sol
 | # | Deviation | Severity / notes |
 | --- | --- | --- |
 | 1 | Package and EF example reference `ProphetsWay.BaseDataAccess` 2.5.0 | **High, breaking to fix.** Current family contract is 3.1.0; adoption requires disposal and test changes. |
-| 2 | Library TFMs are `net461;net471;net48;net80;net90` | **High, breaking to fix.** No current LTS target; old Framework targets and undotted .NET 8/9 monikers remain. |
+| 2 | Library TFMs are `net461;net471;net48;net80;net90` | **High, breaking to fix.** No current LTS target; old Framework targets and undotted .NET 8/9 monikers remain. **The gap is the current list, not the destination:** the approved target state is **`net10.0` only** — a ratified exception to the house standard, not drift. See the section above and D7 in [docs/purpose-and-scope.md](docs/purpose-and-scope.md#owner-decisions--2026-08-15). The same applies to `ProphetsWay.EFTools.Tests` (`net472;net48;net80;net90`) and `ProphetsWay.Example.DataAccess.EF` (`net471;net48;net80;net90`). |
 | 3 | Runtime package forces SQL Server and InMemory providers | **High, breaking to fix.** Provider packages and `UseSqlServer` live in the published library. |
 | 4 | Tests are skipped by CI and cover only the pinned 2.x Example contract | **High.** The 35 inherited tests omit soft delete, keyless DAOs, transactions, disposal, and provider portability. |
 | 5 | Package homepage/tags and source/symbol/reproducibility settings are empty or missing | **Medium.** README, icon, license, repository link, and packed changelog are present. |
