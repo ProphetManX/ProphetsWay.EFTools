@@ -570,10 +570,30 @@ not this agent's files to edit** — these are reported for their owners.
 | "`ProphetsWay.Example` is **vendored** here" | `AGENTS.md`, Known Deviations #1 | **False** | [.gitmodules](../.gitmodules) declares `path = ProphetsWay.Example`, `url = …/ProphetsWay.Example.git`, `branch = main`. It is a submodule. It cannot drift; it is *pinned*. `ProphetsWay.Example` corrected the same claim from its side |
 | "Two copies … drift independently" | `AGENTS.md`, Known Deviations #1 | **False**, follows from the above | The problem is **coordination**, not duplication |
 | "**This is the most modern repo in the family** … targets `net9.0` … When conventions conflict, prefer this repo's approach" | `AGENTS.md`, This Repo | **Stale, and actively harmful as guidance** | `ProphetsWay.BaseDataAccess` and `ProphetsWay.Example` are both at `netstandard2.0;net10.0` as of their 3.1.0 releases. This repo is at `net461;net471;net48;net80;net90` with **no `netstandard2.0`** and references the parent at 2.5.0. It is now the **least** modern of the three. An agent following that line will copy the wrong pattern |
-| "EFTools carries an EF implementation of the very same `IExampleDataAccess`, and the tests do not change" | `ProphetsWay.Example/README.md` | **Pending, not permanently false** | True of the pinned commit; false of the 3.x contracts. FR 1 is what makes it true again |
+| "EFTools carries an EF implementation of the very same `IExampleDataAccess`, and the tests do not change" | `ProphetsWay.Example/README.md` | **Pending, not permanently false** | **The reason moved on 2026-08-16.** The submodule pointer is no longer behind — it is at `d845863`, the 3.1.0 tree. What has not happened is this repository's own adoption: `ProphetsWay.Example.DataAccess.EF.csproj` and `ProphetsWay.EFTools.csproj` still reference `ProphetsWay.BaseDataAccess` 2.5.0, and `ExampleDataAccess` supplies neither `Dispose` nor the two Data Access Objects `IExampleDataAccess` now aggregates. FR 1's remaining steps are what make the claim true again |
 | "The pipeline is green" as evidence the tests ran | general | **Misleading** | `LocalTestsOnly: 'yes'` in [app-variables.yml](../app-variables.yml) — CI skips them |
 | `docs/architecture.md`, per-project `docs/requirements.md` | house convention | **`n/a`, not missing** — ratified by [D5](#owner-decisions--2026-08-15) | Library repo, not a multi-project application solution. The owner has confirmed this document plus `AGENTS.md` and the README are sufficient |
 | `docs/nuget-extraction-proposal.md` | house convention | **`n/a`, not missing** | No candidate clears the dependency test. See [the extraction verdict](#the-extraction-verdict--docsnuget-extraction-proposalmd-is-na-not-missing) |
-| `docs/repo-profile.md` | house convention | **Present** — corrected 2026-08-15 | It was absent when this document's first pass ran, which is why that pass read source directly. `Repo Analyst` has since produced it, dated 2026-08-15. Its findings **agree** with this document on every overlapping claim — the EF6/EF Core `Update` divergence, the hardcoded `UseSqlServer`, the InMemory reference, the submodule status and the malformed `[submodule "Submod"]` block |
+| `docs/repo-profile.md` | house convention | **Present** — corrected 2026-08-15, re-verified 2026-08-16 | It was absent when this document's first pass ran, which is why that pass read source directly. `Repo Analyst` has since produced it, dated 2026-08-15. Its findings **agree** with this document on every overlapping claim — the EF6/EF Core `Update` divergence, the hardcoded `UseSqlServer`, the InMemory reference and the malformed `[submodule "Submod"]` block. **Its submodule rows were corrected on 2026-08-16**, after the pointer advanced; see the note below |
+
+### Factual note — the submodule pointer advanced on 2026-08-16
+
+Recorded here because several statements in this document were written against the older pointer and a
+reader needs the correction in the same place as the text. **No decision or status below has been changed
+by this note; that is `Purpose Refiner`'s to do.**
+
+The `ProphetsWay.Example` submodule is now at **`d845863` — the 3.1.0 tree**, verified by reading
+`.git/modules/ProphetsWay.Example/HEAD` and the checked-out working tree. Three consequences are facts
+about the repository as it stands:
+
+- **Step 1 of FR 1 has landed; steps 2–6 have not.** The recommended-refinements table below still reads
+  `Scheduled` for that row, which is now a status that trails reality rather than a false statement of it.
+- **The repository does not compile.** `ProphetsWay.EFTools.Tests` targets `net472;net48;net80;net90`
+  against a `net48;net10.0` project reference and overrides an upstream member that no longer exists;
+  `ExampleDataAccess` does not satisfy the 3.1.0 `IExampleDataAccess`. This is the mid-flight state FR 1
+  and FR 6 both predicted, not a new regression.
+- **No EFTools-owned `.cs` or `.csproj` has been changed to match.** The library still references
+  `ProphetsWay.BaseDataAccess` 2.5.0, still carries the EF6 `#if` branches, still declares no `Dispose`,
+  and still exposes the 18 key-specific DAO classes — checked file by file, not inferred.
 | "The key-type namespaces are **required** so the default `Get` can build a proper select by Id" | `README.md`, and **restated by this document** in its first pass | **False** | [RootDao.cs](../ProphetsWay.EFTools/RootDao.cs) already compares generically on the EF Core branch — `Single(x => x.Id.Equals(item.Id))` in `Update`, `OrderBy(x => x.Id)` in `GetPaged`. `Int/BaseDao.Get` uses `==` because `int` allows it, not because a generic form is untranslatable. **This document inherited the claim from the README without opening `RootDao.cs`**, and it was the load-bearing argument in the recommendation the owner overturned as [D3](#owner-decisions--2026-08-15) |
 | "Retarget to `netstandard2.0;net10.0`" as this repo's house-standard destination | this document, first pass; house convention | **Unachievable here — and now a ratified exception, not a violation** | `ProphetsWay.EFTools.csproj` pins `Microsoft.EntityFrameworkCore` **9.0.4**, which ships no `netstandard2.0` asset — EF Core has been runtime-targeted since 5.0, and **EF Core 10 exposes only `net10.0`**. An EF Core-only library cannot carry the family's reach floor. Raised as **Q1**; **closed by [D7](#owner-decisions--2026-08-15)** — the destination is `net10.0` alone. `AGENTS.md` still needs the line recording it |

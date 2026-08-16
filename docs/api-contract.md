@@ -24,8 +24,8 @@ test — the exact condition under which a genuine regression is waved through.
 per method, and the cascade assertion is a `Characterization` fact named
 `ShouldReadANavigationPropertyEditBackInsideTheTransactionThatSubmittedIt`. A second retrait has since landed
 in `UserDaoTests.cs`. **Counted directly from the standalone `ProphetsWay.Example` tree rather than taken
-from a report: 162 tests — Contract 138, Characterization 4, Dispatcher 20 — over `net10.0` and `net48`,
-324 executions.** *"The Example suite is green"* **is** now the right gate.
+from a report: 164 tests — Contract 139, Characterization 5, Dispatcher 20 — over `net10.0` and `net48`,
+328 executions.** *"The Example suite is green"* **is** now the right gate.
 
 **Revision 6** answers the third `Contract Reviewer` pass, which returned **PASS WITH FINDINGS** against
 Revision 5: all twelve Revision 4 findings verified closed against source, OD-4 and OD-5 judged implemented
@@ -109,7 +109,7 @@ decisions and every design decision stand unchanged.
 
 | Finding | What Revision 7 did |
 |---|---|
-| **F1** | **Blocking. The `ProphetsWay.Example` retrait has landed, and Revision 6 was written as though it were pending.** Four false statements struck: `SnapshotDeepCopyTests` being traited `Contract` **at class level**; a conforming implementation *"will fail that one `Scope=Contract` test"*; *"expect that one Example test to fail until the retrait lands"*; and the same claim in the `Purpose Refiner` block. Five stale-tense sites swept with them — *"a separate `Test Designer` pass is handling it"*, *"is being retraited"*, and three in the header and this log. **The author's note inside the unblocked OD-6 obligation is deleted outright rather than softened** — a note telling a test author to expect a red Example test is the condition under which a genuine regression is waved through. The collision is now stated in the past tense: it *was* `Contract`, it *is* `Characterization`, the retrait landed, a second landed in `UserDaoTests.cs`, and **"the Example suite is green" is the right gate**. Counts measured directly against the standalone repository: **162 / 324 / Contract 138 / Characterization 4 / Dispatcher 20**. The relational-store analysis is **kept** — it is the durable part and the justification for the retrait |
+| **F1** | **Blocking. The `ProphetsWay.Example` retrait has landed, and Revision 6 was written as though it were pending.** Four false statements struck: `SnapshotDeepCopyTests` being traited `Contract` **at class level**; a conforming implementation *"will fail that one `Scope=Contract` test"*; *"expect that one Example test to fail until the retrait lands"*; and the same claim in the `Purpose Refiner` block. Five stale-tense sites swept with them — *"a separate `Test Designer` pass is handling it"*, *"is being retraited"*, and three in the header and this log. **The author's note inside the unblocked OD-6 obligation is deleted outright rather than softened** — a note telling a test author to expect a red Example test is the condition under which a genuine regression is waved through. The collision is now stated in the past tense: it *was* `Contract`, it *is* `Characterization`, the retrait landed, a second landed in `UserDaoTests.cs`, and **"the Example suite is green" is the right gate**. Counts measured directly against the standalone repository: **164 / 328 / Contract 139 / Characterization 5 / Dispatcher 20**. The relational-store analysis is **kept** — it is the durable part and the justification for the retrait |
 | **F2** | **Blocking. The OD-7 obligation's failure mode made its own assertion unobservable.** A unique-constraint violation is not removable: the entity retained as `Added` violates the same constraint on the next `SaveChanges`, so step two throws and *"the failed row appears"* is never evaluated. Changed to a **removable** failure — `Insert` a graph whose related entity names no stored row, take the referential-integrity exception this document already specifies, then insert the missing principal through the other Data Access Object and let `SaveChanges` run. Under the retracted rule the pending dependent goes in with it and the assertion is **directly assertable**. The paired retry obligation is corrected: it **passes vacuously** on a broken implementation, because the still-tracked `Added` entity is the object the caller fixed, so it is no longer credited with discriminating power |
 | **F3** | **The ninth OD-7 site — the `Restore` sample**, and the document's only worked custom write. It detached on the **success path only**, and its early guard returned having tracked `stored` via `AsTracking()` without detaching at all; the note below it conditioned the `finally` on *"a custom method that loads a graph"*, which the sample is not. Detachment moved into a `try`/`finally`, the guard split so the `return 0` path detaches too, and the note generalized: **the `finally` is owed by every custom write**, and the graph clause is about *what* to detach, not *when* |
 | **F4** | **A26's Failure row overstated the mechanism.** *"The tracker is returned to the state it was in before the call"* contradicts its own second half — an entity tracked before the call that the write's walk reaches is **detached, not restored**, and the `Restore` sample is exactly the shape that produces one. First clause deleted; the rule kept and the pre-tracked case named |
@@ -462,14 +462,7 @@ not advertise. They could already in 2.2.x, and the member behaves correctly whe
 ---
 
 ## Cross-Cutting Rules
-reaching **consumer-authored code** is the consumer's to discover.
-  **That disclaimer does not extend to this document's own behavioral terms.** A25's *"`SetValues` cannot
-  reach a shadow foreign key"* and A22's rejection of `ExecuteUpdate` are **terms of this package**, not
-  consumer code — if a subsequent major changed either, `Update`'s documented limitation would change with
-  it silently, and a consumer would have no statement of which terms survived. **The behavioral terms stated
-  here are guaranteed against EF Core 10 and are re-verified per EF Core major.** A major this document has
-  not been re-verified against carries no such guarantee, and the re-verification is what publishes which
-  terms held
+
 Binding on every type above unless a member states otherwise. Stated once here rather than repeated twelve
 times.
 
@@ -1597,34 +1590,17 @@ public int Restore(Department item)
 	}
 	finally
 	{
-		Context.at the top of the `try` has already returned `0` for that case, so by the time `SaveChanges()` runs
-the row both exists and is changing. Returning its count instead would be correct here by coincidence and wrong
-the 		Context.SaveChanges();
-		item.DeletedDate = null;
-		return 1;
-	}
-	finally
-	{
 		Context.Entry(stored).State = EntityState.Detached;
 	}
 }
 ```
-, and this sample now shows one of them.** `AsTracking()` means `stored` is
-tracked from the moment the query returns, so **every** exit after that owes a detach: the success path, a
-throwing `SaveChanges()`, and the early `return 0` that writes nothing. That is why the guard is split in two
-and the rest sits in a `try`/`finally`. An earlier revision detached on the **success path only** and folded
-`stored.DeletedDate is null` into the null check, which left a tracked entity behind on two exits of three —
-and on the throwing one it left `stored` carrying `DeletedDate = null` **pending**, so the next successful
-`SaveChanges` on the shared context (S8), through any Data Access Object on the layer, silently un-deleted the
-row. **That is the exact shape [OD-7](#owner-decisions-taken-during-revision-6) retracted, and this is the
-document's only worked custom write** — what is written here is what gets copied.
 
-**The `finally` is owed by every custom write, not only by one that loads a graph** (A26, OD-7). The graph
-clause is about *what* to detach, not *when*: this query declares no `Include`, so the one entity **is** the
-whole reachable graph, and a custom method that loads a graph detaches the rest of it in the same `finally`
-the guard one line above has already returned `0` for that case, so by the time `SaveChanges()` runs the row
-both exists and is changing. Returning its count instead would be correct here by coincidence and wrong the
-moment the method grew a second write. The count is not captured because nothing reads it; an earlier
+**Read the `return 1` before copying this.** It is deliberate, and it is the same rule
+[`Update`](#updatetentity-item) states: the return value reports **whether the row existed**, not what
+`SaveChanges()` counted. `SaveChanges()` returns `0` when the stored `DeletedDate` was already `null` — but
+the guard at the top of the `try` has already returned `0` for that case, so by the time `SaveChanges()` runs
+the row both exists and is changing. Returning its count instead would be correct here by coincidence and wrong
+the moment the method grew a second write. The count is not captured because nothing reads it; an earlier
 revision assigned it to a variable it then ignored, which taught the opposite of the rule this sample is
 meant to teach.
 
@@ -2549,8 +2525,7 @@ entity legitimately stored under `0` or `Guid.Empty` — the rows [OD-3](#owner-
 exists to keep legal — that reintroduces the exact duplicate-insert bug OD-4 forbids, and it does so on the
 narrow slice of data least likely to appear in a developer's test fixture.
 
-**So the state is sets an `int` and `ResourceId` as a `Guid` — two different types, both **ordinary mapped
-scalars**, which is the property that matters here. `SetValues` writes eitherer than inferred from any
+**So the state is set explicitly** — `entry.State = EntityState.Unchanged` — rather than inferred from any
 API's idea of what a key value means. **This is why the walk in step 3 is specified by *state* and not by
 method name**, and it is a constraint on the implementer rather than a choice among equivalents: see
 [Implementer question 7](#implementer-only-questions).
@@ -2565,8 +2540,7 @@ constraint violation rather than a silent duplicate — or a column is unique.
 
 #### Key values are not inspected, and that is forced by OD-3
 
-**Every reachable ents an `int` and `ResourceId` as a `Guid` — different types, both **ordinary mapped
-scalars**, which is the property that matters here. `SetValues` writes eitherbrary does not read
+**Every reachable entity is attached `Unchanged` whatever its key holds.** The library does not read
 `default(TKey)` as "unsaved, insert this one," because [OD-3](#owner-decisions-taken-during-revision-4) makes
 `0`, `Guid.Empty` and `""` **legal stored values**; a rule that treated them as unsaved would re-introduce the
 duplicate insert for precisely the rows OD-3 protects.
@@ -2599,8 +2573,9 @@ therefore never repoint `Transaction.User`.** The stored row keeps the `UserId` 
 `1` because the row existed, and nothing anywhere reports that the change was dropped.
 
 **An entity that declares its foreign key as an ordinary mapped scalar is unaffected.** `CompanyResource`
-carries `CompanyId` and `ResourceId` as `int` properties; `SetValues` writes them like any other scalar, so a
-relationship expressed *as a foreign-key property* is repointable through the ordinary path. **The limitation**Nothing the write touched is left tracked** — including an entity that was tracked *before* the call and that the write's walk reached, which is **detached, not restored**. [Writing a `Restore`](#writing-a-restore) is exactly the shape that produces a pre-tracked entity
+declares `CompanyId` as an `int` and `ResourceId` as a `Guid` — two different types, both **ordinary mapped
+scalars**, which is the property that matters here. `SetValues` writes either like any other scalar, so a
+relationship expressed *as a foreign-key property* is repointable through the ordinary path. **The limitation
 is specific to navigation-only relationships**, and a consumer who wants `Update` to move an association can
 remove the limitation from their own model by declaring the foreign key.
 
@@ -2719,8 +2694,8 @@ in `UserDaoTests.cs` on the same reasoning.
 **The dependency this section used to state is discharged.** A conforming EF Core implementation of this
 design is no longer required to fail anything in the Example suite: the assertion that bound it is
 `Characterization`, and **"the Example suite is green" is the right gate**, without qualification. Counted
-directly from the standalone repository rather than taken from a report: **162 tests — Contract 138,
-Characterization 4, Dispatcher 20 — green on `net10.0` and `net48`, 324 executions.** **This document changed
+directly from the standalone repository rather than taken from a report: **164 tests — Contract 139,
+Characterization 5, Dispatcher 20 — green on `net10.0` and `net48`, 328 executions.** **This document changed
 nothing in `ProphetsWay.Example` and proposed nothing there** — it recorded the decision; the fix landed in
 that repository on its own terms.
 
@@ -3049,35 +3024,22 @@ public IList<User> GetCreatedSince(DateTime cutoff)
 ### Keyless DAOs
 
 ```csharp
-// hree routes exist. All are legitimate; they observe different things — and the first two are not of equal
-fidelity, which an earlier revision obscured by listing them as one.**
+// 2.2.x — two abstract methods, plus a third on the soft variant, all expressing "find this row"
+public class CompanyResourceDao : BaseNonIdDao<CompanyResource>
+{
+	public override CompanyResource Get(CompanyResource item)
+		=> Dataset.Single(x => x.CompanyId == item.CompanyId && x.ResourceId == item.ResourceId);
 
-| Route | What it observes | Limit |
-|---|---|---|
-| **A `DbCommandInterceptor`** | The **command as sent to the provider** — final SQL text **and its `DbParameterCollection`**, as an object. Registered on the options the test's context is built from, so the Data Access Object under test is the real one | Captures a command, not a query object. An assertion is a string or parameter-collection assertion, and it must be written to tolerate provider formatting differences between the two legs |
-| **`DbContextOptionsBuilder.LogTo`** | The **formatted log text** of that same command | **Text only.** There is no `DbParameterCollection` to inspect, and parameter *values* are **redacted** unless `EnableSensitiveDataLogging()` is enabled on the options. Sufficient wherever the assertion is over SQL text — an `ORDER BY`, a join, a `COLLATE` clause, whether a command was issued at all — and **not** sufficient for the parameterization obligation |
-| **A test-only Data Access Object whose hook override captures the query it was handed and calls `ToQueryString()` on it** | The query **as composed up to that hook** — `ApplyReadFilter`, `ApplyIncludes` or `ApplyStableOrder` receives an `IQueryable<TEntity>`, and that is a real one | **Two limits, both real.** It observes the pipeline *only up to that hook*, so anything the member does afterwards — `Skip`/`Take`, `AsNoTracking`, the discard in `GetCount` — is invisible to it. And **it changes the Data Access Object under test**: the subject is now a DAO carrying an override, not the plain one |
-
-**Nine obligations below cite the "interceptor route." Eight are satisfiable by either of the first two;
-the parameterization obligation in [Key predicate](#key-predicate--the-riskiest-area-s4) names
-`DbCommandInterceptor` specifically, because it reads the parameter collection rather than the text.**
 	public override int Update(CompanyResource item) { /* … */ }
 }
 
-// hree routes exist. All are legitimate; they observe different things, and the first two are not of equal
-fidelity — an earlier revision listed them as one row and that overstated the second.**
+// 3.0.0 — one predicate hook, one ordering hook, and no IBaseDao unless you want it
+public class CompanyResourceDao : RootNonIdDao<CompanyResource>, ICompanyResourceDao
+{
+	protected override Expression<Func<CompanyResource, bool>> MatchRow(CompanyResource item)
+		=> x => x.CompanyId == item.CompanyId && x.ResourceId == item.ResourceId;
 
-| Route | What it observes | Limit |
-|---|---|---|
-| **A `DbCommandInterceptor`** | The **command as sent to the provider** — final SQL text **and its `DbParameterCollection`**, as an object. Registered on the options the test's context is built from, so the Data Access Object under test is the real one | Captures a command, not a query object. An assertion is a string or parameter-collection assertion, and it must tolerate provider formatting differences between the two legs |
-| **`DbContextOptionsBuilder.LogTo`** | The **formatted log text** of the same command | **Text only.** There is no `DbParameterCollection` to inspect, and parameter *values* are **redacted** unless `EnableSensitiveDataLogging()` is enabled on the options. Sufficient wherever the assertion is over SQL text — an `ORDER BY`, a join, a `COLLATE` clause, whether a command was issued at all — and **not** sufficient for the parameterization obligation, which is the one assertion below that names the interceptor specifically |
-| **A test-only Data Access Object whose hook override captures the query it was handed and calls `ToQueryString()` on it** | The query **as composed up to that hook** — `ApplyReadFilter`, `ApplyIncludes` or `ApplyStableOrder` receives an `IQueryable<TEntity>`, and that is a real one | **Two limits, both real.** It observes the pipeline *only up to that hook*, so anything the member does afterwards — `Skip`/`Take`, `AsNoTracking`, the discard in `GetCount` — is invisible to it. And **it changes the Data Access Object under test**: the subject is now a DAO carrying an override, not the plain one |
-
-**Nine obligations below cite the "interceptor route." Eight of them a`DbCommandInterceptor` specifically —
-	not `LogTo`**: the captured command's `DbParameterCollection` is non-empty and the key value appears in it
-	rather than inline in the SQL text. `LogTo` yields formatted text with no parameter collection, and redacts
-	the values without `EnableSensitiveDataLogging()`. This is also the one assertion the hook route cannot
-	make — parameterization is decided when the command protected override IOrderedQueryable<CompanyResource> ApplyStableOrder(IQueryable<CompanyResource> query)
+	protected override IOrderedQueryable<CompanyResource> ApplyStableOrder(IQueryable<CompanyResource> query)
 		=> query.OrderBy(x => x.CompanyId).ThenBy(x => x.ResourceId);
 }
 ```
@@ -3089,11 +3051,10 @@ fidelity — an earlier revision listed them as one row and that overstated the 
 For `Test Designer`. Grouped to match the `Scope` trait partition in `ProphetsWay.Example.Tests`:
 **Contract** (any conforming DAL must pass), **Characterization** (choices this implementation makes),
 **Dispatcher** (the reflection convention, owned by `ProphetsWay.BaseDataAccess`).
-`DbCommandInterceptor` specifically —
-	not `LogTo`**: the captured command's `DbParameterCollection` is non-empty and the key value appears in it
-	rather than inline in the SQL text. `LogTo` yields formatted text with no parameter collection, and redacts
-	the values without `EnableSensitiveDataLogging()`. This is also the one assertion the hook route cannot make
-	— parameterization is decided when the command erver**, which is the reason for the second leg.
+
+Per [D4](purpose-and-scope.md#owner-decisions--2026-08-15), everything below runs on **both** certified legs
+— SQLite in-memory and a SQL Server container. Several of these **cannot fail on SQLite and can on SQL
+Server**, which is the reason for the second leg.
 
 ### Observing the generated SQL — the seam
 
@@ -3105,12 +3066,18 @@ Stated once, here, because the obvious mechanism does not exist on this API.**
 `Dataset` is `protected` (S10) — so a test holding a Data Access Object reference has nothing to call it on.
 Revision 5 prescribed it on nine obligations regardless; the prescription was unexecutable and is withdrawn.
 
-**Two routes exist. Both are legitimate; they observe different things.**
+**Three routes exist. All are legitimate; they observe different things — and the first two are not of equal
+fidelity, which an earlier revision obscured by listing them as one.**
 
 | Route | What it observes | Limit |
 |---|---|---|
-| **A `DbCommandInterceptor`, or `DbContextOptionsBuilder.LogTo`** | The **command as sent to the provider** — final SQL text and its parameter collection. Registered on the options the test's context is built from, so the Data Access Object under test is the real one | Captures text, not a query object. An assertion is a string or parameter-collection assertion, and it must be written to tolerate provider formatting differences between the two legs |
+| **A `DbCommandInterceptor`** | The **command as sent to the provider** — final SQL text **and its `DbParameterCollection`**, as an object. Registered on the options the test's context is built from, so the Data Access Object under test is the real one | Captures a command, not a query object. An assertion is a string or parameter-collection assertion, and it must be written to tolerate provider formatting differences between the two legs |
+| **`DbContextOptionsBuilder.LogTo`** | The **formatted log text** of that same command | **Text only.** There is no `DbParameterCollection` to inspect, and parameter *values* are **redacted** unless `EnableSensitiveDataLogging()` is enabled on the options. Sufficient wherever the assertion is over SQL text — an `ORDER BY`, a join, a `COLLATE` clause, whether a command was issued at all — and **not** sufficient for the parameterization obligation |
 | **A test-only Data Access Object whose hook override captures the query it was handed and calls `ToQueryString()` on it** | The query **as composed up to that hook** — `ApplyReadFilter`, `ApplyIncludes` or `ApplyStableOrder` receives an `IQueryable<TEntity>`, and that is a real one | **Two limits, both real.** It observes the pipeline *only up to that hook*, so anything the member does afterwards — `Skip`/`Take`, `AsNoTracking`, the discard in `GetCount` — is invisible to it. And **it changes the Data Access Object under test**: the subject is now a DAO carrying an override, not the plain one |
+
+**Nine obligations below cite the "interceptor route." Eight are satisfiable by either of the first two;
+the parameterization obligation in [Key predicate](#key-predicate--the-riskiest-area-s4) names
+`DbCommandInterceptor` specifically, because it reads the parameter collection rather than the text.**
 
 **Which to use is the obligation's to state, and each one below now does.** Where the assertion is about
 what reached the store — an `ORDER BY`, a join, a `COLLATE` clause, a parameter versus a literal, whether a
@@ -3374,13 +3341,10 @@ company, job and department first, then hang them off the user.
 	that includes `Company`, edit `user.Company.Name`, edit a scalar on the user itself, call `Update(user)`, and
 	require the **user's scalar written** and the **`Company` row unchanged** — re-read the company directly, not
 	through the user. This is `Scope=Contract`. It was blocked in Revision 5 and is **unblocked by
-	[OD-6](#owner-decisions-taken-during-revision-6)**, which settled the question in favor of root-only. S
-	**On the same instance, also set `CreatedDate` to a distinguishable wrong value and require the stored one
-	preserved.** A30 names `CreatedDate` as failing the same way and less visibly, and the general obligation
-	above is not a guard on it — that one, in A30's own words, can pass on an instance that happened to carry
-	the stored value, which is exactly what a round-tripped `CreatedDate` does. This is the guard on the
-	mechanism: `SetValues` copies every mapped scalar by name, so an implementation that does not exclude or
-	restore the three timestamps silently un-deletes the row and rewrites its creation time
+	[OD-6](#owner-decisions-taken-during-revision-6)**, which settled the question in favor of root-only. See
+	[The `Update` cascade question](#the-update-cascade-question--resolved-by-od-6).
+
+### Snapshot and tracking
 
 - [ ] Mutating an instance returned by `Get` / `GetAll` / `GetPaged` does not change stored data.
 - [ ] Mutating an argument **after** `Insert` / `Update` / `Delete` returns does not reach the store — including
@@ -3394,13 +3358,10 @@ company, job and department first, then hang them off the user.
       see [Navigation loading](#navigation-loading--od-1-a18) for the default-is-null obligation.
 - [ ] Conformance holds with the context configured as `TrackAll` **and** as `NoTracking` — the DAO must not
       depend on it.
-**On
-	the same instance, also set `CreatedDate` to a distinguishable wrong value and require the stored one
-	preserved.** A30 names `CreatedDate` as failing the same way and less visibly, and the general obligation
-	above does not guard it: that one can pass on an instance that happened to carry the stored value, and
-	`CreatedDate` is the timestamp most likely to. This is the guard on the mechanism: `SetValues` copies every
-	mapped scalar by name, so an implementation that does not exclude or restore the three timestamps silently
-	un-deletes the row and rewrites its creation time.
+
+### Ordering and paging
+
+- [ ] `GetAll` and `GetPaged` return the same entities in the same order.
 - [ ] Successive `GetPaged` windows partition the `GetAll` set with **no overlap and no omission**.
 - [ ] Ordering is stable across two calls with no writes between them.
 - [ ] A nullable or duplicate-capable key overrides `ApplyStableOrder` with a deterministic tie-breaker;
@@ -3439,7 +3400,13 @@ company, job and department first, then hang them off the user.
 	require the row **still deleted** — absent from `GetAll` and still carrying its original `DeletedDate`. This
 	is the guard on the mechanism: `SetValues` copies every mapped scalar by name, so an implementation that
 	does not exclude or restore the three timestamps silently un-deletes the row. The obligation above can pass
-	on an instance that happened to carry the stored value; this one cannot.
+	on an instance that happened to carry the stored value; this one cannot. **On the same instance, also set
+	`CreatedDate` to a distinguishable wrong value and require the stored one preserved.** A30 names
+	`CreatedDate` as failing the same way and less visibly, and the general obligation
+	above does not guard it: that one can pass on an instance that happened to carry the stored value, and
+	`CreatedDate` is the timestamp most likely to. This is the guard on the mechanism: `SetValues` copies every
+	mapped scalar by name, so an implementation that does not exclude or restore the three timestamps silently
+	un-deletes the row and rewrites its creation time.
 - [ ] `Update` on a soft-deleted row succeeds, returns `1`, and leaves it deleted.
 - [ ] `Delete` stamps `DeletedDate`, returns `1`, and leaves the row retrievable by `Get`.
 - [ ] `Delete` on an already-deleted row returns `0` and **does not refresh** the existing `DeletedDate`.
@@ -3634,10 +3601,9 @@ as unfinished work.
 ## Implementer-Only Questions
 
 None of these needs the owner. Each is answerable with a keyboard and a test run, and each is small enough
-that guessing wrong is cheap to correct. Record the answers here when the7 and its status is *under review*.
-Revision 6 passed a focused `Contract Reviewer` delta review **with findings**, and Revision 7 closes them —
-but **no pass has run against this text**, and Revision 7 claims nothing on its own account. Revision 3
-d local in a helper method,
+that guessing wrong is cheap to correct. Record the answers here when they are settled.
+
+1. **Closure carrier for the key parameter.** A one-field private class, a captured local in a helper method,
    or `Expression.Convert` over a boxed constant — whichever produces a parameterized query on **both**
    certified providers. Verify by inspecting generated SQL, not by inspecting the expression tree.
 2. **Where the resolved identifier `PropertyInfo` is cached.** A `static readonly` on the closed generic
@@ -3705,15 +3671,15 @@ plus the detachment-on-failure rule during Revision 6
 when Revision 5 was written and is now closed in favor of the design; the fix it implies lands in
 `ProphetsWay.Example`, and **nothing in that repository was edited or proposed by this document.**
 
-**That is not the same as this document being finished.** It is Revision 6 and its status is *under review*.
-Revision 5 passed `Contract Reviewer` **with findings**, and Revision 6 closes them — but **no pass has run
-against this text**, and Revision 6 claims nothing on its own account. Revision 3 asserted its own passage
+**That is not the same as this document being finished.** It is Revision 7 and its status is *under review*.
+Revision 6 passed `Contract Reviewer` **with findings**, and Revision 7 closes them — but **no pass has run
+against this text**, and Revision 7 claims nothing on its own account. Revision 3 asserted its own passage
 and was wrong to. Whoever reads this next should check the [Revision Log](#revision-log) against the findings
 it claims to close, rather than taking the claim.
 
 ### For `Purpose Refiner`
 
-Two items in this revision are reported for triage and **were not written into**
+Three items in this revision are reported for triage and **were not written into**
 [feature-requests.md](feature-requests.md), which is that agent's file:
 
 1. **The two 2.2.0 defects** in [Two 2.2.0 Defects This Design Retires](#two-220-defects-this-design-retires)
@@ -3733,7 +3699,7 @@ Two items in this revision are reported for triage and **were not written into**
    row**, a shape a foreign key cannot reproduce. **[OD-6](#owner-decisions-taken-during-revision-6) resolved
    it**: the assertion belongs to the in-memory implementation rather than to the contract, and the owner
    authorized its retrait to `Characterization` **in `ProphetsWay.Example`**. **That retrait has landed**, along
-   with a second one in `UserDaoTests.cs`; the suite is **162 tests — Contract 138, Characterization 4,
+   with a second one in `UserDaoTests.cs`; the suite is **164 tests — Contract 139, Characterization 5,
    Dispatcher 20 — green on both legs**. One consequence remains for this agent: `ProphetsWay.Example`'s claim
    that the same suite passes against both Data Access Layers is **materially affected** and may want an entry.
    **Nothing in that repository was edited or proposed by this document.** See
