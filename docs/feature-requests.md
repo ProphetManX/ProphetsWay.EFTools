@@ -44,6 +44,7 @@ answerable by whoever implements v3.0.0.
 | 9 | [Delete the stray `[submodule "Submod"]` block from `.gitmodules`](#9--delete-the-stray-submodule-submod-block-from-gitmodules) | **Scheduled** — v3.0.0; trivial |
 | 10 | [Collapse the `Guid`/`Int`/`Long` DAO triplication](#10--collapse-the-guidintlong-dao-triplication) | **Scheduled** — v3.0.0; **approved by D3, reversing this file's recommendation** |
 | 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Scheduled** — v3.0.0 for the test work; **pipeline half Deferred** to its owner; **D8** makes the certification a public claim |
+| 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Proposed** — a shipped 2.2.0 correctness defect, designed out by 3.x rather than fixed on the 2.2.x line |
 
 Numbers are permanent. Entries are never renumbered and never removed —
 [purpose-and-scope.md](purpose-and-scope.md) cites entries by number, and a rejected entry is decision
@@ -69,6 +70,7 @@ independently breaking. `app-variables.yml` currently reads `Major: '2' / Minor:
 | 9 | Scheduled | **Yes** | Trivial, no build impact |
 | 10 | Scheduled | **Yes — approved (D3)** | A breaking surface change is cheapest riding a major that is already breaking for four other reasons |
 | 11 | Scheduled (test work) / Deferred (pipeline) | **Yes for the suite; the `LocalTestsOnly` removal is separately owned** | The contract cannot be *verified* without it; the CI plumbing is not this repository's decision alone |
+| 12 | Proposed | **Already, incidentally** | Nothing to schedule: the 3.x design removes the members that carry the defect. The entry exists so the fix is *named* in the release notes rather than shipping as an unannounced side effect |
 
 **The honest answer is that this is one indivisible release.** Entries 1–3 and 6 cannot be separated
 without leaving the repository in a non-compiling state, and 4, 5, 7 and 10 are each cheap *now* and
@@ -249,7 +251,25 @@ behaviour is the expensive order.
 2. **Still open.** Should `ObjectDisposedException` guarding be added to the three transaction members, or
    is the parent's dispatcher expected to guard? The parent holds no state and cannot; the guard has to be
    here.
+### Appended 2026-08-15 — this is a shipped defect, not only a forward-compatibility gap
 
+The framing above reads as *"3.1.0 will require a `Dispose` we do not have yet."* That understates it.
+[BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs) contains **no `Dispose`, no `IDisposable`,
+and no finalizer** — its only members are `Context`, two constructors, and three transaction forwarders — and
+both constructors build the context with `Activator.CreateInstance`. **Nothing ever disposes it.** That is a
+live resource leak in the *published* 2.2.0 package, independent of any 3.x contract.
+
+Two consequences:
+
+- **`Changelog Author` must record this as `Fixed`, not `Changed`.** A reader of the 3.0.0 notes who sees only
+  "implements the new disposal contract" will not learn that the version they are running leaks connections.
+- The design question this entry calls "not mechanical" is **answered** — `docs/api-contract.md` settles it as
+  the `ContextOwnership` enum (A9), a required constructor argument with no default so the branch can never be
+  inferred, plus a sealed `Dispose` so a derived DAL cannot omit it. Open question Q2 above is superseded by
+  that document; read it rather than re-deciding here.
+
+The defect was found by `Repo Analyst` during a verification pass and confirmed independently by
+`Contract Reviewer`; both opened the file. Recorded so it is not rediscovered as new.
 ---
 
 ## 4 — Make 3.x Entity Framework Core-only — retire EF6 and .NET Framework
@@ -742,3 +762,58 @@ package *says*, so the two legs below are what makes it true rather than an inte
 the wording without the suite would be the "asserted rather than demonstrated" failure these documents
 object to elsewhere. The wording itself belongs to `Modernizer` and `README Author`; the evidence behind it
 is this entry.
+
+---
+
+## 12 — `RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction
+
+**Status:** **Proposed** — 2026-08-15. Captured during a verification pass, not yet triaged by
+`Purpose Refiner`. **No work is being requested on the 2.2.x line;** this entry exists so a real defect is
+named rather than disappearing into a redesign.
+
+### The defect
+
+[RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs) guards its transaction start on whether one is
+already open:
+
+```csharp
+if (Context.Database.CurrentTransaction == null)
+    _transaction = Context.Database.BeginTransaction();
+```
+
+When a transaction **is** already open, `_transaction` stays `null` — and the matching commit and rollback
+both reach it through `?.`, so **both quietly do nothing**. The caller receives no exception and no return
+value indicating anything was skipped. A write intended to be committed by that path is left to whatever the
+outer transaction decides, and a rollback intended to reverse it does not run.
+
+No existing test would catch it: the 35 inherited tests exercise no nested or pre-existing transaction case,
+and `LocalTestsOnly: 'yes'` skips all of them in CI regardless.
+
+### Why it is `Proposed` rather than `Scheduled`
+
+**3.x designs the defect out rather than fixing it.** Under `docs/api-contract.md`, Data Access Objects carry
+no transaction members at all — transactions live on the DAL root, every misuse throws rather than returning
+quietly, and the library never consults `CurrentTransaction` to decide whether to begin. The one surviving
+escape, a *borrowed* context that already carries a foreign transaction, surfaces EF Core's own
+`InvalidOperationException` from `RelationalConnection.BeginTransaction` rather than a silent skip, and the
+contract carries a regression obligation for it.
+
+So there is nothing to schedule for v3.0.0 — the code is deleted. What needs a decision is narrower:
+
+### The open question
+
+**Does the 2.2.x line get a patch?** Entry 4 says that line's continuing job is to be the EF6 answer and it
+should receive no new work. That is a reasonable rule and this is a reasonable exception to test it against —
+silent transaction loss is a data-correctness bug, not a missing feature. The alternative is to leave 2.2.x as
+it stands and let the release notes for 3.0.0 say plainly that this class of failure is gone.
+
+**Recommendation:** no patch. Name it in the 3.0.0 notes as `Fixed`, alongside the leaked `DbContext` in
+[entry 3](#3--implement-the-3x-disposal-contract-in-baseefdataaccess). A consumer holding 2.2.x who reads that
+learns what they are exposed to, which is the outcome a patch would buy without the cost of reopening a line
+this repository has decided to stop developing.
+
+### Provenance
+
+Found by `Repo Analyst` reading the shipped source during a verification pass; confirmed independently by
+`Contract Reviewer` against the same file while checking that the 3.x design could not reproduce it. Neither
+agent inherited the claim — both opened `RootNonIdDao.cs`.

@@ -1,14 +1,31 @@
 # API Contract — ProphetsWay.EFTools 3.0.0
 
-**Status: Stage 2 — Revision 6, *under review*. Revision 5 passed `Contract Reviewer` *with findings*, and
-Revision 6 closes those findings. No pass has run against *this* text. Nothing here may be described as
-"closed" or "passed" on Revision 6's own account until one does.**
+**Status: Stage 2 — Revision 7, *under review*. Revision 6 passed a focused `Contract Reviewer` delta review
+*with findings*, and Revision 7 closes those findings. No pass has run against *this* text. Nothing here may
+be described as "closed" or "passed" on Revision 7's own account until one does.**
 
 > **The status line on Revision 3 said "Stage 2 closed; passed `Contract Reviewer`" and that claim was
 > false.** It was recorded before the revision it described was written. An independent review of the text
 > as it actually stood returned **BLOCK** with five blocking, eight significant and seven minor findings.
 > The status line is therefore a statement of *where this document is in the workflow*, not a statement of
 > its quality, and it is not the authoring agent's to advance.
+
+**Revision 7** answers a focused `Contract Reviewer` delta review of Revision 6, which returned **PASS WITH
+FINDINGS**: the OD-7 sweep found eight of nine sites, the `R4-S*` renumbering left no dangling citation, the
+observation seam is a real buildable mechanism, A30 and A31 are sound, and **141 of 142** obligations were
+cleared for authoring with two gating the rest. Eight findings (**F1–F8**) are closed here. Nothing is
+restructured — six revisions in, the risk is churn rather than under-specification.
+
+**The largest of them is a fact about another repository that moved under this document: the
+`ProphetsWay.Example` retrait has LANDED.** Revision 6 was written as though it were still pending, and one
+of the sentences that assumed so sat *inside a test obligation*, telling its author to expect a red Example
+test — the exact condition under which a genuine regression is waved through.
+`ProphetsWay.Example.Tests/SnapshotDeepCopyTests.cs` now carries no class-level `Scope` trait, declares them
+per method, and the cascade assertion is a `Characterization` fact named
+`ShouldReadANavigationPropertyEditBackInsideTheTransactionThatSubmittedIt`. A second retrait has since landed
+in `UserDaoTests.cs`. **Counted directly from the standalone `ProphetsWay.Example` tree rather than taken
+from a report: 162 tests — Contract 138, Characterization 4, Dispatcher 20 — over `net10.0` and `net48`,
+324 executions.** *"The Example suite is green"* **is** now the right gate.
 
 **Revision 6** answers the third `Contract Reviewer` pass, which returned **PASS WITH FINDINGS** against
 Revision 5: all twelve Revision 4 findings verified closed against source, OD-4 and OD-5 judged implemented
@@ -19,8 +36,9 @@ therefore a **correction pass**. Nothing that was working has been restructured.
 
 Two owner decisions were taken during it, neither of them raised by that review.
 [**OD-6**](#owner-decisions-taken-during-revision-6) closes the `Update` cascade question **in favor of the
-current design** — `Update` writes the root only, and the conflicting `Scope=Contract` assertion is a
-`ProphetsWay.Example` defect whose retrait the owner has authorized **in that repository**.
+current design** — `Update` writes the root only, and the conflicting `Scope=Contract` assertion was a
+`ProphetsWay.Example` defect. The owner authorized its retrait **in that repository**, and as of Revision 7
+that retrait **has landed**: the assertion is `Characterization`, and the suite is green.
 [**OD-7**](#owner-decisions-taken-during-revision-6) **reverses** A26's failure clause: detachment now happens
 in a `finally`, on success **and** on failure, so a failed write cannot poison the Data Access Layer instance.
 
@@ -83,6 +101,24 @@ They were written as bare `S1`–`S8` and collided with the **settled owner deci
 obligations cited a finding and resolved to an unrelated decision. The prefix is the fix (Revision 6,
 Finding 5). A bare `S`*n* anywhere in this document now means a **settled decision** and nothing else.
 
+#### Revision 7
+
+A focused `Contract Reviewer` delta review of Revision 6 returned **PASS WITH FINDINGS** — eight items, two
+of them gating a test obligation. Keyed **F1–F8**. No section was added or restructured; the two owner
+decisions and every design decision stand unchanged.
+
+| Finding | What Revision 7 did |
+|---|---|
+| **F1** | **Blocking. The `ProphetsWay.Example` retrait has landed, and Revision 6 was written as though it were pending.** Four false statements struck: `SnapshotDeepCopyTests` being traited `Contract` **at class level**; a conforming implementation *"will fail that one `Scope=Contract` test"*; *"expect that one Example test to fail until the retrait lands"*; and the same claim in the `Purpose Refiner` block. Five stale-tense sites swept with them — *"a separate `Test Designer` pass is handling it"*, *"is being retraited"*, and three in the header and this log. **The author's note inside the unblocked OD-6 obligation is deleted outright rather than softened** — a note telling a test author to expect a red Example test is the condition under which a genuine regression is waved through. The collision is now stated in the past tense: it *was* `Contract`, it *is* `Characterization`, the retrait landed, a second landed in `UserDaoTests.cs`, and **"the Example suite is green" is the right gate**. Counts measured directly against the standalone repository: **162 / 324 / Contract 138 / Characterization 4 / Dispatcher 20**. The relational-store analysis is **kept** — it is the durable part and the justification for the retrait |
+| **F2** | **Blocking. The OD-7 obligation's failure mode made its own assertion unobservable.** A unique-constraint violation is not removable: the entity retained as `Added` violates the same constraint on the next `SaveChanges`, so step two throws and *"the failed row appears"* is never evaluated. Changed to a **removable** failure — `Insert` a graph whose related entity names no stored row, take the referential-integrity exception this document already specifies, then insert the missing principal through the other Data Access Object and let `SaveChanges` run. Under the retracted rule the pending dependent goes in with it and the assertion is **directly assertable**. The paired retry obligation is corrected: it **passes vacuously** on a broken implementation, because the still-tracked `Added` entity is the object the caller fixed, so it is no longer credited with discriminating power |
+| **F3** | **The ninth OD-7 site — the `Restore` sample**, and the document's only worked custom write. It detached on the **success path only**, and its early guard returned having tracked `stored` via `AsTracking()` without detaching at all; the note below it conditioned the `finally` on *"a custom method that loads a graph"*, which the sample is not. Detachment moved into a `try`/`finally`, the guard split so the `return 0` path detaches too, and the note generalized: **the `finally` is owed by every custom write**, and the graph clause is about *what* to detach, not *when* |
+| **F4** | **A26's Failure row overstated the mechanism.** *"The tracker is returned to the state it was in before the call"* contradicts its own second half — an entity tracked before the call that the write's walk reaches is **detached, not restored**, and the `Restore` sample is exactly the shape that produces one. First clause deleted; the rule kept and the pre-tracked case named |
+| **F5** | **The observation seam lumped two routes of unequal fidelity.** `DbCommandInterceptor` and `DbContextOptionsBuilder.LogTo` shared one row claiming a parameter collection; `LogTo` yields formatted text and redacts values without `EnableSensitiveDataLogging()`. Row split in two, and the parameterization obligation now names **`DbCommandInterceptor` specifically**. The other eight interceptor-route obligations are satisfiable by either |
+| **F6** | **A30 named `CreatedDate` and then guarded only `DeletedDate`.** The sharpened soft-`Update` obligation gains a clause: set `CreatedDate` to a distinguishable wrong value on the same instance and require the stored one preserved. The general form A30 calls able to *"pass on an instance that happened to carry the stored value"* was all that stood behind it |
+| **F7** | **A31's forward clause was too loose for this library's own terms.** A25's *"`SetValues` cannot reach a shadow foreign key"* and A22's `ExecuteUpdate` rejection are **terms of this package**, not consumer code. The disclaimer is narrowed to consumer-authored code, and the document's **behavioral terms are stated as guaranteed against EF Core 10 and re-verified per major** |
+| **F8** | **Factual error in A25.** `CompanyResource` declares `public int CompanyId` and `public Guid ResourceId` — confirmed by opening `ProphetsWay.Example.DataAccess/Entities/CompanyResource.cs`, not inferred. A25's point survives intact; both are ordinary mapped scalars, which is the property that matters. The type is corrected |
+| **Obligation count** | **142, unchanged, and none is blocked.** F2 rewrote an obligation pair rather than adding one, F6 extended an existing obligation with a clause, and F1 deleted a note rather than a checkbox |
+
 #### Revision 6
 
 The third `Contract Reviewer` pass returned **PASS WITH FINDINGS**, with the instruction to fix in place
@@ -91,7 +127,7 @@ and one of those — OD-6 — ratifies the design that was already written.
 
 | Finding | What Revision 6 did |
 |---|---|
-| **OD-6** | [The `Update` cascade question](#the-update-cascade-question--resolved-by-od-6) rewritten as **resolved**. `Update` writes the root only, as A22 and A25 already specified; the conflicting `Scope=Contract` assertion is a **`ProphetsWay.Example` defect** and the owner has authorized its retrait **in that repository**. The analysis of why a normalized relational store cannot reproduce the `NoDB` shape is **kept**, because it is the reasoning that justifies the retrait. The cascade-dependent obligation is **unblocked** and authorable against root-only behavior |
+| **OD-6** | [The `Update` cascade question](#the-update-cascade-question--resolved-by-od-6) rewritten as **resolved**. `Update` writes the root only, as A22 and A25 already specified; the conflicting `Scope=Contract` assertion was a **`ProphetsWay.Example` defect** and the owner authorized its retrait **in that repository** — Revision 7 records that the retrait has since landed. The analysis of why a normalized relational store cannot reproduce the `NoDB` shape is **kept**, because it is the reasoning that justified the retrait. The cascade-dependent obligation is **unblocked** and authorable against root-only behavior |
 | **OD-7** | **A26's failure clause reversed.** Detachment happens in a **`finally`**, on success and on failure. Stated explicitly: detaching an `Added` entity after a failed `SaveChanges` **discards the pending insert, and that is the intent**; the caller may fix their argument and retry on the same instance. New obligation — a failed `Insert` followed by a successful `SaveChanges` through a **different DAO on the same context** must not surface the failed row. Every surviving statement that assumed post-success-only detachment swept and retracted |
 | **1** | **`ToQueryString()` removed from all nine obligations that prescribed it.** No public member of this library returns an `IQueryable` — `Get` returns `TEntity?`, the trio returns `IList<TEntity>`/`int`, and `Dataset` is `protected` (S10) — so the call could not be made on any of them, and two of the nine offered no alternative assertion at all. The seam is now stated **once**, in [Observing the generated SQL](#observing-the-generated-sql--the-seam), with the second route's limit named honestly. The two prose sites (A27's mechanism, the SQLite limitations table) follow it |
 | **2** | **`Attach` named as the second trap in A24**, alongside `Dataset.Add(item)`: `DbContext.Attach` / `DbSet.Attach` mark a **default-keyed** entity `Added` by their own heuristic, which reintroduces the duplicate insert OD-4 forbids against exactly the rows OD-3 exists to protect. This is why the walk is specified **by state**, not by API. Pinned in [Implementer question 7](#implementer-only-questions) as a **constraint, not a choice**, and given a test obligation |
@@ -269,7 +305,7 @@ is now wrong. It is retracted where it stood rather than left for a reader to re
 
 | # | Decision | Where it lands |
 |---|---|---|
-| **OD-6** | **The `Update` cascade question is resolved in favor of the current design.** `Update` writes the root only, as A22 and A25 specify. The conflicting `Scope=Contract` assertion in `SnapshotDeepCopyTests.Setup_UpdateNavigationInsideTransaction_TestRollBackRestoresIt` is **a `ProphetsWay.Example` defect** — it encodes a `NoDB` denormalization detail (the user row storing a deep copy of the company) that no normalized relational store can reproduce, and it was mis-scoped `Contract` rather than `Characterization`. The owner has authorized the retrait **in the `ProphetsWay.Example` repository**; a separate `Test Designer` pass is handling it there. **This document still changes nothing in that repository** | [The `Update` cascade question](#the-update-cascade-question--resolved-by-od-6); the previously-blocked obligation in [Writes with a populated navigation graph](#writes-with-a-populated-navigation-graph--od-4-a24a26) |
+| **OD-6** | **The `Update` cascade question is resolved in favor of the current design.** `Update` writes the root only, as A22 and A25 specify. The conflicting assertion in `SnapshotDeepCopyTests.Setup_UpdateNavigationInsideTransaction_TestRollBackRestoresIt` was **a `ProphetsWay.Example` defect** — it encodes a `NoDB` denormalization detail (the user row storing a deep copy of the company) that no normalized relational store can reproduce, and it was mis-scoped `Contract` rather than `Characterization`. The owner authorized the retrait **in the `ProphetsWay.Example` repository**, and **it has landed**: the assertion is now a `Characterization` fact and the suite is green. **This document still changes nothing in that repository** | [The `Update` cascade question](#the-update-cascade-question--resolved-by-od-6); the previously-blocked obligation in [Writes with a populated navigation graph](#writes-with-a-populated-navigation-graph--od-4-a24a26) |
 | **OD-7** | **Detachment happens in a `finally`** — the whole reachable graph is detached on success **and** on failure. In the owner's reasoning: a failed write must not poison the Data Access Layer instance, and forcing a caller to dispose and rebuild an entire DAL because one insert violated a unique constraint is too harsh a contract. Detaching an `Added` entity after a failed `SaveChanges` **discards the pending insert, and that is the intent**; the caller may fix their argument and retry on the same instance | [Detachment spans the whole reachable graph](#detachment-spans-the-whole-reachable-graph--a26-od-7), A26 |
 
 ### Design Decisions Made Here
@@ -426,7 +462,14 @@ not advertise. They could already in 2.2.x, and the member behaves correctly whe
 ---
 
 ## Cross-Cutting Rules
-
+reaching **consumer-authored code** is the consumer's to discover.
+  **That disclaimer does not extend to this document's own behavioral terms.** A25's *"`SetValues` cannot
+  reach a shadow foreign key"* and A22's rejection of `ExecuteUpdate` are **terms of this package**, not
+  consumer code — if a subsequent major changed either, `Update`'s documented limitation would change with
+  it silently, and a consumer would have no statement of which terms survived. **The behavioral terms stated
+  here are guaranteed against EF Core 10 and are re-verified per EF Core major.** A major this document has
+  not been re-verified against carries no such guarantee, and the re-verification is what publishes which
+  terms held
 Binding on every type above unless a member states otherwise. Stated once here rather than repeated twelve
 times.
 
@@ -443,8 +486,14 @@ times.
   statement about the TFM, not about the dependency, and several rules here are version-sensitive:
   `IgnoreQueryFilters()` granularity (A28), `SetValues` against a shadow foreign key (A25), and
   `MultipleCollectionIncludeWarning` (A29). **Read every EF-behavior claim in this document as a claim about
-  EF Core 10.** A consumer may reference a later 10.x patch or a subsequent major; this library does not
-  test against one, and a behavior change in either is the consumer's to discover.
+  EF Core 10.** A consumer may reference a later 10.x patch or a subsequent major; this library does not test
+  against one, and a behavior change reaching **consumer-authored code** is the consumer's to discover.
+  **That disclaimer does not extend to this document's own behavioral terms.** A25's *"`SetValues` cannot
+  reach a shadow foreign key"* and A22's rejection of `ExecuteUpdate` are **terms of this package**, not
+  consumer code — if a subsequent major changed either, `Update`'s documented limitation would change with it
+  and a consumer would have no statement of which terms survived. **The behavioral terms stated here are
+  guaranteed against EF Core 10 and are re-verified per EF Core major**; a major that has not been re-verified
+  carries no such guarantee, and the re-verification is what publishes which terms held.
 
 ### Null arguments
 
@@ -1535,19 +1584,44 @@ public int Restore(Department item)
 	if (item is null) throw new ArgumentNullException(nameof(item));
 
 	var stored = Dataset.AsTracking().SingleOrDefault(MatchRow(item));
-	if (stored is null || stored.DeletedDate is null) return 0;
+	if (stored is null) return 0;
 
-	stored.DeletedDate = null;
-	Context.SaveChanges();
-	item.DeletedDate = null;
-	Context.Entry(stored).State = EntityState.Detached;
-	return 1;
+	try
+	{
+		if (stored.DeletedDate is null) return 0;
+
+		stored.DeletedDate = null;
+		Context.SaveChanges();
+		item.DeletedDate = null;
+		return 1;
+	}
+	finally
+	{
+		Context.at the top of the `try` has already returned `0` for that case, so by the time `SaveChanges()` runs
+the row both exists and is changing. Returning its count instead would be correct here by coincidence and wrong
+the 		Context.SaveChanges();
+		item.DeletedDate = null;
+		return 1;
+	}
+	finally
+	{
+		Context.Entry(stored).State = EntityState.Detached;
+	}
 }
 ```
+, and this sample now shows one of them.** `AsTracking()` means `stored` is
+tracked from the moment the query returns, so **every** exit after that owes a detach: the success path, a
+throwing `SaveChanges()`, and the early `return 0` that writes nothing. That is why the guard is split in two
+and the rest sits in a `try`/`finally`. An earlier revision detached on the **success path only** and folded
+`stored.DeletedDate is null` into the null check, which left a tracked entity behind on two exits of three —
+and on the throwing one it left `stored` carrying `DeletedDate = null` **pending**, so the next successful
+`SaveChanges` on the shared context (S8), through any Data Access Object on the layer, silently un-deleted the
+row. **That is the exact shape [OD-7](#owner-decisions-taken-during-revision-6) retracted, and this is the
+document's only worked custom write** — what is written here is what gets copied.
 
-**Read the `return 1` before copying this.** It is deliberate, and it is the same rule
-[`Update`](#updatetentity-item) states: the return value reports **whether the row existed**, not what
-`SaveChanges()` counted. `SaveChanges()` returns `0` when the stored `DeletedDate` was already `null` — but
+**The `finally` is owed by every custom write, not only by one that loads a graph** (A26, OD-7). The graph
+clause is about *what* to detach, not *when*: this query declares no `Include`, so the one entity **is** the
+whole reachable graph, and a custom method that loads a graph detaches the rest of it in the same `finally`
 the guard one line above has already returned `0` for that case, so by the time `SaveChanges()` runs the row
 both exists and is changing. Returning its count instead would be correct here by coincidence and wrong the
 moment the method grew a second write. The count is not captured because nothing reads it; an earlier
@@ -1560,13 +1634,21 @@ prevent: on a Data Access Object carrying a tenant-scoped `MatchRow` override, t
 tenants while `Get`, `Update` and `Delete` on the same DAO do not. **Every member that locates a row goes
 through `MatchRow`, custom members included** — that is what makes one override sufficient.
 
-**Two things a custom write owes that this sample is small enough to hide.** Its
-`Context.Entry(stored).State = EntityState.Detached` detaches one entity, which happens to be the whole
-reachable graph *because the query declares no `Include`*; a custom method that loads a graph owes the rest of
-it, **and owes it from a `finally`** so a failing `SaveChanges` does not leave the graph tracked (A26, OD-7).
-And a consumer who has declared a global query filter on `Department` must add
-`.IgnoreQueryFilters()` to this query, or the filter hides the very rows `Restore` exists to reach — the
-library applies it to its own locating paths (A28), not to a method it never sees.
+**Read the `try`/`finally` too — it is the reason the guard was split in two.** `AsTracking()` means `stored`
+is tracked from the moment the query returns, so **every** exit after that owes a detach: the success path, a
+throwing `SaveChanges()`, and the early `return 0` that never writes anything. An earlier revision detached on
+the success path only and folded `stored.DeletedDate is null` into the null check, which left a tracked entity
+behind on two of the three exits — and on the throwing one it left `stored` carrying `DeletedDate = null`
+**pending**, so the next successful `SaveChanges` on the shared context (S8), through any Data Access Object on
+the layer, un-deleted the row. **That is the exact shape [OD-7](#owner-decisions-taken-during-revision-6)
+retracted, and this is the document's only worked custom write** — what is written here is what gets copied.
+
+**The `finally` is owed by every custom write, not only one that loads a graph** (A26, OD-7). The graph clause
+is about *what* to detach, not *when*: this query declares no `Include`, so the one entity **is** the whole
+reachable graph; a custom method that loads a graph detaches the rest of it in the same `finally`. And a
+consumer who has declared a global query filter on `Department` must add `.IgnoreQueryFilters()` to this query,
+or the filter hides the very rows `Restore` exists to reach — the library applies it to its own locating paths
+(A28), not to a method it never sees.
 
 Note also what this sample does **not** do: it declares no `ThrowIfDisposed()`, because it is a method on a
 **Data Access Object**, and a DAO holds no disposal state (see
@@ -2467,7 +2549,8 @@ entity legitimately stored under `0` or `Guid.Empty` — the rows [OD-3](#owner-
 exists to keep legal — that reintroduces the exact duplicate-insert bug OD-4 forbids, and it does so on the
 narrow slice of data least likely to appear in a developer's test fixture.
 
-**So the state is set explicitly** — `entry.State = EntityState.Unchanged` — rather than inferred from any
+**So the state is sets an `int` and `ResourceId` as a `Guid` — two different types, both **ordinary mapped
+scalars**, which is the property that matters here. `SetValues` writes eitherer than inferred from any
 API's idea of what a key value means. **This is why the walk in step 3 is specified by *state* and not by
 method name**, and it is a constraint on the implementer rather than a choice among equivalents: see
 [Implementer question 7](#implementer-only-questions).
@@ -2482,7 +2565,8 @@ constraint violation rather than a silent duplicate — or a column is unique.
 
 #### Key values are not inspected, and that is forced by OD-3
 
-**Every reachable entity is attached `Unchanged` whatever its key holds.** The library does not read
+**Every reachable ents an `int` and `ResourceId` as a `Guid` — different types, both **ordinary mapped
+scalars**, which is the property that matters here. `SetValues` writes eitherbrary does not read
 `default(TKey)` as "unsaved, insert this one," because [OD-3](#owner-decisions-taken-during-revision-4) makes
 `0`, `Guid.Empty` and `""` **legal stored values**; a rule that treated them as unsaved would re-introduce the
 duplicate insert for precisely the rows OD-3 protects.
@@ -2516,7 +2600,7 @@ therefore never repoint `Transaction.User`.** The stored row keeps the `UserId` 
 
 **An entity that declares its foreign key as an ordinary mapped scalar is unaffected.** `CompanyResource`
 carries `CompanyId` and `ResourceId` as `int` properties; `SetValues` writes them like any other scalar, so a
-relationship expressed *as a foreign-key property* is repointable through the ordinary path. **The limitation
+relationship expressed *as a foreign-key property* is repointable through the ordinary path. **The limitation**Nothing the write touched is left tracked** — including an entity that was tracked *before* the call and that the write's walk reached, which is **detached, not restored**. [Writing a `Restore`](#writing-a-restore) is exactly the shape that produces a pre-tracked entity
 is specific to navigation-only relationships**, and a consumer who wants `Update` to move an association can
 remove the limitation from their own model by declaring the foreign key.
 
@@ -2549,7 +2633,7 @@ leak [Forced Behavior Change 5](#forced-behavior-changes) exists to close.
 | **When** | In a **`finally`**, after `SaveChanges()` returns **or throws**, on every write member — `Insert`, `Update`, `Delete`, and the keyless cores |
 | **What** | The argument's whole reachable graph, plus any fetched row's whole reachable graph. Reachability is the same walk `Insert` uses |
 | **Inside a transaction** | Unchanged. `SaveChanges()` has already issued the SQL, so detaching the entities neither commits nor reverses anything; a later `TransactionRollBack()` removes the rows and, as [Transactions](#transactions) states, **leaves the generated identifier on the caller's instance** |
-| **Failure** | The exception from `SaveChanges()` propagates **unwrapped**, and the detachment still runs (OD-7). The tracker is returned to the state it was in before the call — nothing the write touched is left tracked |
+| **Failure** | The exception from `SaveChanges()` propagates **unwrapped**, and the detachment still runs (OD-7). Nothing the write touched is left tracked — including an entity that was tracked **before** the call and that the write's walk reached, which is **detached, not restored**. See [Writing a `Restore`](#writing-a-restore) for the shape that produces one |
 
 #### Why `finally`, and what it costs — OD-7
 
@@ -2585,8 +2669,8 @@ repository.
 
 #### What the collision was
 
-`ProphetsWay.Example.Tests/SnapshotDeepCopyTests.cs` is annotated `[Trait("Scope", "Contract")]` at class
-level, so every assertion in it binds any conforming Data Access Layer.
+`ProphetsWay.Example.Tests/SnapshotDeepCopyTests.cs` **was** annotated `[Trait("Scope", "Contract")]` at
+**class level**, so every assertion in it bound any conforming Data Access Layer.
 `Setup_UpdateNavigationInsideTransaction_TestRollBackRestoresIt` does this:
 
 ```csharp
@@ -2616,23 +2700,29 @@ relational DAL, not only this one.
 
 #### The decision — OD-6
 
-**The assertion is a `ProphetsWay.Example` defect.** It encodes a `NoDB` denormalization detail — the user row
+**The assertion was a `ProphetsWay.Example` defect.** It encoded a `NoDB` denormalization detail — the user row
 holding a deep copy of the company — as though it were a rule of the paradigm, and it was mis-scoped
 `Contract` when what it actually pins is a **characterization** of the in-memory implementation.
 
-The owner has authorized the **retrait to `Characterization`, in the `ProphetsWay.Example` repository**. A
-separate `Test Designer` pass is handling it there.
+The owner authorized the **retrait to `Characterization`, in the `ProphetsWay.Example` repository**, and
+**that retrait has landed.** `SnapshotDeepCopyTests` no longer carries a class-level `Scope` trait — it
+declares one per method, because xUnit accumulates traits rather than letting a method override a class — and
+the assertion above is now a `Characterization` fact named
+`ShouldReadANavigationPropertyEditBackInsideTheTransactionThatSubmittedIt`. A second retrait has since landed
+in `UserDaoTests.cs` on the same reasoning.
 
 | Option | Disposition |
 |---|---|
 | **`Update` writes the root only**, as A22 and A25 specify | **Chosen.** The design is coherent and unchanged; the conformance bar moves, because the bar was wrong |
 | **`Update` cascades into the reachable graph**, writing related rows | **Rejected.** `da.Update(user)` would silently rewrite `Company`, `Job` and `Department` rows a caller never named, and it contradicts OD-4's shape for `Insert` — leaving the two write members with opposite policies toward the same graph |
 
-**A dependency, stated rather than assumed.** Until that retrait lands, a conforming EF Core implementation of
-this design **will fail that one `Scope=Contract` test** when run against the Example suite. That is expected,
-it is a known defect in the suite rather than in the implementation, and it is the one place where "the suite
-is green" is not yet the right gate. **This document changes nothing in `ProphetsWay.Example` and proposes
-nothing there** — it records the decision and the dependency.
+**The dependency this section used to state is discharged.** A conforming EF Core implementation of this
+design is no longer required to fail anything in the Example suite: the assertion that bound it is
+`Characterization`, and **"the Example suite is green" is the right gate**, without qualification. Counted
+directly from the standalone repository rather than taken from a report: **162 tests — Contract 138,
+Characterization 4, Dispatcher 20 — green on `net10.0` and `net48`, 324 executions.** **This document changed
+nothing in `ProphetsWay.Example` and proposed nothing there** — it recorded the decision; the fix landed in
+that repository on its own terms.
 
 **What was never in doubt:** the other three `SnapshotDeepCopyTests` write-side setups —
 `Setup_CreateUserWithNavigation_TestInsertDoesNotAdoptItsNavigation`,
@@ -2959,22 +3049,35 @@ public IList<User> GetCreatedSince(DateTime cutoff)
 ### Keyless DAOs
 
 ```csharp
-// 2.2.x — two abstract methods, plus a third on the soft variant, all expressing "find this row"
-public class CompanyResourceDao : BaseNonIdDao<CompanyResource>
-{
-	public override CompanyResource Get(CompanyResource item)
-		=> Dataset.Single(x => x.CompanyId == item.CompanyId && x.ResourceId == item.ResourceId);
+// hree routes exist. All are legitimate; they observe different things — and the first two are not of equal
+fidelity, which an earlier revision obscured by listing them as one.**
 
+| Route | What it observes | Limit |
+|---|---|---|
+| **A `DbCommandInterceptor`** | The **command as sent to the provider** — final SQL text **and its `DbParameterCollection`**, as an object. Registered on the options the test's context is built from, so the Data Access Object under test is the real one | Captures a command, not a query object. An assertion is a string or parameter-collection assertion, and it must be written to tolerate provider formatting differences between the two legs |
+| **`DbContextOptionsBuilder.LogTo`** | The **formatted log text** of that same command | **Text only.** There is no `DbParameterCollection` to inspect, and parameter *values* are **redacted** unless `EnableSensitiveDataLogging()` is enabled on the options. Sufficient wherever the assertion is over SQL text — an `ORDER BY`, a join, a `COLLATE` clause, whether a command was issued at all — and **not** sufficient for the parameterization obligation |
+| **A test-only Data Access Object whose hook override captures the query it was handed and calls `ToQueryString()` on it** | The query **as composed up to that hook** — `ApplyReadFilter`, `ApplyIncludes` or `ApplyStableOrder` receives an `IQueryable<TEntity>`, and that is a real one | **Two limits, both real.** It observes the pipeline *only up to that hook*, so anything the member does afterwards — `Skip`/`Take`, `AsNoTracking`, the discard in `GetCount` — is invisible to it. And **it changes the Data Access Object under test**: the subject is now a DAO carrying an override, not the plain one |
+
+**Nine obligations below cite the "interceptor route." Eight are satisfiable by either of the first two;
+the parameterization obligation in [Key predicate](#key-predicate--the-riskiest-area-s4) names
+`DbCommandInterceptor` specifically, because it reads the parameter collection rather than the text.**
 	public override int Update(CompanyResource item) { /* … */ }
 }
 
-// 3.0.0 — one predicate hook, one ordering hook, and no IBaseDao unless you want it
-public class CompanyResourceDao : RootNonIdDao<CompanyResource>, ICompanyResourceDao
-{
-	protected override Expression<Func<CompanyResource, bool>> MatchRow(CompanyResource item)
-		=> x => x.CompanyId == item.CompanyId && x.ResourceId == item.ResourceId;
+// hree routes exist. All are legitimate; they observe different things, and the first two are not of equal
+fidelity — an earlier revision listed them as one row and that overstated the second.**
 
-	protected override IOrderedQueryable<CompanyResource> ApplyStableOrder(IQueryable<CompanyResource> query)
+| Route | What it observes | Limit |
+|---|---|---|
+| **A `DbCommandInterceptor`** | The **command as sent to the provider** — final SQL text **and its `DbParameterCollection`**, as an object. Registered on the options the test's context is built from, so the Data Access Object under test is the real one | Captures a command, not a query object. An assertion is a string or parameter-collection assertion, and it must tolerate provider formatting differences between the two legs |
+| **`DbContextOptionsBuilder.LogTo`** | The **formatted log text** of the same command | **Text only.** There is no `DbParameterCollection` to inspect, and parameter *values* are **redacted** unless `EnableSensitiveDataLogging()` is enabled on the options. Sufficient wherever the assertion is over SQL text — an `ORDER BY`, a join, a `COLLATE` clause, whether a command was issued at all — and **not** sufficient for the parameterization obligation, which is the one assertion below that names the interceptor specifically |
+| **A test-only Data Access Object whose hook override captures the query it was handed and calls `ToQueryString()` on it** | The query **as composed up to that hook** — `ApplyReadFilter`, `ApplyIncludes` or `ApplyStableOrder` receives an `IQueryable<TEntity>`, and that is a real one | **Two limits, both real.** It observes the pipeline *only up to that hook*, so anything the member does afterwards — `Skip`/`Take`, `AsNoTracking`, the discard in `GetCount` — is invisible to it. And **it changes the Data Access Object under test**: the subject is now a DAO carrying an override, not the plain one |
+
+**Nine obligations below cite the "interceptor route." Eight of them a`DbCommandInterceptor` specifically —
+	not `LogTo`**: the captured command's `DbParameterCollection` is non-empty and the key value appears in it
+	rather than inline in the SQL text. `LogTo` yields formatted text with no parameter collection, and redacts
+	the values without `EnableSensitiveDataLogging()`. This is also the one assertion the hook route cannot
+	make — parameterization is decided when the command protected override IOrderedQueryable<CompanyResource> ApplyStableOrder(IQueryable<CompanyResource> query)
 		=> query.OrderBy(x => x.CompanyId).ThenBy(x => x.ResourceId);
 }
 ```
@@ -2986,10 +3089,11 @@ public class CompanyResourceDao : RootNonIdDao<CompanyResource>, ICompanyResourc
 For `Test Designer`. Grouped to match the `Scope` trait partition in `ProphetsWay.Example.Tests`:
 **Contract** (any conforming DAL must pass), **Characterization** (choices this implementation makes),
 **Dispatcher** (the reflection convention, owned by `ProphetsWay.BaseDataAccess`).
-
-Per [D4](purpose-and-scope.md#owner-decisions--2026-08-15), everything below runs on **both** certified legs
-— SQLite in-memory and a SQL Server container. Several of these **cannot fail on SQLite and can on SQL
-Server**, which is the reason for the second leg.
+`DbCommandInterceptor` specifically —
+	not `LogTo`**: the captured command's `DbParameterCollection` is non-empty and the key value appears in it
+	rather than inline in the SQL text. `LogTo` yields formatted text with no parameter collection, and redacts
+	the values without `EnableSensitiveDataLogging()`. This is also the one assertion the hook route cannot make
+	— parameterization is decided when the command erver**, which is the reason for the second leg.
 
 ### Observing the generated SQL — the seam
 
@@ -3240,15 +3344,22 @@ company, job and department first, then hang them off the user.
 - [ ] **`Insert` inside a transaction, then roll back**: the detachment does not interfere — the row is gone,
 	the generated identifier is still on the caller's instance, and the related rows were never written and are
 	still there.
-- [ ] **A failed write leaves nothing tracked** (OD-7). `Insert` a row that violates a unique constraint and
-	let the provider's exception propagate; then, **through a different Data Access Object on the same context**,
-	perform a write that succeeds. Require that the failed row **does not appear** in the store afterwards. This
-	is the obligation OD-7 exists to create: under the Revision 5 rule the failed graph stayed tracked as
-	`Added` and the next successful `SaveChanges` carried it along.
-- [ ] **And the instance is still usable** (OD-7): after that failed `Insert`, fix the argument and call
-	`Insert` again **on the same Data Access Layer instance**. It succeeds. No dispose, no rebuild. Pair this
-	with the obligation above — the first pins that the discard happened, the second pins that the discard is
-	not a punishment.
+- [ ] **A failed write leaves nothing tracked** (OD-7). **The failure has to be a *removable* one, or the
+	assertion cannot be reached.** `Insert` a graph whose related entity names **no stored row** and let the
+	provider's referential-integrity exception propagate — the path the obligation four above already specifies.
+	Then insert the missing principal **through a different Data Access Object on the same context** and let that
+	`SaveChanges` run. Require that the failed dependent row **does not appear** in the store afterwards. Under
+	the Revision 5 rule the dependent stayed tracked as `Added`, the row it named now exists, and the second
+	`SaveChanges` carries it in — so *"the failed row appears"* is **directly assertable**, which is what makes
+	this obligation an observation rather than a hope. **A unique-constraint violation will not serve**: the
+	retained `Added` entity violates the *same* constraint on the next `SaveChanges`, so step two throws, the
+	stated assertion is never evaluated, and the test reports the wrong failure.
+- [ ] **And the instance is still usable** (OD-7): after that failed `Insert`, fix the argument — point it at a
+	principal that exists — and call `Insert` again **on the same Data Access Layer instance**. It succeeds. No
+	dispose, no rebuild. **This one discriminates nothing on its own and must not be credited with doing so**: on
+	a broken implementation the still-tracked `Added` entity is the same object the caller just fixed, so the
+	retry succeeds either way. It pins that the discard is not a punishment; the obligation above is the only one
+	of the pair that pins that the discard happened.
 - [ ] **A failed `Update` detaches its fetched row too** (OD-7): provoke a failure from `SaveChanges` on an
 	`Update`, then mutate the entity that `Update` fetched and trigger a `SaveChanges` through another Data
 	Access Object on the same context. Nothing reaches the store.
@@ -3263,14 +3374,13 @@ company, job and department first, then hang them off the user.
 	that includes `Company`, edit `user.Company.Name`, edit a scalar on the user itself, call `Update(user)`, and
 	require the **user's scalar written** and the **`Company` row unchanged** — re-read the company directly, not
 	through the user. This is `Scope=Contract`. It was blocked in Revision 5 and is **unblocked by
-	[OD-6](#owner-decisions-taken-during-revision-6)**, which settled the question in favor of root-only.
-	**Note for the author:** `SnapshotDeepCopyTests.Setup_UpdateNavigationInsideTransaction_TestRollBackRestoresIt`
-	asserts the *opposite* and is a defect in `ProphetsWay.Example` — mis-scoped `Contract` when it pins a `NoDB`
-	denormalization. Its retrait is authorized and is being handled in that repository. Do not mirror it here,
-	and expect that one Example test to fail until the retrait lands. See
-	[The `Update` cascade question](#the-update-cascade-question--resolved-by-od-6).
-
-### Snapshot and tracking
+	[OD-6](#owner-decisions-taken-during-revision-6)**, which settled the question in favor of root-only. S
+	**On the same instance, also set `CreatedDate` to a distinguishable wrong value and require the stored one
+	preserved.** A30 names `CreatedDate` as failing the same way and less visibly, and the general obligation
+	above is not a guard on it — that one, in A30's own words, can pass on an instance that happened to carry
+	the stored value, which is exactly what a round-tripped `CreatedDate` does. This is the guard on the
+	mechanism: `SetValues` copies every mapped scalar by name, so an implementation that does not exclude or
+	restore the three timestamps silently un-deletes the row and rewrites its creation time
 
 - [ ] Mutating an instance returned by `Get` / `GetAll` / `GetPaged` does not change stored data.
 - [ ] Mutating an argument **after** `Insert` / `Update` / `Delete` returns does not reach the store — including
@@ -3284,10 +3394,13 @@ company, job and department first, then hang them off the user.
       see [Navigation loading](#navigation-loading--od-1-a18) for the default-is-null obligation.
 - [ ] Conformance holds with the context configured as `TrackAll` **and** as `NoTracking` — the DAO must not
       depend on it.
-
-### Ordering and paging
-
-- [ ] `GetAll` and `GetPaged` return the same entities in the same order.
+**On
+	the same instance, also set `CreatedDate` to a distinguishable wrong value and require the stored one
+	preserved.** A30 names `CreatedDate` as failing the same way and less visibly, and the general obligation
+	above does not guard it: that one can pass on an instance that happened to carry the stored value, and
+	`CreatedDate` is the timestamp most likely to. This is the guard on the mechanism: `SetValues` copies every
+	mapped scalar by name, so an implementation that does not exclude or restore the three timestamps silently
+	un-deletes the row and rewrites its creation time.
 - [ ] Successive `GetPaged` windows partition the `GetAll` set with **no overlap and no omission**.
 - [ ] Ordering is stable across two calls with no writes between them.
 - [ ] A nullable or duplicate-capable key overrides `ApplyStableOrder` with a deterministic tie-breaker;
@@ -3497,7 +3610,7 @@ as unfinished work.
 | **A `bool useUtc` constructor parameter alongside `GetCurrentTimestamp()`** | **Rejected.** Two ways to set one policy, and the flag is the one that cannot express a test clock |
 | **`AsNoTrackingWithIdentityResolution()` on reads** | **Rejected.** It hands out a shared instance within a query, which the Example snapshot rule explicitly denies. See [the trap](#the-asnotrackingwithidentityresolution-trap) — it is the substitution most likely to be made in good faith, and no existing Example test would catch it |
 | **Cascading `Insert` into the argument's navigation graph** | **Rejected by [OD-4](#owner-decisions-taken-during-revision-5).** Related entities are read, never inserted: `DbContext.Add` would re-insert already-stored rows and overwrite the caller's keys with the duplicates'. See [Writes and the Navigation Graph](#writes-and-the-navigation-graph) |
-| **Cascading `Update` into the argument's navigation graph** | **Rejected by [OD-6](#owner-decisions-taken-during-revision-6).** `Update` writes the root's mapped scalars and nothing else. The one `Scope=Contract` assertion that required otherwise encodes a `NoDB` denormalization no normalized relational store can reproduce, and is being retraited `Characterization` **in `ProphetsWay.Example`** |
+| **Cascading `Update` into the argument's navigation graph** | **Rejected by [OD-6](#owner-decisions-taken-during-revision-6).** `Update` writes the root's mapped scalars and nothing else. The one `Scope=Contract` assertion that required otherwise encodes a `NoDB` denormalization no normalized relational store can reproduce, and **has been retraited `Characterization` in `ProphetsWay.Example`** |
 | **`DbContext.Attach` / `DbSet.Attach` for the reachable-graph walk** | **Rejected** (A24). It marks a **default-keyed** entity `Added` by its own heuristic, which re-introduces the duplicate insert OD-4 forbids against exactly the rows [OD-3](#owner-decisions-taken-during-revision-4) makes legal. The state is assigned explicitly instead, which is why the walk is specified by **state** and not by API |
 | **Leaving the change tracker as EF Core left it when `SaveChanges` throws** | **Rejected by [OD-7](#owner-decisions-taken-during-revision-6)**, reversing the rule Revision 5 wrote. A failed write's graph left tracked as `Added` is carried into the next successful `SaveChanges` on the shared context, and recovering would mean disposing and rebuilding the whole Data Access Layer. Detachment runs in a `finally`; the pending insert is discarded, and that is the intent |
 | **Repointing a navigation-only relationship through `Update`** | **Not supported** (A25). `SetValues` reads properties by name off the CLR type and a shadow foreign key has none. A Data Access Object that needs it writes a custom method; a consumer who declares the foreign key as a scalar removes the limitation from their own model |
@@ -3612,15 +3725,15 @@ Two items in this revision are reported for triage and **were not written into**
    [BaseDataAccess FR 1](../../ProphetsWay.BaseDataAccess/docs/feature-requests.md), the conformance-suite
    request.
 3. **A `Scope=Contract` assertion in `ProphetsWay.Example` that no relational Data Access Layer can satisfy —
-   now decided.**
-   `SnapshotDeepCopyTests.Setup_UpdateNavigationInsideTransaction_TestRollBackRestoresIt` requires an edit made
+   decided, and now fixed.**
+   `SnapshotDeepCopyTests.Setup_UpdateNavigationInsideTransaction_TestRollBackRestoresIt` required an edit made
    through `user.Company` and submitted via `Update(user)` to be readable back — which
    `ProphetsWay.Example.DataAccess.NoDB` delivers by storing the user's copy of the company **inside the user
    row**, a shape a foreign key cannot reproduce. **[OD-6](#owner-decisions-taken-during-revision-6) resolved
-   it**: the assertion belongs to the in-memory implementation rather than to the contract, and the owner has
-   authorized its retrait to `Characterization` **in `ProphetsWay.Example`**, where a separate `Test Designer`
-   pass is handling it. Two consequences for this agent: `ProphetsWay.Example`'s claim that the same suite
-   passes against both Data Access Layers is **materially affected** and may want an entry, and until the
-   retrait lands a conforming EF Core implementation **will fail that one test**. **Nothing in that repository
-   was edited or proposed by this document.** See
+   it**: the assertion belongs to the in-memory implementation rather than to the contract, and the owner
+   authorized its retrait to `Characterization` **in `ProphetsWay.Example`**. **That retrait has landed**, along
+   with a second one in `UserDaoTests.cs`; the suite is **162 tests — Contract 138, Characterization 4,
+   Dispatcher 20 — green on both legs**. One consequence remains for this agent: `ProphetsWay.Example`'s claim
+   that the same suite passes against both Data Access Layers is **materially affected** and may want an entry.
+   **Nothing in that repository was edited or proposed by this document.** See
    [The `Update` cascade question](#the-update-cascade-question--resolved-by-od-6).
