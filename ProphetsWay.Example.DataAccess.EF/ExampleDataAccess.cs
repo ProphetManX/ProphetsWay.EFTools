@@ -1,6 +1,4 @@
-﻿#if NET8_0_OR_GREATER
-using Microsoft.EntityFrameworkCore;
-#endif
+﻿using Microsoft.EntityFrameworkCore;
 
 using ProphetsWay.EFTools;
 using ProphetsWay.Example.DataAccess.EF.Daos;
@@ -11,7 +9,7 @@ using System.Collections.Generic;
 
 namespace ProphetsWay.Example.DataAccess.EF
 {
-	public class ExampleDataAccess : BaseEFDataAccess<ExampleContext, int>, IExampleDataAccess
+	public class ExampleDataAccess : BaseEFDataAccess<ExampleContext>, IExampleDataAccess
 	{
 		private readonly ICompanyDao _companyDao;
 		private readonly IJobDao _jobDao;
@@ -19,24 +17,40 @@ namespace ProphetsWay.Example.DataAccess.EF
 		private readonly IResourceDao _resourceDao;
 		private readonly ITransactionDao _transactionDao;
 
+		/// <summary>
+		/// Builds a SQL Server-backed context from a connection string and owns it.
+		/// </summary>
+		/// <remarks>
+		/// The provider is named here, in the consumer's own file — the library names none. A PostgreSQL
+		/// consumer writes <c>UseNpgsql</c>, a SQLite one <c>UseSqlite</c>, and neither needs anything from
+		/// <c>ProphetsWay.EFTools</c> to do it.
+		/// </remarks>
+		public ExampleDataAccess(string connectionString)
+			: this(new ExampleContext(new DbContextOptionsBuilder<ExampleContext>()
+				.UseSqlServer(connectionString)
+				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+				.Options), ContextOwnership.Owned)
+		{ }
 
+		/// <summary>
+		/// Builds a context from options the caller has already configured — provider included — and owns it.
+		/// </summary>
+		public ExampleDataAccess(DbContextOptions<ExampleContext> options)
+			: this(new ExampleContext(options), ContextOwnership.Owned)
+		{ }
 
-#if NET8_0_OR_GREATER
-		public ExampleDataAccess() : this(new DbContextOptionsBuilder<ExampleContext>().UseInMemoryDatabase(typeof(ExampleContext).Name).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
-#endif
+		/// <summary>
+		/// Takes a context someone else created and will dispose — a dependency-injection container, or a test
+		/// that configured its own in-memory database.
+		/// </summary>
+		public ExampleDataAccess(ExampleContext context)
+			: this(context, ContextOwnership.Borrowed)
+		{ }
 
-#if NET471 || NET48
-public ExampleDataAccess(string connectionString) : base(connectionString) {
-#endif
-
-#if NET8_0_OR_GREATER
-		
-		public ExampleDataAccess(string connectionString) : this(new DbContextOptionsBuilder<ExampleContext>().UseSqlServer(connectionString).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
-
-		public ExampleDataAccess(DbContextOptions options) : base(options)
+		private ExampleDataAccess(ExampleContext context, ContextOwnership ownership)
+			: base(context, ownership)
 		{
-#endif
-            _companyDao = new CompanyDao(Context);
+			_companyDao = new CompanyDao(Context);
 			_jobDao = new JobDao(Context);
 			_userDao = new UserDao(Context);
 			_resourceDao = new ResourceDao(Context);

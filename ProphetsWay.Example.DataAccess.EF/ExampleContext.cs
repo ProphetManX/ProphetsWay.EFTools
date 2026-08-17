@@ -1,61 +1,44 @@
-﻿#if NET8_0_OR_GREATER
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-#endif
-#if NET471 || NET48
-using System.Data.Entity;
-using System.Data.Entity.Migrations;
-#endif
+﻿using Microsoft.EntityFrameworkCore;
 using ProphetsWay.EFTools;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.Enums;
 
 namespace ProphetsWay.Example.DataAccess.EF
 {
+	/// <summary>
+	/// The Entity Framework Core context behind <see cref="ExampleDataAccess"/>.
+	/// </summary>
+	/// <remarks>
+	/// It names no database provider. Whoever builds the <see cref="DbContextOptions{TContext}"/> chooses one,
+	/// which is what lets a test point this context at an in-memory SQLite database it controls.
+	/// </remarks>
 	public class ExampleContext : BaseEFContext
 	{
-		public ExampleContext(string connectionString) : base(connectionString) { }
-
-#if NET8_0_OR_GREATER
+		/// <summary>
+		/// Initializes the context from options the caller has already configured, provider included.
+		/// </summary>
 		public ExampleContext(DbContextOptions<ExampleContext> options) : base(options) { }
-#endif
 
-        public DbSet<Company> Companies { get; set; }
+		public DbSet<Company> Companies { get; set; }
 		public DbSet<User> Users { get; set; }
 		public DbSet<Resource> Resources { get; set; }
 		public DbSet<Transaction> Transactions { get; set; }
 		public DbSet<Job> Jobs { get; set; }
 
-
-#if NET8_0_OR_GREATER
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			modelBuilder.Entity<User>().HasOne(x => x.Company).WithMany().HasForeignKey("CompanyId");
 			modelBuilder.Entity<User>().HasOne(x => x.Job).WithMany().HasForeignKey("JobId");
-			modelBuilder.Entity<User>().Property(x => x.RoleStr).HasConversion(x=> x.ToString(), x=> (Roles)System.Enum.Parse(typeof(Roles), x));
+			modelBuilder.Entity<User>().Property(x => x.RoleStr).HasConversion(x => x.ToString(), x => (Roles)System.Enum.Parse(typeof(Roles), x));
 
 			modelBuilder.Entity<Transaction>().HasOne(x => x.Company).WithMany().HasForeignKey("CompanyId");
 			modelBuilder.Entity<Transaction>().HasOne(x => x.User).WithMany().HasForeignKey("UserId");
-#endif
-
-#if NET471 || NET48
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
-		{		
-			modelBuilder.Entity<User>().HasOptional(x => x.Company).WithMany().Map(m => m.MapKey("CompanyId"));
-			modelBuilder.Entity<User>().HasOptional(x => x.Job).WithMany().Map(m => m.MapKey("JobId"));
-
-			modelBuilder.Entity<Transaction>().HasOptional(x => x.Company).WithMany().Map(m => m.MapKey("CompanyId"));
-			modelBuilder.Entity<Transaction>().HasOptional(x => x.User).WithMany().Map(m => m.MapKey("UserId"));
-#endif
 
 			modelBuilder.Entity<Company>().ToTable("Companies");
 			modelBuilder.Entity<Job>().ToTable("Jobs");
 			modelBuilder.Entity<Resource>().ToTable("Resources");
 			modelBuilder.Entity<Transaction>().ToTable("Transactions");
 			modelBuilder.Entity<User>().ToTable("Users");
-
 		}
-
-
 	}
 }

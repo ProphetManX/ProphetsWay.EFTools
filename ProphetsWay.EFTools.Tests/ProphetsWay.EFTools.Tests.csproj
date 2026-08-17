@@ -20,6 +20,11 @@
 	</PackageReference>
   </ItemGroup>
 
+  <!-- Relational provider for the SQLite in-memory certification leg; must not move into the library. -->
+  <ItemGroup>
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
+  </ItemGroup>
+
   <ItemGroup>
 	<ProjectReference Include="..\ProphetsWay.Example.DataAccess.EF\ProphetsWay.Example.DataAccess.EF.csproj" />
 	<ProjectReference Include="..\ProphetsWay.Example\ProphetsWay.Example.Tests\ProphetsWay.Example.Tests.csproj" />
