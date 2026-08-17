@@ -20,6 +20,14 @@ files while this pass ran. Every statement below about C# source is a reading ta
 cited to the file; re-open the file rather than trusting the sentence. No build or test was run — this
 agent has no command-execution tool — so **no compile outcome is claimed anywhere in this document**._
 
+_**Superseded on 2026-08-16 by a real build.** The paragraph above is retained as history of how this
+document was produced. **The owner ran `dotnet build ProphetsWay.EFTools.sln -c Debug` and it
+succeeded** — SDK 10.0.400, **7 warnings, 0 errors**. That is the first measured compile outcome in
+this repository since the submodule advance, and the statements it establishes are marked **observed
+in a build on 2026-08-16** wherever they appear below. They are the only claims here not derived from
+reading source. **No test was run** — there is nothing here to run — and a green compile is not
+conformance._
+
 ## One-Line Purpose
 
 The **published 2.2.0** package supplies EF6 and EF Core base classes that implement the repetitive CRUD,
@@ -85,9 +93,14 @@ repository and four come from the `ProphetsWay.Example` git submodule
 
 `ProphetsWay.Example` is a submodule at `path = ProphetsWay.Example`, tracking the standalone repository's
 `main` branch. It is not vendored and must not be edited from this repository
-([.gitmodules](../.gitmodules)). The extra `[submodule "Submod"]` declaration has no path or URL.
-**The pointer is at `d845863`** — read from `.git/modules/ProphetsWay.Example/HEAD` and corroborated by the
-checked-out tree, whose `app-variables.yml` reads `3` / `1` / `0`.
+([.gitmodules](../.gitmodules)). **The pointer is at `d845863`** — read from
+`.git/modules/ProphetsWay.Example/HEAD` and corroborated by the checked-out tree, whose
+`app-variables.yml` reads `3` / `1` / `0`.
+
+The second, malformed `[submodule "Submod"]` declaration this section previously recorded — `branch =
+main`, no `path`, no `url` — **cost more than the cosmetic nuisance it was filed as; see the Source
+Link note under Packaging Audit.** It is **absent from `.gitmodules` as read on 2026-08-16**;
+`Modernizer` owns that file and was removing it as this correction was written.
 
 ## Public API Surface
 
@@ -209,6 +222,31 @@ All source states above come from
 [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj). The README, changelog,
 and icon packing entries are correctly paired.
 
+### Source Link is off, and a malformed `.gitmodules` block was the proximate cause — observed in a build on 2026-08-16
+
+The owner's `dotnet build` emitted, **three times** — once each for `ProphetsWay.EFTools`,
+`ProphetsWay.Example.DataAccess.EF` and `ProphetsWay.EFTools.Tests`:
+
+```
+Microsoft.Build.Tasks.Git.targets(25,5): warning : The path of submodule 'Submod' is missing or invalid: ''.
+  The source code won't be available via Source Link.
+```
+
+The cause is the malformed `[submodule "Submod"]` block — `branch = main`, no `path`, no `url`.
+**The measured cost is that Source Link is disabled on a published package**: a consumer of
+`ProphetsWay.EFTools` cannot step into its source. This is recorded in `AGENTS.md` as **Deviation 7**,
+where it had been filed **Low / cosmetic** on reasoning; the build disproves that reading and the
+severity has been raised to **Medium**. The block is **absent from `.gitmodules` as read on
+2026-08-16** — `Modernizer` was removing it as this was written — but **no build has been run since,
+so the warning is not claimed to be gone.**
+
+**Removal is expected to stop the warning. It does not give the library Source Link.** The table
+above is unchanged on that point and must be read alongside this note: SourceLink is not referenced
+at all, and `PublishRepositoryUrl`, `EmbedUntrackedSources`, `IncludeSymbols`, `SymbolPackageFormat`
+and `ContinuousIntegrationBuild` are all absent — re-verified by opening
+[ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) on 2026-08-16.
+Source Link starts working when the proposed snippets below are applied, not when the block goes.
+
 **PROPOSED — not applied:** add or replace these values in the existing main `PropertyGroup`:
 
 ```xml
@@ -253,13 +291,13 @@ is implemented; writing future behavior into the current package metadata would 
   `ProphetsWay.Example.Tests` is `net48;net10.0`, so the single leg has a compatible asset
   ([ProphetsWay.EFTools.Tests.csproj](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj),
   [ProphetsWay.Example.Tests.csproj](../ProphetsWay.Example/ProphetsWay.Example.Tests/ProphetsWay.Example.Tests.csproj)).
-- **`ProphetsWay.Example.DataAccess.EF` is where the last recorded break was, and it is being closed as
-  this pass ran.** `ExampleDataAccess` declares `: BaseEFDataAccess<ExampleContext, int>,
-  IExampleDataAccess`, and at 3.1.0 that interface additionally aggregates `IDepartmentDao` and
-  `ICompanyResourceDao` and inherits `IDisposable`. Opening the file on 2026-08-16 shows member groups for
-  both DAOs present as **deliberately throwing "not written yet" stubs**, and `Dispose` inherited from
-  `BaseEFDataAccess`. `Implementer` owns this file and was editing it concurrently, so **no compile outcome
-  is claimed here**
+- **`ProphetsWay.Example.DataAccess.EF` held the last recorded break, and it is closed.**
+  `ExampleDataAccess` declares `: BaseEFDataAccess<ExampleContext, int>, IExampleDataAccess`, and at 3.1.0
+  that interface additionally aggregates `IDepartmentDao` and `ICompanyResourceDao` and inherits
+  `IDisposable`. Opening the file on 2026-08-16 shows member groups for both DAOs present as **deliberately
+  throwing "not written yet" stubs**, and `Dispose` inherited from `BaseEFDataAccess`. The sentence that
+  stood here declining to claim a compile outcome is **superseded \u2014 the project compiled in the 2026-08-16
+  build** (see below). It compiles; it does not conform
   ([ExampleDataAccess.cs](../ProphetsWay.Example.DataAccess.EF/ExampleDataAccess.cs),
   [IExampleDataAccess.cs](../ProphetsWay.Example/ProphetsWay.Example.DataAccess/IExampleDataAccess.cs)).
 - `Constants.cs` survives and still carries `#if` branches for `NET45`–`NETCOREAPP3_1`, `NET5_0` and
@@ -282,9 +320,32 @@ is implemented; writing future behavior into the current package metadata would 
   artifacts
   ([restore-build-test.yml](../../prophets-pipelines/steps/restore-build-test.yml),
   [ci-build.yml](../../prophets-pipelines/stages/ci-build.yml)).
-- No build or test command was run during this read-only grounding pass because this agent session has no
-  command-execution tool. The facts above describe checked-in configuration and test inventory, not a
-  claimed green local run.
+- **The solution builds — observed in a build on 2026-08-16.** `dotnet build ProphetsWay.EFTools.sln -c
+  Debug`, run by the owner, **succeeded**: SDK 10.0.400, **7 warnings, 0 errors**. Every project
+  compiled — `ProphetsWay.EFTools`, `ProphetsWay.Example.DataAccess.EF` and `ProphetsWay.EFTools.Tests`
+  on `net10.0`; the submodule's `ProphetsWay.Example.DataAccess` and `ProphetsWay.Example.DataAccess.NoDB`
+  on `netstandard2.0` and `net10.0`; `ProphetsWay.Example.Tests` on **both** `net48` and `net10.0`; and
+  `ProphetsWay.Example.Database` producing `ProphetsWay.Example.Database.dacpac`. This closes all three
+  breaks recorded as `AGENTS.md` Deviation 8. **It is a compile outcome and nothing more** — no test was
+  run, the new `ExampleDataAccess` DAO members are deliberately throwing stubs, and `ExampleContext`
+  maps neither new entity.
+- **Two facts the CI pipeline never exercises were measured by that build.** The SDK-style `.sqlproj`
+  **builds under the .NET CLI** — `HasSqlProj` is commented out in [app-variables.yml](../app-variables.yml)
+  and CI builds `**/*.csproj`, so CI has never proved this. And `ProphetsWay.Example.Tests` **compiled on
+  both legs**, which is what the upstream **164 tests / 328 executions** figure rests on.
+- **4 of the 7 warnings are upstream, not an EFTools defect.** Two per leg, both `xUnit1013` on the
+  submodule's `DepartmentDaoTests.cs`: `public static void EditEveryFieldAfterTheCall` (line 294) and
+  `public static void AssertEveryStampIsUtc` (line 1001) — both helpers carrying no test attribute, both
+  confirmed present and public by opening the file. They belong to `ProphetsWay.Example`; a `Test
+  Designer` fixes them **there**, never from this repository. **This verifies a claim that could not be
+  verified before:** `ProphetsWay.Example/docs/repo-profile.md` asserts "two `xUnit1013` warnings" and
+  annotates the count as taken from a `Modernizer` build and not re-measured. It is exactly two, and both
+  are now identified
+  ([DepartmentDaoTests.cs](../ProphetsWay.Example/ProphetsWay.Example.Tests/DepartmentDaoTests.cs)).
+  The remaining 3 warnings are the Source Link warning — see the Packaging Audit.
+- The rest of this document was produced with no command-execution tool and describes checked-in
+  configuration and test inventory. Apart from the four bullets above and the Source Link note, nothing
+  here is a measured result.
 
 ## Real Usage Examples Found
 
@@ -349,12 +410,13 @@ source, projects, and tests prove them:
 - ~~Delete the six test adapters~~ **— done 2026-08-16.** The Entity Framework conformance run they used to
   stand in for now waits on the upstream seam, per owner decision **D10**.
 
-**Whether the repository compiles was not verified by this pass** — this agent has no build tool, and both
-`Implementer` and `Modernizer` were editing concurrently. What was verified by opening the files: the break
-recorded earlier as `ExampleDataAccess` not satisfying `IExampleDataAccess` is being closed as this was
-written — the class now carries `IDepartmentDao` and `ICompanyResourceDao` member groups (deliberately
-throwing "not written yet" stubs) and inherits `Dispose` from `BaseEFDataAccess`. **Do not read that as a
-report of a green build.**
+**The repository compiles — observed in a build on 2026-08-16**, after this document's reading passes.
+The owner ran `dotnet build ProphetsWay.EFTools.sln -c Debug`; it succeeded with 7 warnings and 0
+errors on SDK 10.0.400. That closes the last recorded break — `ExampleDataAccess` now satisfies
+`IExampleDataAccess`, with `IDepartmentDao` and `ICompanyResourceDao` member groups present as
+deliberately throwing "not written yet" stubs and `Dispose` inherited from `BaseEFDataAccess`.
+**Read it as a compile outcome, not as progress on the redesign**: every item still marked *Not done*
+or *Not started* above is unaffected by it.
 
 This direction was supplied by the owner on 2026-08-15 and recorded as D1-D6 in
 [purpose-and-scope.md](purpose-and-scope.md#owner-decisions--2026-08-15). Current-state contrasts are verified in
@@ -382,7 +444,11 @@ This direction was supplied by the owner on 2026-08-15 and recorded as D1-D6 in
    'yes'` already skipped them and the project already did not compile — but the verification gap is now
    total and explicit rather than nominal.
 6. Packaging is functional but lacks homepage/tags, SourceLink, symbol-package, and explicit CI build
-   metadata.
+   metadata. **Source Link is measurably off, not merely unconfigured** — the 2026-08-16 build emitted the
+   `Submod` submodule-path warning three times, one per project, each ending "The source code won't be
+   available via Source Link." Removing the malformed block stops the warning; the library still has no
+   SourceLink package reference and none of the five related properties, so consumer source navigation
+   remains absent either way. See the Packaging Audit.
 7. XML documentation exists on the 18 key-specific leaf classes but not on the principal context, DAL,
    root bridge, or keyless public API.
 8. `docs/architecture.md`, per-project `docs/requirements.md`, and

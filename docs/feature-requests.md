@@ -42,22 +42,32 @@ here waits on the owner.** What entry 6 now waits on is *another repository* —
 [ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation)
 — which is a dependency, not an open question.
 
+**The repository builds green — 2026-08-16, and this supersedes every "does not compile" claim below.**
+`dotnet build ProphetsWay.EFTools.sln -c Debug` succeeded on SDK 10.0.400 with 7 warnings and every project
+compiling. This is the **first verified-green state since the submodule pointer advanced**, and it is what made
+this triage pass possible: entries 2, 3, 5 and 8 were previously asserted-but-unverified, and a compiling tree
+is the evidence they were waiting on. Sentences elsewhere in this file describing the repository as
+non-compiling were true when written and are **history**; they are marked where they appear rather than
+deleted. **A green build is not a passing suite** — this repository still contains no tests, by design, under
+**D10**.
+
 ## Index
 
 | # | Item | Status |
 | --- | --- | --- |
-| 1 | [Advance the `ProphetsWay.Example` submodule onto the 3.x contracts](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) | **Scheduled** — v3.0.0; **step 1 landed 2026-08-16, steps 2–6 outstanding**; the repository does not currently compile as a result |
-| 2 | [Move the `ProphetsWay.BaseDataAccess` reference from 2.5.0 to 3.1.0](#2--move-the-prophetswaybasedataaccess-reference-from-250-to-310) | **Scheduled** — v3.0.0 |
-| 3 | [Implement the 3.x disposal contract in `BaseEFDataAccess`](#3--implement-the-3x-disposal-contract-in-baseefdataaccess) | **Scheduled** — v3.0.0; carries open question **Q2** |
+| 1 | [Advance the `ProphetsWay.Example` submodule onto the 3.x contracts](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) | **Scheduled** — v3.0.0; **steps 1 and 3 landed 2026-08-16 and the tree now compiles**; steps 2, 4, 5 and 6 outstanding — step 2 is satisfied by throwing stubs, not by an implementation |
+| 2 | [Move the `ProphetsWay.BaseDataAccess` reference from 2.5.0 to 3.1.0](#2--move-the-prophetswaybasedataaccess-reference-from-250-to-310) | **Done** — 2026-08-16; both projects reference 3.1.0 and the solution compiles against it |
+| 3 | [Implement the 3.x disposal contract in `BaseEFDataAccess`](#3--implement-the-3x-disposal-contract-in-baseefdataaccess) | **Scheduled** — v3.0.0; **rescoped 2026-08-16**: `Dispose` has landed, and the entry now carries only the `ObjectDisposedException` guarding. **Q2 is superseded**, not open |
 | 4 | [Make 3.x Entity Framework Core-only — retire EF6 and .NET Framework](#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework) | **Scheduled** — v3.0.0; **approved by D1** |
 | 5 | [Retarget to the house TFM standard](#5--retarget-to-the-house-tfm-standard) | **Scheduled** — v3.0.0; unblocked by 4; destination settled by **D7** as **`net10.0` only** |
-| 6 | [Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory and `Scope` traits](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits) | **Scheduled** — v3.0.0; forced by 1; rescoped 2026-08-16 and **resolved to shape B the same day** — the six adapters are **deleted, not rebuilt**, and the entry now depends on **ProphetsWay.Example FR 13** |
+| 6 | [Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory and `Scope` traits](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits) | **Scheduled** — v3.0.0; forced by 1; rescoped 2026-08-16 and **resolved to shape B the same day**. The six adapters are **deleted** — verified 2026-08-16 — so this repository's half is done; the entry stays open on **ProphetsWay.Example FR 13**, which is **being implemented now** |
 | 7 | [Stop forcing a database provider on every consumer](#7--stop-forcing-a-database-provider-on-every-consumer) | **Scheduled** — v3.0.0; **approved by D2** |
-| 8 | [Remove `FluentAssertions` from `ProphetsWay.Example.DataAccess.EF`](#8--remove-fluentassertions-from-prophetswayexampledataaccessef) | **Scheduled** — v3.0.0; trivial, and **eligible to land ahead of the rest** — 2026-08-16 |
+| 8 | [Remove `FluentAssertions` from `ProphetsWay.Example.DataAccess.EF`](#8--remove-fluentassertions-from-prophetswayexampledataaccessef) | **Done** — 2026-08-16; the reference is gone and the licence exposure is closed |
 | 9 | [Delete the stray `[submodule "Submod"]` block from `.gitmodules`](#9--delete-the-stray-submodule-submod-block-from-gitmodules) | **Scheduled** — v3.0.0; trivial |
 | 10 | [Collapse the `Guid`/`Int`/`Long` DAO triplication](#10--collapse-the-guidintlong-dao-triplication) | **Scheduled** — v3.0.0; **approved by D3, reversing this file's recommendation** |
 | 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Scheduled** — v3.0.0 for the test work; **pipeline half Deferred** to its owner; **D8** makes the certification a public claim |
 | 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Scheduled** — v3.0.0, as a **release-note obligation only**; the 2.2.x patch is **Rejected** — triaged 2026-08-16 |
+| 13 | [The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | **Scheduled** — v3.0.0; filed 2026-08-16. Four contract-rule violations in `RootBaseSoftDao` and a structural mismatch in `BaseNonIdDao<T>`; constrains [entry 10](#10--collapse-the-guidintlong-dao-triplication) |
 
 Numbers are permanent. Entries are never renumbered and never removed —
 [purpose-and-scope.md](purpose-and-scope.md) cites entries by number, and a rejected entry is decision
@@ -72,18 +82,19 @@ independently breaking. `app-variables.yml` currently reads `Major: '2' / Minor:
 
 | # | Status | Eligible for v3.0.0? | Why |
 | --- | --- | --- | --- |
-| 1 | Scheduled | **Yes — and it is the gate; step 1 of it has landed** | Nothing else can be verified until the proving ground compiles against the 3.x contracts. **The pointer advanced on 2026-08-16 and the remaining steps did not, so the repository is currently non-compiling** — that is the gate held open, not a regression |
-| 2 | Scheduled | **Yes — required** | Without it the package advertises a contract it does not reference. This is what makes the release a 3.x |
-| 3 | Scheduled | **Yes — forced by 2** | The code does not compile against 3.1.0 without it |
+| 1 | Scheduled | **Yes — and it is the gate; steps 1 and 3 of it have landed** | Nothing else can be verified until the proving ground compiles against the 3.x contracts. **It now does** — the 2026-08-16 build is green — but step 2 was satisfied by throwing stubs rather than an implementation, so the gate is passed for *compilation* and not for *conformance* |
+| 2 | **Done** | **Landed 2026-08-16** | Both projects reference 3.1.0 and the solution compiles against it. This is what makes the release a 3.x |
+| 3 | Scheduled | **Yes — rescoped** | `Dispose` landed 2026-08-16; what remains is the `ObjectDisposedException` guarding on every other member, which the parent's dispatcher cannot supply |
 | 4 | Scheduled | **Yes — approved (D1)** | Only a major may drop targets, and this is the only major on the horizon |
 | 5 | Scheduled | **Yes — strictly after 4** | The `#if` conditions go with 4; the destination is **`net10.0` alone**, a ratified exception to the house standard — see **D7** |
 | 6 | Scheduled | **Yes — forced by 1** | The upstream base class it derives from no longer exists in that shape. **Rescoped 2026-08-16:** the deliverable is a suite that constructs the Entity Framework Data Access Layer itself, not a rebuilt set of adapters. **Resolved to shape B the same day** — so the deletion of the six adapters is in this release, while the *completion* of the entry additionally needs [ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation), whose design is deferred until Lap 1 |
 | 7 | Scheduled | **Yes — approved (D2), and only in a major** | Removing a transitive package reference is breaking. Postponing costs a second major |
-| 8 | Scheduled | **Yes — and it need not wait for the rest** | Trivial, isolated to a non-packaged project, no reason to wait. **It is a licence item rather than hygiene**, and the reference is statically verified unused, so removing it cannot break a build that the other entries have not already broken |
+| 8 | **Done** | **Landed 2026-08-16** | Trivial, isolated to a non-packaged project, and it did not wait for the rest — exactly as "eligible to land ahead" anticipated. **It was a licence item rather than hygiene**, and that exposure is now closed |
 | 9 | Scheduled | **Yes** | Trivial, no build impact |
 | 10 | Scheduled | **Yes — approved (D3)** | A breaking surface change is cheapest riding a major that is already breaking for four other reasons |
 | 11 | Scheduled (test work) / Deferred (pipeline) | **Yes for the suite; the `LocalTestsOnly` removal is separately owned** | The contract cannot be *verified* without it; the CI plumbing is not this repository's decision alone |
 | 12 | Scheduled (release note) / Rejected (2.2.x patch) | **Already, incidentally** | Nothing to schedule in code: the 3.x design removes the members that carry the defect. What **is** scheduled is the release-note obligation — the entry exists so the fix is *named* in the notes rather than shipping as an unannounced side effect. Triaged 2026-08-16 |
+| 13 | Scheduled | **Yes — it is a precondition of 10, not a sibling of it** | The 3.x DAO families cannot be a re-wrap of `RootBaseSoftDao`; its `Update` and `Delete` semantics violate four of `IDepartmentDao`'s rules today. Filed 2026-08-16 |
 
 **The honest answer is that this is one indivisible release.** Entries 1–3 and 6 cannot be separated
 without leaving the repository in a non-compiling state, and 4, 5, 7 and 10 are each cheap *now* and
@@ -102,12 +113,15 @@ the EF6 answer, and it should receive no new work — see [entry 4](#4--make-3x-
 [ProphetsWay.Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md), where it is recorded as the
 highest-consequence open item in that repository. **The work is entirely in this one.**
 
-**Partially landed — 2026-08-16.** Step 1 of six is done and the entry stays `Scheduled` because the other
-five are not. It is deliberately **not** `Done`: the pointer move on its own delivers none of this entry's
-value and costs the repository its build. Re-verified this date by opening
+**Partially landed — 2026-08-16.** Steps 1 and 3 of six are done, step 2 is done only to the extent of making
+the compiler happy, and the entry stays `Scheduled` because the rest are not. It is deliberately **not**
+`Done`: **the tree now compiles — `dotnet build ProphetsWay.EFTools.sln -c Debug` was green on this date — and
+compiling is not conforming.** The sentence this paragraph replaced said the pointer move "costs the
+repository its build"; that was true when written and is now history. Re-verified this date by opening
 `.git/modules/ProphetsWay.Example/HEAD`, `ProphetsWay.EFTools.Tests/` (which now holds only `Constants.cs`
-and its `.csproj`), `ProphetsWay.EFTools.Tests.csproj`, `ProphetsWay.Example.DataAccess.EF.csproj` and
-`ProphetsWay.Example/ProphetsWay.Example.DataAccess/IExampleDataAccess.cs`.
+and its `.csproj`), `ProphetsWay.EFTools.Tests.csproj`, `ProphetsWay.Example.DataAccess.EF.csproj`,
+`ProphetsWay.Example.DataAccess.EF/ExampleContext.cs`, `ProphetsWay.Example.DataAccess.EF/ExampleDataAccess.cs`
+and `ProphetsWay.Example/ProphetsWay.Example.DataAccess/IExampleDataAccess.cs`.
 
 ### The situation, verified rather than inherited
 
@@ -162,13 +176,17 @@ it is this entry's mid-flight state and not a regression. Three independent brea
    [entry 6](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits). The project now
    contains no tests, which is the intended temporary state under **D10**, not a loss: the 35 upstream
    facts are parked awaiting the seam.
-3. **`ExampleDataAccess` no longer satisfies `IExampleDataAccess`. — STILL OPEN, and now the only break.**
+3. **`ExampleDataAccess` no longer satisfies `IExampleDataAccess`. — CLOSED 2026-08-16, and read the closure
+   carefully.**
    At 3.1.0 that interface aggregates `IDepartmentDao` and `ICompanyResourceDao` and inherits `IDisposable`
    — verified by opening
    `ProphetsWay.Example/ProphetsWay.Example.DataAccess/IExampleDataAccess.cs`, whose declaration reads
    `: IBaseDataAccess, ICompanyDao, IJobDao, IUserDao, ITransactionDao, IResourceDao, IDepartmentDao, ICompanyResourceDao`.
-   `ProphetsWay.Example.DataAccess.EF/ExampleDataAccess.cs` supplies none of the three. Resolved by steps 2
-   and 3 below.
+   **`ExampleDataAccess.cs` now supplies all three**, but it supplies the two new DAO groups as **11 members
+   that throw `NotImplementedException`** — verified by searching the project for `NotWrittenYet`, which
+   matches 12 times in that one file: eight `IDepartmentDao` members, three `ICompanyResourceDao` members,
+   and the helper itself. `Dispose` is inherited from `BaseEFDataAccess`. **The break is closed; step 2 below
+   is not.**
 
 ### The work
 
@@ -182,11 +200,33 @@ it is this entry's mid-flight state and not a regression. Three independent brea
    `d845863`. **This is the only step of this entry that has landed**, and steps 2–6 not landing with it is
    what leaves the repository non-compiling.
 2. Add `Department` and `CompanyResource` — entities, `I*Dao` implementations, EF mappings in
-   `ExampleContext`, and the schema they need. **Now a build break rather than a gap:** `ExampleDataAccess`
-   does not satisfy the interface it declares.
+   `ExampleContext`, and the schema they need. **No longer a build break, and no longer close to done:** the
+   11 throwing stubs satisfy the compiler and nothing else.
+
+   **The mapping half has not been started at all, and it is sharper than it looks — verified 2026-08-16 by
+   opening [ExampleContext.cs](../ProphetsWay.Example.DataAccess.EF/ExampleContext.cs).** That file declares
+   five `DbSet<>` properties — `Company`, `User`, `Resource`, `Transaction`, `Job` — and `OnModelCreating`
+   calls `ToTable` for the same five. **There is no `DbSet<Department>`, no `DbSet<CompanyResource>`, and no
+   mapping for either.**
+
+   Two consequences worth having written down before anyone starts:
+
+   - **Model building will fail at runtime the moment anything materializes the model.** Nothing does yet,
+     because every member that would touch those two entities throws first. The throwing stubs are therefore
+     *hiding* this, not fixing it, and the first real implementation of any one of the 11 members surfaces it.
+   - **`CompanyResource` is keyless, and EF Core forces a choice the contract has already made.** Per
+     `ICompanyResourceDao` rule 1 a row is identified by the `CompanyId`/`ResourceId` pair. EF Core needs
+     either an explicit composite `HasKey(x => new { x.CompanyId, x.ResourceId })` or `HasNoKey()` — and
+     **`HasNoKey()` makes the entity read-only, which forbids the `Insert` and `Delete` that rules 3 and 4
+     require.** The composite key is therefore the only viable mapping. "Keyless" in this contract means *no
+     surrogate identifier property on the entity*, not *no primary key in the store*; the database project's
+     `CompanyResources.sql` already carries the composite primary key. Do not read `IBaseEntity` as an
+     instruction to reach for `HasNoKey`.
 3. Implement `Dispose` and the three transaction members against the real `DbContext` — which is
    [entry 3](#3--implement-the-3x-disposal-contract-in-baseefdataaccess) in the library and its
-   consequence here. **Also now a build break**, for the same reason.
+   consequence here. **Landed 2026-08-16** at the library level: `BaseEFDataAccess` now carries `Dispose`,
+   and the three transaction members were already forwarders. What entry 3 still owes is the
+   `ObjectDisposedException` guarding, not the disposal itself.
 4. Satisfy the **snapshot rule** — reads return deep snapshots, writes read their argument. EF Core's
    change tracker makes this the interesting one: the existing examples already set
    `QueryTrackingBehavior.NoTracking`, which is a start and not a proof.
@@ -194,7 +234,10 @@ it is this entry's mid-flight state and not a regression. Three independent brea
    `RootDao.GetPaged` already orders by `Id`; **`RootDao.GetAll` does not** — it is
    `Dataset.ToList()`. [repo-profile.md](repo-profile.md) adds a third case this entry had missed:
    **soft-delete paging in `RootBaseSoftDao` is not explicitly ordered either.** All three are divergences
-   the rule was written to catch, and all three are in the library, not the example.
+   the rule was written to catch, and all three are in the library, not the example. **`RootBaseSoftDao` has
+   since been found to violate four of `IDepartmentDao`'s rules besides this one — see
+   [entry 13](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) before
+   implementing the `Department` half of step 2.**
 6. Run `dotnet test --filter "Scope=Contract"` and report the result.
 
 ### Why this is the gate
@@ -224,20 +267,27 @@ approved work with its own scope rather than a question downstream of
 
 ## 2 — Move the `ProphetsWay.BaseDataAccess` reference from 2.5.0 to 3.1.0
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15, by owner decision
-[D6](purpose-and-scope.md#owner-decisions--2026-08-15). Previously `Proposed`. A one-line edit with the
+**Status:** **Done — 2026-08-16.** Previously `Scheduled for v3.0.0` (2026-08-15, owner decision
+[D6](purpose-and-scope.md#owner-decisions--2026-08-15)), and `Proposed` before that. A one-line edit with the
 largest consequence in the file.
 
-**Landed — 2026-08-16. The status line above is untouched; only the facts below are.**
+**Why `Done` rather than `Scheduled` until v3.0.0 ships.** The entry's deliverable is a reference version, and
+the reference is at 3.1.0 in both projects. What made this triageable today rather than a week ago is that the
+solution now **compiles against 3.1.0** — a version bump that does not build is a claim, not a change, and the
+verified-green build of 2026-08-16 is the evidence this entry was waiting on. The release it rides in is a
+separate fact, recorded in [Release Eligibility](#release-eligibility--the-next-release); an entry is not held
+open for the act of shipping.
+
+**Landed — 2026-08-16.**
 [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) and
 [ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj)
-**now both reference `ProphetsWay.BaseDataAccess` 3.1.0** — verified by opening both files. The sentence
-this paragraph replaced said they were on **2.5.0**, which was true when written. Whether the entry is
-therefore `Done` is `Purpose Refiner`'s call, not this agent's.
+**now both reference `ProphetsWay.BaseDataAccess` 3.1.0** — re-verified by opening both files on 2026-08-16.
+The sentence this paragraph replaced said they were on **2.5.0**, which was true when written.
 
 **This is not a version-hygiene item.** A library whose stated purpose is "implements the
 `ProphetsWay.BaseDataAccess` contracts" and which references a superseded major is not implementing the
-contracts it advertises. The README's paradigm claim is currently a statement about 2.x.
+contracts it advertises. The README's paradigm claim was, until this landed, a statement about 2.x — and it
+remains one **for the published package**, which is still 2.2.0 carrying 2.5.0. Only the tree has moved.
 
 What 3.0.0 changed that lands directly on this package:
 
@@ -257,17 +307,53 @@ What 3.0.0 changed that lands directly on this package:
 `ProphetsWay.BaseDataAccess` 3.1.0 whether they asked for it or not, and their own DAL must now supply
 `Dispose`. This is the single strongest reason the next release must be a major.
 
-**Do not split this from entry 3.** Landing it alone leaves the repository non-compiling.
+**Do not split this from entry 3.** Landing it alone leaves the repository non-compiling. **In the event it
+was not split** — both landed on 2026-08-16 and the tree compiles, which is the outcome this warning existed
+to obtain. Retained as the reason, not as an outstanding instruction.
 
 ---
 
 ## 3 — Implement the 3.x disposal contract in `BaseEFDataAccess`
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15, by owner decision
-[D6](purpose-and-scope.md#owner-decisions--2026-08-15). Previously `Proposed`. Mechanically forced by
-[entry 2](#2--move-the-prophetswaybasedataaccess-reference-from-250-to-310); the **design** is a genuine
-open question and the reason this is its own entry rather than a line in that one. Scheduling the entry
-does not answer the design question — see [the open questions](#open-questions-for-the-owner) below.
+**Status:** **Scheduled for v3.0.0, and rescoped 2026-08-16.** Scheduled 2026-08-15 by owner decision
+[D6](purpose-and-scope.md#owner-decisions--2026-08-15); previously `Proposed`.
+
+### The rescope — 2026-08-16, and read this before reading the rest of the entry
+
+**Half of this entry has landed and the other half has not, and the halves are not the ones the entry was
+written around.** Verified by opening
+[BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs) on this date.
+
+| Deliverable | State |
+|---|---|
+| `Dispose` exists, is idempotent, never throws, rolls back an open transaction, disposes the context it created | **Landed** — `public override void Dispose()` reads `_disposed`, returns early, rolls back `Context.Database.CurrentTransaction` inside a swallowing `try`/`catch`, then disposes the context in a second one |
+| **Every member other than `Dispose` throws `ObjectDisposedException` once disposed** | **Outstanding — this is now the whole of the entry** |
+| Ownership flag distinguishing a created context from an injected one | **Superseded** by `docs/api-contract.md`'s `ContextOwnership` enum (A9). Not this entry's to re-decide |
+
+**The remaining half is not a detail, and it is not covered anywhere else.** `IBaseDataAccess` requires that
+*every* member other than `Dispose` throw `ObjectDisposedException` once the instance is disposed.
+`_disposed` is **set and never read outside `Dispose` itself** — so a disposed `BaseEFDataAccess` currently
+fails the contract on **seven** members, not one:
+
+- the three transaction members overridden here — `TransactionStart`, `TransactionCommit`,
+  `TransactionRollBack` — which reach a disposed `Context.Database` and surface whatever EF Core throws;
+- the four concrete dispatcher members inherited from `BaseDataAccess` — `GetAll<T>`, `GetPaged<T>`,
+  `GetCount<T>` and `Get<T>` — verified by opening
+  [BaseDataAccess.cs](../../ProphetsWay.BaseDataAccess/ProphetsWay.BaseDataAccess/BaseDataAccess.cs), where
+  each is `public virtual` and reflects onto the derived class with no disposal state to consult.
+
+**The parent cannot supply this guard and it is not an oversight there.** `BaseDataAccess` holds no
+connection, context or disposal state — its own `<summary>` on `Dispose` says exactly that, which is why the
+member is abstract. The guard has to live here. That answers open question 2 below on the evidence rather
+than leaving it open, and the design question it asks — *guard here or in the parent* — has only one
+answer available.
+
+**A green build says nothing about this.** The 2026-08-16 build compiles; nothing in this repository executes
+a disposed instance, because there is no test suite (entry 6). The gap is invisible until either the upstream
+suite runs against this Data Access Layer or a consumer meets it.
+
+**Q2 is superseded, not open** — see the note at the foot of this entry. The entry's remaining scope is one
+sentence: **guard the seven members.**
 
 ### The mechanical part
 
@@ -307,14 +393,19 @@ behaviour is the expensive order.
 
 ### Open questions for the owner
 
-1. **Still open (Q2).** Does v3.0.0 add a `DbContext`-accepting constructor, or only prepare for one?
-   Owner decision [D2](purpose-and-scope.md#owner-decisions--2026-08-15) makes this *more* pressing, not
+1. **Superseded (Q2).** Does v3.0.0 add a `DbContext`-accepting constructor, or only prepare for one?
+   Owner decision [D2](purpose-and-scope.md#owner-decisions--2026-08-15) made this *more* pressing, not
    less: now that the consumer configures the provider themselves through `DbContextOptions`, the distance
    between "you pass options" and "you pass the context" is one step, and a DI-hosted consumer will ask for
-   that step.
-2. **Still open.** Should `ObjectDisposedException` guarding be added to the three transaction members, or
-   is the parent's dispatcher expected to guard? The parent holds no state and cannot; the guard has to be
+   that step. **`docs/api-contract.md` settles it as the `ContextOwnership` enum (A9)** — a required
+   constructor argument with no default, plus a sealed `Dispose`. Read that document; do not re-decide it
    here.
+2. **Answered, 2026-08-16 — and it is not a question, it is the entry's remaining work.** Should
+   `ObjectDisposedException` guarding be added here, or is the parent's dispatcher expected to guard? **Here.**
+   The parent holds no state and cannot — confirmed by opening `BaseDataAccess.cs`, whose `Dispose` is
+   abstract for precisely that reason. The scope is **seven members**, not the three transaction members this
+   line originally named: the four concrete dispatcher members inherited from `BaseDataAccess` are equally
+   bound by the contract and equally unguarded. See [The rescope](#the-rescope--2026-08-16-and-read-this-before-reading-the-rest-of-the-entry).
 ### Appended 2026-08-15 — this is a shipped defect, not only a forward-compatibility gap
 
 The framing above reads as *"3.1.0 will require a `Dispose` we do not have yet."* That understates it.
@@ -329,10 +420,10 @@ of any 3.x contract, and that half of this note remains true for as long as 2.2.
 > flag and returns early when already set, rolls back `Context.Database.CurrentTransaction` inside a
 > `try`/`catch` that swallows the failure, then disposes the context in a second guarded `try`/`catch`, with
 > `<remarks>` stating that the context is disposed because both constructors construct it. **The published
-> package is unchanged; the working tree is not.** `_disposed` is set but not yet consulted by the three
-> transaction members, so the second open question below — `ObjectDisposedException` guarding — is still
-> open on the evidence of the file. **Status untouched:** whether this makes the entry `Done` is
-> `Purpose Refiner`'s call.
+> package is unchanged; the working tree is not.** `_disposed` is set but **never read outside `Dispose`**, so
+> the second open question below is not merely still open — it is now the entirety of what this entry owes.
+> **Status rescoped rather than closed**, 2026-08-16: see
+> [The rescope](#the-rescope--2026-08-16-and-read-this-before-reading-the-rest-of-the-entry).
 
 Two consequences:
 
@@ -614,11 +705,18 @@ class`, a static class cannot declare a `protected` member, and a static method 
 
 ### What has landed — 2026-08-16
 
-**The deletion half of this entry is done. The status line is untouched** — only `Purpose Refiner` triages,
-and the entry cannot be `Done` while its second deliverable waits on another repository.
+**The deletion half of this entry is done, and it is re-verified rather than inherited. The status line is
+untouched** — the entry cannot be `Done` while its second deliverable waits on another repository.
 
-Verified by listing `ProphetsWay.EFTools.Tests/`: it now contains **`Constants.cs` and
-`ProphetsWay.EFTools.Tests.csproj`, and nothing else.** The six adapters are gone.
+Re-verified 2026-08-16 by listing `ProphetsWay.EFTools.Tests/`: it contains **`Constants.cs`,
+`ProphetsWay.EFTools.Tests.csproj`, and build output. The six adapters are gone.**
+
+**The upstream dependency is now in flight rather than merely scheduled — 2026-08-16.**
+[ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation)
+is being implemented by an `Interface Architect` as this is written. **It is not done, and this entry must not
+be advanced on the strength of it** — the seam is unverified, and one constraint that emerged during its
+design lands directly here: **a per-class virtual hook is rejected**, on the grounds that it recreates the six
+adapter classes deleted above. Whatever shape the seam takes, this repository does not get its adapters back.
 
 Three things worth stating plainly, because a future reader will otherwise read "a test project with no
 tests" as damage:
@@ -639,8 +737,8 @@ rather than removes it. This entry now has an explicit cross-repository dependen
 |---|---|---|
 | ~~Deleting the six adapters~~ | **Here** | **Done 2026-08-16** |
 | Deleting the dead `#if` branches in `Constants.cs` | **Here** | Nothing — still outstanding; `Implementer`'s file |
-| A run of the upstream suite against the Entity Framework Data Access Layer | **Here**, once the seam exists | **[ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation)** — `Scheduled`, design deferred until Lap 1 |
-| The seam itself | **`ProphetsWay.Example`** — never edited from this side | Lap 1 showing what it must carry |
+| A run of the upstream suite against the Entity Framework Data Access Layer | **Here**, once the seam exists | **[ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation)** — `Scheduled`, **implementation begun 2026-08-16**, unverified |
+| The seam itself | **`ProphetsWay.Example`** — never edited from this side | In flight as of 2026-08-16 |
 
 What the rebuilt suite gains, and why it is worth having rather than merely unavoidable:
 
@@ -761,10 +859,20 @@ it belong to `Modernizer` and `README Author`.
 
 ## 8 — Remove `FluentAssertions` from `ProphetsWay.Example.DataAccess.EF`
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15, by owner decision
-[D6](purpose-and-scope.md#owner-decisions--2026-08-15). Trivial, isolated, and should not wait for
-anything. **Re-triaged 2026-08-16 — status unchanged, sequencing sharpened; see
-[Why it stays Scheduled](#why-it-stays-scheduled-rather-than-moving--2026-08-16).**
+**Status:** **Done — 2026-08-16.** Previously `Scheduled for v3.0.0` (2026-08-15, owner decision
+[D6](purpose-and-scope.md#owner-decisions--2026-08-15)). Trivial, isolated, and it did not wait — which is
+exactly what the sequencing analysis below predicted.
+
+**Re-verified before the status moved**, not affirmed:
+[ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj)
+was opened on 2026-08-16 and contains no `FluentAssertions` line. Its `PackageReference` entries are
+`Microsoft.EntityFrameworkCore`, `Microsoft.EntityFrameworkCore.SqlServer` and
+`ProphetsWay.BaseDataAccess` 3.1.0, and nothing else. **The licence exposure is closed.**
+
+**Why `Done` and not held to the release.** The entry's own reasoning below establishes that there was nothing
+to *ship* — the project is not packaged and reaches no consumer — so the only meaningful state was "is the
+reference in the file." It is not. Holding it open until v3.0.0 would keep an entry alive to track a file that
+no longer contains the thing it tracks.
 
 [ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj)
 carried `<PackageReference Include="FluentAssertions" Version="8.2.0" />`. Two independent problems:
@@ -785,15 +893,20 @@ actually uses it. If something does, that code is the real finding.
 returns **no match**. Every other hit is the `PackageReference` itself or a `bin`/`obj` build artefact.
 There is no "real finding" behind it; it is an unused reference and nothing more.
 
-### Why it stays Scheduled rather than moving — 2026-08-16
+### Why it stayed Scheduled at the time — 2026-08-16, superseded later the same day
+
+Retained because the sequencing argument is the durable part and it turned out to be right. The heading
+previously read "Why it stays Scheduled rather than moving"; the entry is now `Done`, and a heading that
+contradicts its own status line is the defect this pass exists to remove.
 
 The question put was whether the paid-licence exposure on an unused reference should move this out of
-v3.0.0 and into something sooner. **It should not move status, but its sequencing claim needs correcting.**
+v3.0.0 and into something sooner. **It should not have moved status *then*, but its sequencing claim needed
+correcting.**
 
-- **Status stays `Scheduled` for v3.0.0.** Nothing about it has changed: the work is a one-line `.csproj`
+- **Status stayed `Scheduled` for v3.0.0.** Nothing about it had changed: the work is a one-line `.csproj`
   deletion owned by `Modernizer`, and v3.0.0 is the release it lands in. Moving it to a separate release
-  would mean cutting a 2.2.x patch to remove a reference from a project that is **not packaged and not
-  published**, which reaches no consumer at all. There is nothing to ship.
+  would have meant cutting a 2.2.x patch to remove a reference from a project that is **not packaged and not
+  published**, which reaches no consumer at all. There was nothing to ship.
 - **Its "should not wait for anything" is currently false, and that is worth saying.** It *is* waiting —
   not on priority but on the absence of any green baseline, since the repository does not compile while
   [entry 1](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) is mid-flight.
@@ -818,10 +931,9 @@ on that date: it contains no `FluentAssertions` line, and its only `PackageRefer
 Core packages and `ProphetsWay.BaseDataAccess`. **The substance of this entry is satisfied and the licence
 exposure is closed.**
 
-**The status line is untouched, and this is the one place in this file where that most needs saying.** The
+**The status line has moved, and this is the one place in this file where that most needs saying.** The
 entry above reasons at length about *when* this should land relative to v3.0.0 — and it landed early, exactly
-as "eligible to land ahead of the rest" anticipated. Whether that makes the entry `Done`, or whether it stays
-`Scheduled` until v3.0.0 actually ships, is a triage question. **Only `Purpose Refiner` may answer it.**
+as "eligible to land ahead of the rest" anticipated. **Triaged `Done` on 2026-08-16.**
 
 ---
 
@@ -912,6 +1024,13 @@ Preserved in full. The middle one is the one that failed.
 
 These are the conditions under which D3's "no compatibility wrappers" holds. If one of them cannot be met,
 that is the implementation evidence that reopens the question — not a preference.
+
+**Added 2026-08-16 — the collapse is not a re-wrap, and this is the most load-bearing constraint on it.**
+`RootBaseSoftDao` violates four of `IDepartmentDao`'s 19 rules and `BaseNonIdDao<T>` structurally cannot
+serve `ICompanyResourceDao`. The six generic families this entry creates must therefore **fix `Update` and
+`Delete` semantics**, not close over the existing bases with a new type parameter list. The evidence is
+[entry 13](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance); read it
+before designing the families.
 
 - **The `Get` predicate must remain translatable to SQL.** Use the `x.Id.Equals(item.Id)` form already
   proven in `RootDao.Update`, **not** `EqualityComparer<TKey>.Default`, which EF Core cannot translate.
@@ -1054,7 +1173,12 @@ No existing test would catch it: the 35 upstream tests exercise no nested or pre
 and nothing in this repository runs them — `LocalTestsOnly: 'yes'` skipped them in CI even before the six
 adapters that reached them were deleted on 2026-08-16.
 
-### Why it is `Proposed` rather than `Scheduled`
+### Why there is nothing to schedule in code
+
+**The heading here previously read "Why it is `Proposed` rather than `Scheduled`", which contradicted this
+entry's own status line. Corrected 2026-08-16.** The entry has not been `Proposed` since it was triaged
+earlier that day; it is `Scheduled` as a release-note obligation with the 2.2.x patch `Rejected`. Nothing
+about the reasoning below changed — only the heading, which had survived the triage that made it false.
 
 **3.x designs the defect out rather than fixing it.** Under `docs/api-contract.md`, Data Access Objects carry
 no transaction members at all — transactions live on the DAL root, every misuse throws rather than returning
@@ -1065,7 +1189,11 @@ contract carries a regression obligation for it.
 
 So there is nothing to schedule for v3.0.0 — the code is deleted. What needs a decision is narrower:
 
-### The open question
+### The open question — decided, and retained because the owner may overrule
+
+**Decided 2026-08-16: no patch.** The heading is kept because the question is a real one and the owner is
+entitled to reopen it; it is no longer *open* in the sense of blocking anything, and the status line records
+the decision rather than a pending choice.
 
 **Does the 2.2.x line get a patch?** Entry 4 says that line's continuing job is to be the EF6 answer and it
 should receive no new work. That is a reasonable rule and this is a reasonable exception to test it against —
@@ -1082,3 +1210,112 @@ this repository has decided to stop developing.
 Found by `Repo Analyst` reading the shipped source during a verification pass; confirmed independently by
 `Contract Reviewer` against the same file while checking that the 3.x design could not reproduce it. Neither
 agent inherited the claim — both opened `RootNonIdDao.cs`.
+
+---
+
+## 13 — The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance
+
+**Status:** **Scheduled for v3.0.0** — filed and triaged 2026-08-16. Scheduled rather than `Proposed` because
+it requires no scope decision: [entry 10](#10--collapse-the-guidintlong-dao-triplication) is already approved
+and already rewrites these types, and this entry is the specification of *what the rewrite must change*. It
+is filed separately from entry 10 because entry 10 is a **surface** change (18 classes → 6 generic families)
+and this is a **semantic** one, and conflating them is precisely the mistake it exists to prevent.
+
+**"Just inherit the existing soft base" is a trap.** That is the whole entry in one sentence. Anyone
+implementing `IDepartmentDao` or `ICompanyResourceDao` in `ProphetsWay.Example.DataAccess.EF` — which is step
+2 of [entry 1](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) — will reach for
+`Guid/Int/Long.BaseSoftDao` and `BaseNonIdDao<T>` because they are the types that exist and the names match.
+They do not satisfy the contracts, and the ways they fail are quiet.
+
+### How this was found
+
+By checking `RootBaseSoftDao` against `IDepartmentDao`'s 19 numbered rules one at a time, during the lap that
+produced the 2026-08-16 green build. **Nothing surfaced it before because nothing runs it** — there is no
+test suite here (entry 4 of the deviation list; [entry 6](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits)
+in this file), `LocalTestsOnly: 'yes'` skips CI, and the `Department` members in
+`ProphetsWay.Example.DataAccess.EF` currently throw before reaching any base class. It is a reading finding,
+which is the only kind available in this repository right now.
+
+Verified by opening [RootBaseSoftDao.cs](../ProphetsWay.EFTools/RootBaseSoftDao.cs),
+[RootBaseDao.cs](../ProphetsWay.EFTools/RootBaseDao.cs), [RootDao.cs](../ProphetsWay.EFTools/RootDao.cs),
+[BaseNonIdDao.cs](../ProphetsWay.EFTools/BaseNonIdDao.cs) and
+`ProphetsWay.Example/ProphetsWay.Example.DataAccess/IDaos/IDepartmentDao.cs` and `ICompanyResourceDao.cs`.
+
+### `RootBaseSoftDao` — four rule violations
+
+`RootBaseSoftDao<T, TIdType>` is 40 lines. Three of them are the defect.
+
+| Rule | What it requires | What the code does |
+|---|---|---|
+| **3** | `Update` writes the department's own data only; the stored `CreatedDate` and `DeletedDate` are **preserved** and values carried on the incoming instance for them are **ignored** | `Update` stamps `UpdatedDate` and calls `base.Update(item)`, which reaches `RootDao.Update`: `entry.CurrentValues.SetValues(item)` — **whole-object replacement.** A caller passing an instance fetched before the delete silently wipes the stored `DeletedDate` |
+| **5** | `Delete` returns `1` when a **live** department with that identifier is stored | `Delete` stamps `DeletedDate` and returns `base.Update(item)`, which returns `Context.SaveChanges()`. It never asks whether the row was live |
+| **6** | `Delete` on an already-deleted department returns `0`, changes nothing, and leaves the existing `DeletedDate` **not refreshed** — soft delete is **idempotent** | The stamp is unconditional, so a second delete **overwrites the original `DeletedDate` with a later one** and returns `1`. Both halves of the rule fail |
+| **1** | After `Insert`, `UpdatedDate` and `DeletedDate` are `null` **whatever the caller had assigned to them** | `Insert` stamps `CreatedDate` and calls `base.Insert(item)`. Neither field is cleared, so a caller who reuses an instance carries stale timestamps into a new row |
+
+**Rule 3 is the one `IDepartmentDao` itself predicts.** Its `WHY` section carries a paragraph headed
+*"Rule 3 is the one that gets broken"*, naming whole-object replacement as the obvious implementation and
+soft delete failing "with nothing to point at." This library is that prediction, in shipped code, in the
+package the contract's own reference implementation is supposed to be demonstrated against.
+
+**Rules 5 and 6 are the more dangerous pair in practice.** A refreshed `DeletedDate` is not an exception and
+not a wrong row count that anyone checks — it is a timestamp that quietly moves. Any audit, retention window
+or "deleted before" query built on it is wrong, and nothing anywhere reports it.
+
+### `BaseNonIdDao<T>` — a structural mismatch, not a bug
+
+`BaseNonIdDao<T> : IBaseDao<T>` declares `public abstract T Get(T item)` and `public abstract int Update(T item)`.
+
+`ICompanyResourceDao` **deliberately does not inherit `IBaseDao<T>`** and its `<remarks>` spend two headed
+paragraphs — *"No `Update`"* and *"No `Get`"* — explaining why: a `CompanyResource` is nothing but its two
+foreign keys, so there is nothing to update *to*, and `IBaseDao<T>.Get(T)` is defined in terms of an
+identifier field the entity does not have. Rule 8 goes further and states that
+`Get<CompanyResource>(object id)` on the dispatcher **can never be made to work.**
+
+So inheriting `BaseNonIdDao<T>` forces an implementer to write two members the contract declines to declare,
+and the only honest bodies for them are throws. **That is not a defect in `BaseNonIdDao<T>`** — it was written
+for keyless entities that still want CRUD, which is a real shape. It is the wrong base for this contract, and
+the name will suggest otherwise to everyone who meets it.
+
+### What this constrains
+
+- **[Entry 10](#10--collapse-the-guidintlong-dao-triplication).** The six generic families must fix these
+  semantics. A collapse that closes over `RootBaseSoftDao` unchanged ships the four violations under new type
+  names and spends the major version doing it. The soft-delete families need a **read-modify-write `Update`**
+  that preserves the three timestamps, and a **`Delete` that checks liveness first** and returns `0` without
+  stamping when the row is already deleted or absent.
+- **The keyless family must not implement `IBaseDao<T>`.** `ICompanyResourceDao`'s shape — `Insert`, `Delete`,
+  `GetAll`, and nothing else — needs a base that offers exactly that. `IBaseDao<T>` is described by the
+  contract as "a menu, not a mandate"; the library currently offers only the mandate.
+- **[Entry 1](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) step 2.** Do not implement
+  the `Department` DAO by deriving from today's soft base. If step 2 is done before entry 10, the honest route
+  is a hand-written DAO satisfying the 19 rules, which then becomes the evidence for what the generic family
+  must look like.
+- **[Entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container).** Rules 5 and
+  6 are exactly the kind of defect a green suite catches and a reading pass nearly misses. The upstream
+  `Contract` tests for `IDepartmentDao` already exist; they have simply never run against this library.
+
+### Severity, stated honestly
+
+**This is a shipped defect in the 2.2.0 package, not only a forward-compatibility gap** — the same shape as
+[entry 3](#3--implement-the-3x-disposal-contract-in-baseefdataaccess)'s leaked `DbContext` and
+[entry 12](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction)'s
+silent transaction skip. A 2.2.0 consumer using `BaseSoftDao` today has non-idempotent soft delete and an
+`Update` that can resurrect a deleted row.
+
+**It does not get a 2.2.x patch**, for the reason [entry 12](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction)
+gives and on the same owner decision ([D1](purpose-and-scope.md#owner-decisions--2026-08-15)): that line
+receives no new work. **`Changelog Author` must record this as `Fixed` in the 3.0.0 notes, not `Changed`** —
+a consumer reading "soft-delete DAO bases rewritten" learns nothing about the rows they have already stamped.
+
+### The strongest argument against filing this separately
+
+It could have been three sentences appended to [entry 10](#10--collapse-the-guidintlong-dao-triplication),
+which already owns these types and is already approved. A fourteen-entry index is harder to read than a
+thirteen-entry one, and every entry that is really a constraint on another entry dilutes the index's job.
+
+The counter, and the reason it is filed: entry 10 is a **surface** change with a stated recommendation-reversal
+history, and someone reading it for the D3 decision will not read a semantics appendix buried in it. This
+finding also outlives entry 10 — it is a statement about the published package that `Changelog Author` needs,
+and it binds entry 1 step 2 whether or not the collapse happens first. A constraint that binds three entries
+and the changelog is not an appendix to one of them.
+
