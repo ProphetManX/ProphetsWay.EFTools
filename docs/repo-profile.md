@@ -11,9 +11,14 @@ _**Corrected again later on 2026-08-16**, against a tree in which the six `Proph
 adapter classes have been **deleted**, and all three EFTools-owned `.csproj` files have been retargeted to
 **`net10.0` alone**, moved to `ProphetsWay.BaseDataAccess` **3.1.0**, and stripped of their **EF6** and
 **FluentAssertions** references. The paragraph above saying no EFTools-owned `.cs` or `.csproj` had changed
-describes the earlier pass and is retained as history. **No EF Core package version is stated anywhere in
+describes the earlier pass and is retained as history. ~~**No EF Core package version is stated anywhere in
 this document — the bump was mid-flight when this pass ran, and an unverifiable number is worse than
-none.**_
+none.**~~ **Superseded 2026-08-16: the bump has landed and the EF Core references are pinned at
+`10.0.11`** — read from `ProphetsWay.EFTools.csproj` and
+`ProphetsWay.Example.DataAccess.EF.csproj`, both opened that day; all five references agree. **No build has
+been run since the bump**, so the versions below are stated as pinned in the project files and nothing
+here claims the solution compiles against them — the green build recorded further down predates the
+change._
 
 _**Concurrency warning.** `Implementer` was editing `.cs` files and `Modernizer` was editing `.csproj`
 files while this pass ran. Every statement below about C# source is a reading taken at that moment and
@@ -26,7 +31,8 @@ succeeded** — SDK 10.0.400, **7 warnings, 0 errors**. That is the first measur
 this repository since the submodule advance, and the statements it establishes are marked **observed
 in a build on 2026-08-16** wherever they appear below. They are the only claims here not derived from
 reading source. **No test was run** — there is nothing here to run — and a green compile is not
-conformance._
+conformance. **That build predates the EF Core `10.0.11` bump**, so it is not evidence about the versions
+now pinned in the project files._
 
 ## One-Line Purpose
 
@@ -144,18 +150,36 @@ is no longer referenced anywhere in the repository.
 
 | Dependency | Version | Why it is present |
 | --- | --- | --- |
-| `Microsoft.EntityFrameworkCore` | *mid-flight — see note* | EF Core implementation |
-| `Microsoft.EntityFrameworkCore.SqlServer` | *mid-flight* | Hardcoded string-constructor provider |
-| `Microsoft.EntityFrameworkCore.InMemory` | *mid-flight* | Used by the proving-ground default constructor, not product source |
+| `Microsoft.EntityFrameworkCore` | **10.0.11** | EF Core implementation |
+| `Microsoft.EntityFrameworkCore.SqlServer` | **10.0.11** | Hardcoded string-constructor provider |
+| `Microsoft.EntityFrameworkCore.InMemory` | **10.0.11** | Used by the proving-ground default constructor, not product source |
 | `ProphetsWay.BaseDataAccess` | **3.1.0** | Parent DAL contracts — moved from 2.5.0 on 2026-08-16 |
 
 The three EF Core references still sit inside a
 `Condition="!$(TargetFramework.StartsWith('net4')) and $(TargetFramework.StartsWith('net'))"` `ItemGroup`,
-which is now unconditionally true given the single `net10.0` target. **Their version is deliberately
-unstated**: `Modernizer` was bumping it while this pass ran, so any number written here would be a claim
-this agent could not stand behind. Read it from the file.
+which is now unconditionally true given the single `net10.0` target. **Their version is no longer
+unstated** — the earlier text here withheld it because `Modernizer` was bumping it mid-pass. That bump
+landed on 2026-08-16 and all three read `10.0.11`, verified by opening
+`ProphetsWay.EFTools.csproj` rather than by inheriting the claim.
 
-Evidence: [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj).
+**There is no central version file to look for.** No `Directory.Packages.props` and no
+`Directory.Build.props` exists anywhere in the workspace, and `ManagePackageVersionsCentrally` is not set
+in any project — so the two `.csproj` files are the only place package versions live. Verified 2026-08-16
+by a workspace-wide file search and a text search for the property.
+
+**No EF6 reference survives anywhere.** Both conditional `net4*` `ItemGroup`s were removed and no project
+in the repository references `EntityFramework` — verified 2026-08-16 by a workspace-wide search for the
+package reference, which matches nothing.
+
+**Release-relevant consequence:** pinning at 10.0.11 raises the **minimum EF Core version a consumer of the
+eventual 3.0.0 package must resolve**. Recorded here as a fact about the project files; the release note
+for it belongs to `Changelog Author`.
+
+**No build has been run since the bump.** These are the versions the project files declare, not a
+statement that the solution still compiles against them.
+
+Evidence: [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj),
+[ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj).
 
 ### Tests and proving ground
 
@@ -165,7 +189,7 @@ Evidence: [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTool
   even though it now defines nothing itself
   ([ProphetsWay.EFTools.Tests.csproj](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj)).
 - `ProphetsWay.Example.DataAccess.EF` references `Microsoft.EntityFrameworkCore` and
-  `Microsoft.EntityFrameworkCore.SqlServer` (versions mid-flight, as above) and `ProphetsWay.BaseDataAccess`
+  `Microsoft.EntityFrameworkCore.SqlServer` (both **10.0.11**, as above) and `ProphetsWay.BaseDataAccess`
   **3.1.0**. **The FluentAssertions 8.2.0 reference this document previously recorded here has been
   removed** — verified by opening the csproj on 2026-08-16, which now carries no `FluentAssertions` line at
   all. The paid-commercial-licence exposure it described is closed

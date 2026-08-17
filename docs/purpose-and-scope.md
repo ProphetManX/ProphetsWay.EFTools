@@ -82,6 +82,14 @@ pose. Every status change in [feature-requests.md](feature-requests.md) traces t
 | **D8** | **The certification scope is stated publicly, not only in these docs.** Public wording says EFTools is **designed for relational EF Core providers** and **certified and tested by this repository on SQLite and SQL Server**. It **must not imply that any other relational provider is certified**. | **Closes [Q4](#unresolved-purpose-level-questions)**; [FR 7](feature-requests.md#7--stop-forcing-a-database-provider-on-every-consumer), [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) |
 | **D9** | The **obsolete local modification inside the pinned `ProphetsWay.Example` submodule was approved for discard and has been discarded.** The submodule working tree is clean; nothing local stands between the repository and advancing the pointer. | [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) |
 | **D10** *(2026-08-16)* | **The Entity Framework conformance suite is reached through an upstream seam — shape B — not through a duplicate local suite.** Shape A is **declined**: a second copy of the assertions inside this repository ends the demonstration `ProphetsWay.Example` exists to provide. **The commitment is to the direction only.** Nobody has yet attempted to satisfy the 3.1.0 contracts in Entity Framework, so the seam's requirements are unknown; **its design is deliberately deferred until Lap 1 has shown what it must carry.** The six adapter classes in `ProphetsWay.EFTools.Tests` are to be **deleted, not rebuilt.** | **Closes the fork opened by the 2026-08-16 rescope of** [FR 6](feature-requests.md#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits); depends on [ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation) |
+| **D11** *(2026-08-16)* | **Release ordering, so each repository is built, pull-requested, merged and published exactly once.** (1) All remaining EFTools 3.x work is done **against the live submodule working tree**, not against a tagged `ProphetsWay.Example`. (2) `ProphetsWay.Example` is **tagged and released only once EFTools' Entity Framework implementation is green against it.** (3) EFTools' submodule pointer is then advanced **to that tag.** (4) `ProphetsWay.EFTools` 3.0.0 is pull-requested, merged and published. `ProphetsWay.BaseDataAccess` **3.1.0 is already published and current** and needs no release in this sequence unless something new is found in it. | [Release Ordering](#release-ordering--settled-d11); binds [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts), [FR 6](feature-requests.md#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits), [ProphetsWay.Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md#5--advance-the-eftools-submodule-pointer-onto-the-3x-contracts) and [FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation) |
+| **D12** *(2026-08-16)* | **The three shipped 2.2.0 defects are documented, not patched.** In the owner's words: *"I don't believe anyone is currently using that library in any meaningful capacity, so it's document the bug and recommend to update to v3.0.0."* **No 2.2.1 patch will be cut.** This **upholds [D1](#owner-decisions--2026-08-15)** rather than carving an exception from it, and puts the reasoning on record: the exposure is judged near-zero because the package has no meaningful consumer base. **The consequence is not softened** — [D7](#owner-decisions--2026-08-15) makes 3.x `net10.0`-only, so a consumer on `net48`, `net8.0` or `net9.0` **cannot take 3.0.0 at all**, and "upgrade to 3.0.0" is therefore not available to every 2.2.x consumer. | [The Three Shipped 2.2.0 Defects](#the-three-shipped-220-defects--settled-d12); closes the 2.2.x-patch question in [FR 3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess), [FR 12](feature-requests.md#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) and [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) |
+| **D13** *(2026-08-16)* | **A hand-written concrete Entity Framework `DepartmentDao` is approved** in `ProphetsWay.Example.DataAccess.EF/Daos/`, explicitly rather than leaning on a generic DAO family first. In the owner's words: *"the point of the generic tests and classes was to just reduce all the duplicative code, but in this case there is a real need for it."* **The generic families of [D3](#owner-decisions--2026-08-15) are to be derived from a concrete implementation proven against `IDepartmentDao`'s 19 rules, not designed ahead of one.** | [The Hand-Written `DepartmentDao`](#the-hand-written-departmentdao--settled-d13); constrains [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication) and [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance); resolves step 2 of [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) |
+
+**D11–D13 were taken on 2026-08-16, in the same session, and are appended rather than merged into the rows
+above.** No earlier decision's text has been altered. **The numbering is not the order they were stated in:**
+the owner assigned **D11** to the release-ordering decision explicitly, so the other two took the next numbers
+after it. Numbers here are permanent and monotonic; do not renumber to restore narrative order.
 
 **D10 postdates this section's heading, which is left as it was.** The heading reads *2026-08-15* because
 that is when D1–D9 were taken; D10 was taken on **2026-08-16** and is dated in its own row rather than by
@@ -481,6 +489,164 @@ namespace that could not express it. If the DAO surface ever grows past six fami
 
 ---
 
+## Release Ordering — Settled (D11)
+
+> Settled as [D11](#owner-decisions--2026-08-15) on **2026-08-16**. It constrains *when* things ship, not
+> *what* they contain, so it changes no entry's scope and no entry's status. It binds two repositories.
+
+### Scope Verdict — sequencing the 3.x release across repositories
+
+| | |
+|---|---|
+| **Verdict** | **In scope, and it does not widen the purpose sentence.** Release mechanics are not a feature; this is a decision about the order of four existing, already-approved deliverables |
+| **Purpose it's measured against** | The settled sentence above |
+| **Because** | The owner's goal, stated directly: *"I want to make sure that we deploy the latest changes in the correct order so we only have to build, PR, merge, publish once… whatever each library needs."* Nothing in the order adds work; a wrong order **doubles** it |
+| **Owner's decision** | **Approved**, as the four steps below |
+
+### The order
+
+1. **Do all remaining EFTools 3.x work against the live `ProphetsWay.Example` submodule working tree**, not
+   against a tagged release of it.
+2. **Tag and release `ProphetsWay.Example`** — once EFTools' Entity Framework implementation is **green
+   against it**.
+3. **Advance this repository's submodule pointer to that tag.**
+4. **Pull-request, merge and publish `ProphetsWay.EFTools` 3.0.0** to NuGet.
+
+`ProphetsWay.BaseDataAccess` **3.1.0 is already published and current.** It needs no release in this sequence
+unless something new is found in it.
+
+### The reasoning, which is the load-bearing part
+
+**Implementing against a contract is what exposes gaps *in* that contract.** That is not hypothetical here:
+**`IDepartmentDao` rule 18 was narrowed on 2026-08-16 as a direct result of Entity Framework design work in
+this repository** — a change to `ProphetsWay.Example`'s interface, driven from this side, recorded upstream as
+[ProphetsWay.Example FR 14](../../ProphetsWay.Example/docs/feature-requests.md#14--restoring-datetimekind-on-a-department-reached-as-a-navigation-property).
+
+Tagging `ProphetsWay.Example` before EFTools is green therefore risks discovering a **second rule 18** and
+needing a second `ProphetsWay.Example` release — which is exactly the double build / pull request / merge the
+decision exists to avoid.
+
+### What this changes for a reader of this document
+
+- **Step 1 is why the submodule pointer does not move again yet.** Anyone finding the pointer at `d845863`
+  while `ProphetsWay.Example` has moved on is looking at D11 working as intended, not at a stale pointer.
+- **Nothing here reopens [D9](#owner-decisions--2026-08-15)**, which was about a discarded local modification
+  inside the submodule, nor [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts)
+  step 1, which has landed. D11 governs the **next** pointer move, which is step 3 above.
+- **It does not schedule anything.** No entry moved status because of it.
+
+### The strongest argument against, recorded so it is weighed
+
+Working against a live, untagged submodule working tree means EFTools' 3.0.0 is developed against a moving
+target: every upstream edit is immediately live here, with no pinned commit to reproduce a build from. If a
+regression appears mid-flight, "which version of the contracts was that against" has no answer until step 3.
+
+The counter is that steps 2 and 3 close exactly that window before anything is published, and that the
+alternative — pinning first — buys reproducibility at the cost of a second release of `ProphetsWay.Example`
+the moment implementation finds anything. The owner has weighed the pair and chosen the order above.
+
+---
+
+## The Three Shipped 2.2.0 Defects — Settled (D12)
+
+> Settled as [D12](#owner-decisions--2026-08-15) on **2026-08-16**. It closes the 2.2.x-patch question that
+> [FR 12](feature-requests.md#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction)
+> had deliberately left open for the owner, and answers the same question for
+> [FR 3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess) and
+> [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance).
+
+### Scope Verdict — cutting a 2.2.1 patch for three shipped defects
+
+| | |
+|---|---|
+| **Verdict** | **Out of scope.** The 2.2.x line receives no new work; the defects are **documented**, and the remedy offered is 3.0.0 |
+| **Purpose it's measured against** | The settled sentence above |
+| **Because** | The owner judges the exposure near-zero: *"I don't believe anyone is currently using that library in any meaningful capacity, so it's document the bug and recommend to update to v3.0.0."* This **upholds [D1](#owner-decisions--2026-08-15)** rather than carving an exception from it — FR 12 filed itself as the exception D1 invites someone to test, and it does not survive the test |
+| **Owner's decision** | **Approved. No 2.2.1 patch will be cut** |
+
+### The three defects, all live in the published 2.2.0 package
+
+| Entry | Defect | Fails how? |
+|---|---|---|
+| [FR 3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess) | `BaseEFDataAccess` constructs its `DbContext` via `Activator.CreateInstance` and **never disposes it**. In 2.2.0 `IBaseDataAccess` did not extend `IDisposable`, so there was nowhere to. A leaked context and connection per Data Access Layer instance | Resource exhaustion — visible eventually, and attributable |
+| [FR 12](feature-requests.md#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | `RootNonIdDao` begins a transaction only when none exists, leaving `_transaction` null otherwise — then `_transaction?.Commit()` / `?.Rollback()` **silently no-op**. The Data Access Object believes it managed a transaction and did not | **Silent.** No exception, wrong data |
+| [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | `RootBaseSoftDao.Update` is whole-object replacement and **wipes the stored `DeletedDate`**, so `Update` on a soft-deleted row **silently un-deletes it**. A second `Delete` also refreshes the timestamp and returns `1` rather than `0` | **Silent.** No exception, wrong data |
+
+**Two of the three fail silently — no exception, just wrong data.** That is recorded here because it is what
+makes documenting them a real obligation rather than a formality: a consumer cannot discover either from a log.
+
+All three were re-verified in source on **2026-08-16** by opening
+[BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs),
+[RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs) and
+[RootBaseSoftDao.cs](../ProphetsWay.EFTools/RootBaseSoftDao.cs).
+
+### The consequence, recorded honestly and not softened
+
+**[D7](#owner-decisions--2026-08-15) makes 3.x `net10.0`-only, so a consumer on `net48`, `net8.0` or `net9.0`
+cannot take 3.0.0 at all.** "Upgrade to 3.0.0" is therefore **not available to every 2.2.x consumer**. For
+those consumers the remedy on offer is the release note and nothing else.
+
+The decision is defensible **because** the consumer base is judged near-empty — **and that premise is the
+thing a future reader must be able to see and re-test.** If it ever turns out someone was on 2.2.x with a
+`net4x` or `net8.0` target, **this decision was made without them in mind.** That sentence is the point of
+this section; do not paraphrase it away.
+
+### The obligation this creates on `Changelog Author`
+
+Not this agent's to execute, and it must not be lost. It is stated in one place —
+[feature-requests.md § The `Changelog Author` obligation](feature-requests.md#the-changelog-author-obligation--d12)
+— and cited from the three entries rather than restated in each.
+
+---
+
+## The Hand-Written `DepartmentDao` — Settled (D13)
+
+> Settled as [D13](#owner-decisions--2026-08-15) on **2026-08-16**. It resolves the open recommendation in
+> [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance)
+> and **constrains** [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication).
+
+### Scope Verdict — writing a concrete Entity Framework `DepartmentDao` before the generic family
+
+| | |
+|---|---|
+| **Verdict** | **In scope.** It is step 2 of [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) done in the order FR 13 already recommended, in the proving ground, which this document lists as in scope for the repository |
+| **Purpose it's measured against** | The settled sentence above |
+| **Because** | In the owner's words: *"the point of the generic tests and classes was to just reduce all the duplicative code, but in this case there is a real need for it."* Deduplication is the *benefit* of the generic families; it is not evidence that a generic family can satisfy `IDepartmentDao`'s 19 rules. FR 13 establishes that today's soft base violates four of them, so the family has to be **derived from something proven**, not designed ahead of one |
+| **Owner's decision** | **Approved.** A concrete `DepartmentDao` in `ProphetsWay.Example.DataAccess.EF/Daos/` — verified against the 19 rules — becomes the evidence for what [D3](#owner-decisions--2026-08-15)'s generic soft-delete families must look like |
+
+**Verified 2026-08-16:** `ProphetsWay.Example.DataAccess.EF/Daos/` contains `CompanyDao.cs`, `JobDao.cs`,
+`ResourceDao.cs`, `TransactionDao.cs` and `UserDao.cs` — **no `DepartmentDao.cs` and no
+`CompanyResourceDao.cs`.** The eight `IDepartmentDao` members and three `ICompanyResourceDao` members are the
+throwing stubs on `ExampleDataAccess`. So D13 approves work that has not started.
+
+### What changed to make this safe — the counter-argument has been answered
+
+The objection on record was that this meant **writing throwaway code with no test suite to verify it**. That
+objection is now largely answered rather than merely overruled:
+
+**The shape B seam landed upstream on 2026-08-16** —
+`ProphetsWay.Example.Tests.TestDataAccessFactory.Use(Func<IExampleDataAccess>)`, verified by opening that file
+in the submodule working tree. EFTools can therefore point `ProphetsWay.Example`'s **164 tests** at its Entity
+Framework Data Access Layer, and **`DepartmentDaoTests` is the largest class in that suite**, written directly
+against the 19 rules. **The hand-written Data Access Object will be verified, not guessed.**
+
+**The qualification, which is not optional:** the seam is **unverified** — nothing has been run through it,
+in either repository. See [ProphetsWay.Example FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation),
+which is deliberately **not** `Done`. "Verified, not guessed" is the arrangement that now exists on paper; the
+first run is what makes it true.
+
+### The strongest argument against, recorded so it is weighed
+
+A concrete `DepartmentDao` written now is code that the [D3](#owner-decisions--2026-08-15) collapse is
+explicitly expected to generalize away, and the version of it that survives will be the generic family rather
+than this class. Writing it first means writing the same semantics twice.
+
+The counter is that the second writing is a **refactor with a green suite behind it**, and the alternative is
+designing six generic families against a specification nobody has yet satisfied once — which is how
+`RootBaseSoftDao` came to violate four rules quietly in the first place.
+
+---
+
 ## Unresolved Purpose-Level Questions
 
 Everything else in this document is settled. **Two of the original four are now closed** — they are kept in
@@ -585,6 +751,25 @@ pipeline edits inside #11, which belong to another owner.
 requests no change to any file here — the 3.x design deletes the members carrying the defect, so its only
 deliverable is a line in the release notes. It was triaged on 2026-08-16 to `Scheduled` for that obligation,
 with the 2.2.x patch `Rejected`; there is nothing for a refinements table to hold.
+
+**Row 13 is likewise absent, for a different reason.**
+[FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance)
+is a **constraint on row 10**, not a change of its own: it specifies what the six generic families must fix
+rather than proposing a separate edit. It also carries a release-note obligation of its own, for the same
+reason FR 12 does.
+
+**Three 2026-08-16 decisions land on this table without moving a row, and that is the correct outcome.**
+
+- **[D11](#owner-decisions--2026-08-15)** sequences the release across repositories. It changes *when*, not
+  *what*, so no row's scope, effort or breaking-ness moves. See [Release Ordering](#release-ordering--settled-d11).
+- **[D12](#owner-decisions--2026-08-15)** settles the three shipped 2.2.0 defects as **documented, not
+  patched**. Rows 3 and 10 both carry a defect that is live in the published package; neither gains work here,
+  because the fix rides 3.x and the *record* rides the changelog. See
+  [The Three Shipped 2.2.0 Defects](#the-three-shipped-220-defects--settled-d12).
+- **[D13](#owner-decisions--2026-08-15)** constrains **row 10** without changing its status: the six generic
+  families are now to be **derived from a hand-written concrete `DepartmentDao`** proven against
+  `IDepartmentDao`'s 19 rules, rather than designed ahead of one. That is a sequencing constraint inside row 1
+  step 2 and row 10, not a new row. See [The Hand-Written `DepartmentDao`](#the-hand-written-departmentdao--settled-d13).
 
 ---
 
