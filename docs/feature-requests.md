@@ -99,6 +99,23 @@ rule 18 and needing a second release of it — the double build / pull request /
 reopen [entry 1](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) step 1, which has landed;
 D11 governs the **next** pointer move, which is step 3 above.
 
+### Clarification recorded 2026-08-16 — an interim pointer advance is **not** a D11 violation
+
+D11 step 1 says the remaining 3.x work is done *against the live `ProphetsWay.Example` submodule working
+tree*. **That premise silently assumed the submodule could see the live work. It cannot** — the submodule
+tracks `main`, and the work is on `ProphetsWay.Example`'s `3.1.1-eftool-findings` branch. Concretely,
+`TestDataAccessFactory.Use` — the seam that lets this repository run the upstream suite against Entity
+Framework without editing a file it is forbidden to edit — is not in the code this repository compiles
+against, so nothing downstream of it can move.
+
+**Advancing the pointer onto in-progress upstream work is a different act from step 3.** Step 3 advances the
+pointer onto a **tag**, after a green run. An interim advance onto a merged-but-untagged `main` is what makes
+that green run *possible*. D11 defers **tagging and releasing** `ProphetsWay.Example`; it does not require
+this repository to compile against a stale contract while doing the very work that proves the contract.
+
+**No status changed. This is a note about the scope of an owner decision, not a change to it** — if the owner
+reads it otherwise, D11 as written wins and this paragraph is what should be corrected.
+
 ## The `Changelog Author` Obligation — D12
 
 **Not this agent's to execute, and it must not be lost.** It is stated once, here, and cited from
