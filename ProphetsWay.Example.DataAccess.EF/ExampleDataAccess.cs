@@ -16,6 +16,7 @@ namespace ProphetsWay.Example.DataAccess.EF
 		private readonly IUserDao _userDao;
 		private readonly IResourceDao _resourceDao;
 		private readonly ITransactionDao _transactionDao;
+		private readonly IDepartmentDao _departmentDao;
 
 		/// <summary>
 		/// Builds a SQL Server-backed context from a connection string and owns it.
@@ -55,6 +56,7 @@ namespace ProphetsWay.Example.DataAccess.EF
 			_userDao = new UserDao(Context);
 			_resourceDao = new ResourceDao(Context);
 			_transactionDao = new TransactionDao(Context);
+			_departmentDao = new DepartmentDao(Context);
 		}
 
 
@@ -218,46 +220,57 @@ namespace ProphetsWay.Example.DataAccess.EF
 
 #endregion
 
-#region DepartmentDao - NOT IMPLEMENTED
+#region DepartmentDao
 
+		//BaseEFDataAccess asks every member a derived Data Access Layer declares to open with this. The Borrowed
+		//constructor is why it is not redundant: the context outlives this instance there, so without the guard a
+		//disposed Data Access Layer would keep answering against a live context.
 		public Department Get(Department item)
 		{
-			throw NotWrittenYet("IDepartmentDao.Get(Department)");
+			ThrowIfDisposed();
+			return _departmentDao.Get(item);
 		}
 
 		public void Insert(Department item)
 		{
-			throw NotWrittenYet("IDepartmentDao.Insert(Department)");
+			ThrowIfDisposed();
+			_departmentDao.Insert(item);
 		}
 
 		public int Update(Department item)
 		{
-			throw NotWrittenYet("IDepartmentDao.Update(Department)");
+			ThrowIfDisposed();
+			return _departmentDao.Update(item);
 		}
 
 		public int Delete(Department item)
 		{
-			throw NotWrittenYet("IDepartmentDao.Delete(Department)");
+			ThrowIfDisposed();
+			return _departmentDao.Delete(item);
 		}
 
 		public IList<Department> GetAll(Department item)
 		{
-			throw NotWrittenYet("IDepartmentDao.GetAll(Department)");
+			ThrowIfDisposed();
+			return _departmentDao.GetAll(item);
 		}
 
 		public IList<Department> GetPaged(Department item, int skip, int take)
 		{
-			throw NotWrittenYet("IDepartmentDao.GetPaged(Department, int, int)");
+			ThrowIfDisposed();
+			return _departmentDao.GetPaged(item, skip, take);
 		}
 
 		public int GetCount(Department item)
 		{
-			throw NotWrittenYet("IDepartmentDao.GetCount(Department)");
+			ThrowIfDisposed();
+			return _departmentDao.GetCount(item);
 		}
 
 		public int Restore(Department item)
 		{
-			throw NotWrittenYet("IDepartmentDao.Restore(Department)");
+			ThrowIfDisposed();
+			return _departmentDao.Restore(item);
 		}
 
 #endregion

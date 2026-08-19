@@ -67,7 +67,8 @@ deleted. **A green build is not a passing suite** — this repository still cont
 | 10 | [Collapse the `Guid`/`Int`/`Long` DAO triplication](#10--collapse-the-guidintlong-dao-triplication) | **Scheduled** — v3.0.0; **approved by D3, reversing this file's recommendation**. **Constrained by [D13](purpose-and-scope.md#owner-decisions--2026-08-15), 2026-08-16:** the generic families are **derived from** a hand-written concrete `DepartmentDao`, not designed ahead of one |
 | 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Scheduled** — v3.0.0 for the test work; **pipeline half Deferred** to its owner; **D8** makes the certification a public claim |
 | 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Scheduled** — v3.0.0, as a **release-note obligation only**; the 2.2.x patch is **Rejected** — triaged 2026-08-16, and its retained open question **closed by [D12](purpose-and-scope.md#owner-decisions--2026-08-15)** the same day |
-| 13 | [The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | **Scheduled** — v3.0.0; filed 2026-08-16. Four contract-rule violations in `RootBaseSoftDao` and a structural mismatch in `BaseNonIdDao<T>`; constrains [entry 10](#10--collapse-the-guidintlong-dao-triplication). **2.2.x patch `Rejected` ([D12](purpose-and-scope.md#owner-decisions--2026-08-15))**; the route to the fix is settled by **[D13](purpose-and-scope.md#owner-decisions--2026-08-15)** |
+| 13 | [The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | **Scheduled** — v3.0.0; filed 2026-08-16. Four contract-rule violations in `RootBaseSoftDao` and a structural mismatch in `BaseNonIdDao<T>`; constrains [entry 10](#10--collapse-the-guidintlong-dao-triplication). **2.2.x patch `Rejected` ([D12](purpose-and-scope.md#owner-decisions--2026-08-15))**; the route to the fix is settled by **[D13](purpose-and-scope.md#owner-decisions--2026-08-15)**. **Strengthened 2026-08-18** — the members are `new`, not `virtual`, so the title's claim is structural rather than a judgement; and the entry is no longer a reading finding |
+| 14 | [The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | **Proposed** — filed 2026-08-18 from a measured test run, awaiting `Purpose Refiner` triage. `RootNonIdDao.Insert` leaves the caller's instance tracked, which is **why several tests are currently green**; `BaseDao.Get` is saved only by a `QueryTrackingBehavior` set on **one of three** constructors |
 
 Numbers are permanent. Entries are never renumbered and never removed —
 [purpose-and-scope.md](purpose-and-scope.md) cites entries by number, and a rejected entry is decision
@@ -1576,4 +1577,155 @@ history, and someone reading it for the D3 decision will not read a semantics ap
 finding also outlives entry 10 — it is a statement about the published package that `Changelog Author` needs,
 and it binds entry 1 step 2 whether or not the collapse happens first. A constraint that binds three entries
 and the changelog is not an appendix to one of them.
+
+### Strengthened 2026-08-18 — no longer a reading finding, and the inheritance claim is now structural
+
+Two things this entry says about itself have stopped being true, and one claim in its title got stronger.
+**No status changed** — that is `Purpose Refiner`'s to change.
+
+**1. "It is a reading finding, which is the only kind available in this repository right now" is superseded.**
+That sentence was accurate when written. This repository now has a working test harness: the upstream
+`ProphetsWay.Example` suite is pointed at the Entity Framework Data Access Layer through
+`TestDataAccessFactory.Use`, and `dotnet test` reports **151 tests, 123 passed, 28 failed**. The
+`IDepartmentDao` rules are executed rather than read.
+
+**2. "The work has not started" is superseded.** The hand-written `DepartmentDao.cs` that
+[D13](purpose-and-scope.md#owner-decisions--2026-08-15) approved **landed 2026-08-18** in
+`ProphetsWay.Example.DataAccess.EF/Daos/`, together with the `ExampleContext` mapping and the eight
+forwarders. All 33 `DepartmentDaoTests` and 11 of 12 `DepartmentDataAccessTests` pass; the remaining one
+fails inside `UserDao`, for the reason [entry 14](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule)
+describes. **This entry's prediction held**: the DAO derives from no EFTools base, and the reasons are the
+four violations above.
+
+**3. The inheritance claim in the title is structural, not a matter of degree.** The entry argued
+`RootBaseSoftDao` *does not* satisfy the contracts. An independent `Code Reviewer` pass on 2026-08-18
+confirmed the violations member by member — **eight of nine**, adding rules 11, 12, 14 and 17 to the four
+already listed, with `GetCount` the only clean member — and found the reason it cannot be repaired by a
+derived class:
+
+> **Every member on `RootBaseSoftDao` is declared `new`, not `virtual`.**
+
+They cannot be overridden, only hidden again. A derived Data Access Object that re-hides them and is then
+used through a `RootBaseSoftDao`-typed reference **silently gets the base behaviour back** — the four
+violations return, through a reference type the consumer chose reasonably. So the title is exact rather than
+rhetorical: these bases cannot serve the 3.x contracts by inheritance **at all**, and a rewrite is the only
+route. That sharpens the constraint on [entry 10](#10--collapse-the-guidintlong-dao-triplication) — a collapse
+that preserves the `new` declarations preserves the trap.
+
+**What was verified, and by whom.** The `new`-not-`virtual` finding and the eight-of-nine count come from a
+`Code Reviewer` pass that opened `RootBaseSoftDao.cs`, `RootBaseDao.cs`, `RootDao.cs`, `RootNonIdDao.cs` and
+`Int/BaseSoftDao.cs`. The test numbers were measured. Neither is carried forward from an earlier revision of
+this file.
+
+## 14 — The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule
+
+**Status:** **Proposed** — filed 2026-08-18, awaiting triage. Filed by an agent under the shared-capture
+rule; only `Purpose Refiner` may change this status.
+
+**Several tests in this repository are currently green *because* of this defect.** That is the entry in one
+sentence, and it is why it is filed separately from [entry 13](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance)
+rather than appended to it. Entry 13 is about the **soft-delete and keyless** bases. This is about the
+**ordinary CRUD** ones — `RootNonIdDao`, `RootDao`, `RootBaseDao` and the `Int`/`Guid`/`Long` `BaseDao`,
+`BaseGetAllDao` and `BasePagedDao` that chain to them — i.e. the path every Data Access Object in the
+published package takes.
+
+### How this was found
+
+By implementing a *correct* Data Access Object next to the incorrect ones. `DepartmentDao` landed on
+2026-08-18 satisfying the SNAPSHOT rule — it copies on `Insert` rather than adding the caller's instance —
+and nine previously-passing-or-stubbed tests began failing with:
+
+```
+Cannot insert explicit value for identity column in table 'Departments'
+```
+
+**The correct implementation is what broke them.** Confirmed by an independent `Code Reviewer` pass which
+opened [CompanyDao.cs](../ProphetsWay.Example.DataAccess.EF/Daos/CompanyDao.cs),
+[JobDao.cs](../ProphetsWay.Example.DataAccess.EF/Daos/JobDao.cs),
+[UserDao.cs](../ProphetsWay.Example.DataAccess.EF/Daos/UserDao.cs),
+[Int/BasePagedDao.cs](../ProphetsWay.EFTools/Int/BasePagedDao.cs),
+[Int/BaseGetAllDao.cs](../ProphetsWay.EFTools/Int/BaseGetAllDao.cs),
+[Int/BaseDao.cs](../ProphetsWay.EFTools/Int/BaseDao.cs),
+[RootBaseDao.cs](../ProphetsWay.EFTools/RootBaseDao.cs),
+[RootDao.cs](../ProphetsWay.EFTools/RootDao.cs) and
+[RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs).
+
+### The mechanism
+
+`RootNonIdDao.Insert` is `Dataset.Add(item); Context.SaveChanges();`. `SaveChanges` transitions the entity
+`Added` → `Unchanged` and **keeps it in the change tracker**. The caller's instance is now the Data Access
+Layer's instance — the definition of adopting an argument, which the SNAPSHOT rule on `IExampleDataAccess`
+forbids.
+
+The adoption is then load-bearing. `UserDao.Insert` is `Dataset.Add(user)`, and EF Core's `Add` walks the
+graph and paints every **untracked** reachable entity `Added` regardless of whether its key is set.
+`SnapshotDeepCopyTests.InsertUserWithNavigation` inserts a `Company`, a `Job` and a `Department`, hangs all
+three off a `User`, and inserts the user:
+
+- `co` and `job` are **still tracked** from their own inserts, so the graph walk skips them and only the
+  `Users` row is written. **They work because they were adopted.**
+- `dept` was correctly detached by the new Data Access Object, so the walk paints it `Added` with a non-zero
+  `Id` and Entity Framework emits an `INSERT` carrying an explicit value into an `IDENTITY` column.
+
+### Three findings that widen it
+
+**1. It is not only `Insert`.** `Int/BaseDao.Get` is
+`Dataset.Where(i => i.Id == item.Id).SingleOrDefault()` — no `AsNoTracking()`, no projection. It returns the
+store's own tracked instance.
+
+**2. It escapes being a violation only because of a setting on one constructor out of three.**
+`ExampleDataAccess(string)` sets `QueryTrackingBehavior.NoTracking` context-wide.
+`ExampleDataAccess(DbContextOptions<ExampleContext>)` and `ExampleDataAccess(ExampleContext)` take whatever
+the caller configured, and Entity Framework Core's default is `TrackAll`. **A consumer using either of the
+two dependency-injection-friendly constructors gets a Data Access Layer whose `Get` hands out the store's
+tracked instances, so their next `Update` flushes edits nobody submitted.** Nothing detects it: the test seam
+only ever uses the connection-string constructor.
+
+**3. `RootDao.Update` compounds it.** It is `Dataset.AsTracking().Single(...)` then
+`entry.CurrentValues.SetValues(item)` — whole-object replacement, and `Single` rather than `SingleOrDefault`,
+so a missing row throws `InvalidOperationException` where the ROW COUNT rule requires `0`. Entry 13 records
+the same shape reached through `RootBaseSoftDao`; this is the non-soft path to it.
+
+### A test that is green for a prohibited reason
+
+`SnapshotDeepCopyTests.ShouldNotStoreEditsMadeToAUsersNavigationAfterInsertReturned` passes today **by luck
+of ordering.** It edits `co.Name` after the insert, then asserts through a second Data Access Layer instance
+with its own context — and nothing calls `SaveChanges()` on the writer's context again before the assertion,
+so the dirty tracked `co` is simply never flushed. **Insert one more entity through the same Data Access
+Layer between the edit and the assertion and it fails.**
+
+This is the finding with the longest reach, because it is not a defect in this repository. It is an upstream
+test that does not currently test what it is named for, and it belongs to `ProphetsWay.Example` — see
+[ProphetsWay.Example/docs/feature-requests.md](../../ProphetsWay.Example/docs/feature-requests.md). A
+`Test Auditor` pass over that class is the right next step, and it must happen **in that repository**.
+
+### Why it matters beyond the failing tests
+
+**This is a shipped defect in the 2.2.0 package**, the same shape as entries 3, 12 and 13, and it very likely
+falls under [D12](purpose-and-scope.md#owner-decisions--2026-08-15) — documented, not patched — with a
+`Changelog Author` obligation attached. **That is a triage judgement and is deliberately not asserted here.**
+
+It also bears directly on this repository's stated purpose. `ProphetsWay.Example` exists to demonstrate that
+the same tests pass against two Data Access Layer implementations. A green suite that is green because one
+implementation quietly aliases the caller's objects is the paradigm's central claim being *reported* rather
+than *proven* — and the in-memory implementation, which does not alias, is the one telling the truth.
+
+### What it constrains
+
+- **[Entry 10](#10--collapse-the-guidintlong-dao-triplication).** The six generic families must copy on
+  `Insert` and project on `Get`. A collapse that preserves `Dataset.Add(item)` ships this under new names.
+- **[Entry 7](#7--stop-forcing-a-database-provider-on-every-consumer).** Finding 2 is a second reason the
+  constructor surface needs attention: the three constructors do not agree on tracking behaviour, and only
+  the least dependency-injection-friendly one is safe.
+- **[Entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container).** Nine of the
+  currently failing tests are this defect. Certification cannot be claimed until they pass **for the right
+  reason** — a fix that restores adoption would turn them green and prove nothing.
+
+### What has deliberately not been done
+
+No fix has been attempted. `DepartmentDao` was implemented correctly and the failures were left standing
+rather than papered over by making the new Data Access Object adopt its argument like its neighbours. **That
+option was available and was declined** — taking it would have turned nine tests green while spreading the
+defect to a tenth Data Access Object, and it is recorded here so it is not proposed later as an obvious
+simplification.
 

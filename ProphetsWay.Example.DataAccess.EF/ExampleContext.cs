@@ -24,17 +24,20 @@ namespace ProphetsWay.Example.DataAccess.EF
 		public DbSet<Resource> Resources { get; set; }
 		public DbSet<Transaction> Transactions { get; set; }
 		public DbSet<Job> Jobs { get; set; }
+		public DbSet<Department> Departments { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			modelBuilder.Entity<User>().HasOne(x => x.Company).WithMany().HasForeignKey("CompanyId");
 			modelBuilder.Entity<User>().HasOne(x => x.Job).WithMany().HasForeignKey("JobId");
+			modelBuilder.Entity<User>().HasOne(x => x.Department).WithMany().HasForeignKey("DepartmentId");
 			modelBuilder.Entity<User>().Property(x => x.RoleStr).HasConversion(x => x.ToString(), x => (Roles)System.Enum.Parse(typeof(Roles), x));
 
 			modelBuilder.Entity<Transaction>().HasOne(x => x.Company).WithMany().HasForeignKey("CompanyId");
 			modelBuilder.Entity<Transaction>().HasOne(x => x.User).WithMany().HasForeignKey("UserId");
 
 			modelBuilder.Entity<Company>().ToTable("Companies");
+			modelBuilder.Entity<Department>().ToTable("Departments");
 			modelBuilder.Entity<Job>().ToTable("Jobs");
 			modelBuilder.Entity<Resource>().ToTable("Resources");
 			modelBuilder.Entity<Transaction>().ToTable("Transactions");
