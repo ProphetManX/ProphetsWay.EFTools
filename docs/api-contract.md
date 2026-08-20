@@ -1,14 +1,26 @@
 # API Contract — ProphetsWay.EFTools 3.0.0
 
-**Status: Stage 2 — Revision 9, *under review*.** A `Contract Reviewer` adversarial pass over Revision 8 on
-**2026-08-19** returned **"not fit to be the sole source for the shape pass"** — **five blocking**, nine
-significant and six minor findings, keyed **B1–B5**, **G1–G9** and **M1–M6**. Revision 9 closes them. It is a
-**localized correction pass**: no section is restructured, no type is added or removed, and no settled
-decision is re-argued. **No pass has run against the text as it now stands**, and nothing here may be
-described as "closed" or "passed" on Revision 9's own account until one does.
+**Status: Stage 2 — Revision 10, *under review*.** A `Contract Reviewer` **delta review** of Revision 9 on
+**2026-08-19** returned **"not yet fit to be the sole source for the shape pass."** It closed 16 of the 20
+prior findings, passed a clean regression sweep and re-verified [D19](purpose-and-scope.md#owner-decisions--2026-08-15)
+intact — but found **three blocking and four significant defects in the text Revision 9 newly wrote**, keyed
+**N1–N13**. Revision 10 closes them. It is a **localized correction pass**: no section is restructured, one
+decision is added (**A37**), three are refined in place (**A32**, **A34**, **A35**) and one is made
+deterministic (**A36**). **No pass has run against the text as it now stands**, and nothing here may be
+described as "closed" or "passed" on Revision 10's own account until one does.
 
-**Two owner decisions were taken on 2026-08-19 and are implemented here. Both are settled and are not open
-to re-litigation.**
+> **The failure this revision was written to stop repeating.** The delta review found that Revision 9
+> **complied with two instructions inherited from the previous review without checking either against the
+> sources** — all of B5, whose worked examples and `[C]` obligation rested on an arrangement that cannot
+> fail, and the `Snapshot` row of the D16 helper table, "corrected" into a different wrong claim under a
+> header promising it had been checked against `DepartmentDao.cs`. `AGENTS.md` names this directly:
+> **affirming an inherited claim is not verifying it.** Every EF Core mechanism asserted in Revision 10 was
+> checked against the sources or against EF Core's own documented semantics before being written, and where a
+> reviewer's named API turned out to be the wrong one it was **replaced and the replacement said so** — see
+> **N1** in the log. A reviewer is not authoritative over the sources.
+
+**Three owner decisions were taken on 2026-08-19 and are implemented here. All three are settled and are not
+open to re-litigation.**
 
 - **Q11 — the `Insert` mechanism.** The owner approved **"clear the key from a copy."** `Insert` inserts from
   a **copy** of the caller's entity, never from the caller's instance, **and** clears a store-generated
@@ -20,9 +32,30 @@ to re-litigation.**
 - **Q12 — [OD-11](#owner-decisions-taken-during-revision-8) is ratified**, in the owner's words: *"yes to
   insert writes back whatever the store settled on."* It is **no longer open to reversal**, and it resolves
   not by picking a side but by **one rule covering both cases**.
+- **Q13 — what "store-generated" means.** The owner confirmed that **N1's fix refines Q11 rather than
+  reversing it**: the clearing step applies only to identifiers the **store** generates, never to ones **EF
+  Core generates client-side before sending**. Q11's *"clear the key from a copy"* stands; what changes is
+  which identifiers it is asking about. Implemented in [A32](#revision-9-additions) and A24 step 6.
 
-**What the five blocking findings were, in one line each**, so this header is checkable against the log
-below rather than taken: **B1** — `Insert`'s stated mechanism could not produce its stated outcome, twice
+**What the three blocking findings were, in one line each**, so this header is checkable against the log
+below rather than taken: **N1** — A24 step 6 cleared *any* `ValueGenerated.OnAdd` identifier, which for a
+`Guid` key is exactly the value that makes EF Core's **client-side** generator fire, so a caller-supplied
+`Guid` came back as a different one and the `[C]` obligation asserting the opposite was unpassable. **N7** —
+B5's justification, both worked examples and its `[C]` obligation rested on an arrangement in which
+`SetValues` cannot throw, so the obligation was green against an implementation with no exclusion at all.
+**N8** — A35's second permitted remedy, *"restore from the tracked entry immediately after"*, has no "after":
+the exception is raised **by** the change, inside the copy.
+
+**And the four significant ones:** **N2** — A32's copy is what relationship fix-up now appends to a caller's
+inverse navigation, a consequence A32 created and that D16's acceptance test cannot see. **N3** — the soft
+`Insert`'s stamps were unstated at every site, which blocks D16's 33/33. **N9** — the `Snapshot` row of the
+D16 helper table described code that does not exist. **N13** — three provenance rows mis-classified as
+*already discharged upstream* when all three are new local obligations, costing five tests.
+
+**Revision 9's own summary of what it closed is kept below**, because a later revision correcting three of
+its statements is not a reason to lose the record of the sixteen it got right.
+
+**What the five blocking findings of the previous pass were, in one line each:** **B1** — `Insert`'s stated mechanism could not produce its stated outcome, twice
 over. **B2** — the DAO constructor foreclosed the `GetKey` override the same page offered. **B3** — no rule
 said which family a two-capability DAO derives from, and the document carried no `DepartmentDao` sample on
 the family it is the acceptance test for. **B4** — `DbUpdateConcurrencyException` is a **second** addition to
@@ -160,6 +193,37 @@ They were written as bare `S1`–`S8` and collided with the **settled owner deci
 obligations cited a finding and resolved to an unrelated decision. The prefix is the fix (Revision 6,
 Finding 5). A bare `S`*n* anywhere in this document now means a **settled decision** and nothing else.
 
+#### Revision 10
+
+A `Contract Reviewer` **delta review** of Revision 9 on **2026-08-19** returned **not yet fit to be the sole
+source for the shape pass** — **three blocking** (**N1**, **N7**, **N8**), four significant (**N2**, **N3**,
+**N9**, **N13**) and six minor (**N4–N6**, **N10–N12**), plus one log correction (**M1**). Sixteen of the
+twenty prior findings were confirmed closed, the regression sweep was clean, and
+[D19](purpose-and-scope.md#owner-decisions--2026-08-15)'s four `Restore` seams were re-verified intact — and
+**every new defect was in the text Revision 9 newly wrote.** One owner decision was taken the same day and is
+implemented rather than recorded as open: **Q13**, which refines what *store-generated* means without
+reversing **Q11**. One new decision is recorded in [Revision 10 additions](#revision-10-additions) —
+**A37** — and **A32**, **A34**, **A35** and **A36** are refined in place. **No section is restructured.**
+
+| Finding | What Revision 10 did |
+|---|---|
+| **N1** | **Blocking, and the largest change in this revision — B1's own failure shape reproduced inside the fix for B1.** A24 step 6 cleared any `ValueGenerated.OnAdd` identifier off the copy, keyed on the model and forbidden from inspecting the value. **EF Core's convention for a `Guid` key is `ValueGenerated.OnAdd` with a client-side sequential generator that fires precisely when the property holds `Guid.Empty`** — so clearing a caller-supplied `Guid` to `Guid.Empty` makes the generator run and the caller receives a **different** `Guid`, while G7's prose and a `[C]` obligation both promised the opposite. **A `[C]` no conforming implementation can pass is a worse defect than an untraceable one.** Closed by distinguishing **store-side** generation from **EF-client-side** generation, which is owner decision **Q13**. **The reviewer's named mechanism was checked and is wrong**: `IProperty.GetValueGeneratorFactory()` returns only an **explicitly configured** factory and is `null` for a conventionally-configured `Guid` key — the exact case N1 is about — so keying on it reproduces the defect a third time. The mechanism specified instead is `IValueGeneratorSelector` plus **`ValueGenerator.GeneratesTemporaryValues`**, which is the property EF Core itself uses to decide whether a generated value is sent to the store or merely held until the store answers. `GetValueGenerationStrategy()` is **named and forbidden** — it is SQL Server-specific and breaks S13. A24 step 6, [`Insert`](#inserttentity-item)'s `Mechanism` / `Identity` / `Side effects` rows, the OD-11 unified rule, G7's prose and the `Guid` obligation are all re-cut onto it |
+| **N7** | **Blocking, and the more serious half of B5. The rule's justification, both worked examples and its `[C]` obligation rested on an arrangement that cannot fail.** `PropertyValues.SetValues` writes a property only where the incoming value **differs** from the tracked entry's current value, and the key-is-read-only exception is raised **on the change** — **independently verified before being written here**, and it is why `Entry(stored).CurrentValues.SetValues(dto)` is EF Core's ordinary update recipe rather than a trap. In `x => x.TenantId == item.TenantId && x.Id == item.Id`, `item.Id` **equals** `stored.Id` by construction — that is how the row was located — so nothing is written to a key property and nothing throws. The obligation asserting *"without the exclusion, EF Core throws"* was therefore **green against an implementation with no exclusion at all**: the *"passes while asserting nothing"* trap this document names in its own [SQLite section](#sqlite-leg-limitations), committed inside a `[C]`. Re-cut onto the genuine trigger — a `MatchRow` locating by a **non-key** column while `item`'s key differs from the located row's — on **both** the keyed `Update` and the keyless `UpdateCore` paths, with the superseded arrangement named and its failure to discriminate stated |
+| **N8** | **Blocking. A35's second permitted remedy cannot be taken.** It borrowed [A30](#revision-6-additions)'s *"exclude from the copy, or restore from the tracked entry immediately after it — the implementer's choice"* shape, but A30's subjects are **timestamps** and A35's are **key properties**: EF Core raises the exception **during** the copy, so an `Implementer` choosing option two gets the exact `InvalidOperationException` A35 exists to prevent, before any restore could run. **The second option is withdrawn**, leaving exclusion from the copy — `SetValues(IDictionary<string, object?>)`, or per-property assignment — as the only route. Stated as a withdrawal with its reason, on the [OD-7](#owner-decisions-taken-during-revision-6) / [OD-8](#owner-decisions-taken-during-revision-8) precedent, rather than quietly edited. **A30's second option survives for the three timestamps**, because a timestamp is not a key property; the two exclusion sets and their two remedy sets are now stated together |
+| **A35 refined beyond the finding** | **Not in the review, and found while fixing N7/N8: A35 as written was unimplementable.** *"`SetValues` never writes the properties `MatchRow` matched on … under an override it is whatever the override reads"* gave **no mechanism for discovering what an arbitrary `Expression<Func<TEntity,bool>>` read**, and introspecting one is fragile in a way nothing else in this document depends on. The rule is **refined, not withdrawn**: the exclusion set is **the entity's key properties, read from `Context.Model`** (`IProperty.IsKey()`). That is deterministic, needs no expression introspection, is what actually prevents the exception — EF Core's message is about a **key** property, not a matched one — and it subsumes the default `MatchRow` and every override. It is also **less restrictive in the right place**: a `MatchRow` locating by a non-key `Email` column may now legitimately *change* that email, which the old wording forbade for no reason |
+| **N2** | **Significant, and a consequence [A32](#revision-9-additions) created.** A24 step 3 copies navigations **by reference**, step 5 tracks principals `Unchanged`, step 7 tracks the copy `Added` — so EF Core relationship fix-up writes the **copy** into any inverse navigation on the **caller's own** principal, and step 10's detach does not take it back out. Under Revision 8 the object landing there was the caller's own instance and the effect was invisible; under A32 it is a library-internal object leaking into a caller's graph, which is the SNAPSHOT RULE's *"an entity reached through a navigation property on an argument is likewise read rather than adopted"* broken in the other direction. **The contract forbids it**, with a stated mechanism — recorded as [A37](#revision-10-additions) — rather than declaring a limitation against the one rule this repository exists to demonstrate. **It is invisible to D16's acceptance test, and that was verified rather than taken:** a search of `ProphetsWay.Example.DataAccess/Entities/` for `ICollection`, `List<`, `IList<`, `IEnumerable` and `HashSet<` returns **nothing**, and reading `Company.cs`, `User.cs` and `Department.cs` confirms there is no inverse navigation of **any** kind, reference or collection. Stated in the register this document keeps for per-consumer invisible consequences, alongside the `AutoInclude` rows |
+| **N3** | **Significant, and it blocks [D16](purpose-and-scope.md#owner-decisions--2026-08-15).** `BaseSoftDao.Insert` requires `CreatedDate` stamped, `UpdatedDate`/`DeletedDate` null **and** the key visible on `item` when the call returns — while A24's ten steps contained **no stamping step at all** and step 9 said flatly *"the identifier is the only one this contract promises to write back onto `item`"*. **Which object is stamped was unstated at every site.** `DepartmentDao.Insert` was opened rather than reasoned about: it stamps **both** — the copy carries `CreatedDate = stamp`, `UpdatedDate = null`, `DeletedDate = null` so the stored row does, and the same three values are then assigned onto `item` alongside `item.Id = stored.Id`. Added as A24 **step 6b** and **step 9b**, with step 9's wording reconciled: the identifier is the only **store-propagated** value written back, and the three timestamps are not store-propagated — they come from `GetCurrentTimestamp()` and are assigned to two objects from one reading of the clock. The keyless [`Insert`](#keyless-member-contracts) row's *"assigns nothing back onto `item`"* is corrected with it — it is true of the **identifier**, and was false for the two soft keyless types |
+| **N9** | **Significant. The `Snapshot` row of the D16 helper table was wrong, in a table whose header promises every row was checked against `DepartmentDao.cs`.** Revision 9 wrote *"absorbed — both halves,"* crediting the write half to A32's copy. **`Snapshot(Department)` is called from `Get`, `GetAll` and `GetPaged` and nowhere else** — `Insert` builds a separate inline `new Department { … }` that never calls it. The **disposition survives**: `Snapshot` is fully absorbed, by `AsNoTracking()` plus `NormalizeRetrievedTimestamp`, **on the read side alone**. The row is re-cut, and the inline copy — which is not one of the seven helpers — is accounted for beneath the table instead of inside it. **All seven rows were re-verified against the file**, not just this one; the other six stand |
+| **N13** | **Significant. Three provenance rows were mis-classified as *already discharged upstream* when all three are new local obligations**, so a `Test Designer` following the table writes **none of five tests**. **Soft delete** — `GetCurrentTimestamp` and `NormalizeRetrievedTimestamp` are this library's hooks and have no upstream vocabulary, on the **keyed** branch too and not only `RootSoftNonIdDao`. **Disposal** — `DisposeCore()` is A11's hook; neither it nor the override-and-forget-`ThrowIfDisposed` hazard has an upstream subject. **Snapshot and tracking** — `QueryTrackingBehavior` does not exist upstream, where the Data Access Layer is `NoDB`. The errors ran the **safe** direction — coverage lost, no second suite created — and are fixed. **Every other row was re-checked**, and the **CRUD** row was wrong too in the same direction: it named four new-local items and omitted four more, all of which assert through the change tracker or need a purpose-built model — the copy guard (A32), the pre-detach guard (A34), the key-property exclusion guard (A35) and the `Guid` two-case guard |
+| **N4** | **Minor.** Both offered copy mechanisms call `Context.Entry(item)`, which reads as tension with the obligation's *"no tracked entry `ReferenceEquals` `item` at any point."* Resolved by stating the fact rather than the fear: `Context.Entry` on an **untracked** instance yields an entry in state `Detached`, which `ChangeTracker.Entries()` does not return — reading values through it does not begin tracking, and **setting `State` on it is what would**. The obligation is worded against `ChangeTracker.Entries()` accordingly. The no-parameterless-constructor case is answered with it: `CurrentValues.ToObject()` materializes through EF Core's own constructor binding, and a third mechanism — assigning the mapped non-shadow scalars onto a fresh instance — is stated with the constraint that makes it usable |
+| **N5** | **Minor, and the next pass shapes six families from this rule.** A36 said *"the largest capability"* — but `IBaseGetAllDao<T>` and `IBasePagedDao<T>` are **incomparable**: neither inherits the other, both inherit `IBaseDao<T>`, so "largest" named no function and yielded *either*. Replaced with a **three-axis selection with a fixed precedence at the capability axis** — `Paged` before `GetAll` before neither — and the tie-breaker's reasoning stated: `IBasePagedDao` declares two members to `IBaseGetAllDao`'s one, so it is the strictly larger surface, and it is the one requiring `ApplyStableOrder` to be a genuine total order, so picking it never under-specifies. **`BaseSoftPagedDao<Department, int>` is unchanged**; it is now *derived* rather than *asserted* |
+| **N6** | **Minor.** The worked conversion accounted for `IDepartmentDao` rules 1–13, 18 and 19 and left **14, 15, 16 and 17** unaccounted, in a conversion [D16](purpose-and-scope.md#owner-decisions--2026-08-15) grades **per rule**. All four are satisfied and now say by what: 14 by the [null-arguments table](#null-arguments), 15 by `BaseSoftDao.ApplyReadFilter` adding `DeletedDate == null` **and nothing else**, 16 by [A8](#identifier-resolution--a8) resolving the same `int Id` the parent dispatcher does, and 17 by the mandated `AsNoTracking()`, which satisfies rule 17 **more strongly than it asks** — rule 17 leaves in-place population permitted, and [`Get`](#gettentity-item)'s `Identity` row refuses it |
+| **N10** | **Minor.** [A34](#revision-9-additions) stated no mechanism for matching already-tracked entries. `MatchRow` returns an `Expression<Func<TEntity,bool>>` — a **query** predicate — so using it against tracked entries needs `.Compile()` and client evaluation, and an override reading a navigation or `EF.Functions.*` would compile and then throw or misbehave. The hand-written `Track` avoided it by hard-coding `x.Entity.Id == id`. **Scoped, per the review's own alternative:** on the keyed families the pre-detach is keyed on **`GetKey(item)`** and never compiles `MatchRow`; on the keyless families, where there is no resolved key, it compiles `MatchRow` under a stated purity constraint the keyless hook already meets. Both consequences are named, including the one where a narrowing `MatchRow` override makes the keyed pre-detach wider than the fetch |
+| **N11** | **Minor.** The upstream IDENTIFIER RULE says the instance carries an identifier *"not the default value of its type"*, while OD-11's `ValueGeneratedNever` branch permits returning with `item.Id == 0` where the caller passed `0` and the store accepted it — legal under [OD-3](#owner-decisions-taken-during-revision-4). One clause closes it: **a `ValueGeneratedNever` identifier left at its default is caller error**, because under that configuration the caller owns the value and asking for a non-default one back asks this library to invent one. **The upstream wording problem is noted and not worked around**: `IExampleDataAccess`'s unconditional *"not the default value of its type"* and the paradigm's own insistence that `0`/`Guid.Empty`/`""` are legal stored keys cannot both hold for an entity legitimately keyed at its default. It is latent upstream — all seven Example entities are store-keyed — and it is **not this repository's to fix**; the route is an entry in `ProphetsWay.Example`'s index, never an edit from here |
+| **N12** | **Minor.** [A33](#revision-9-additions) forecloses the keyed families to an entity with a **computed** identifier, and the answer — the keyless families — was stated only for **composite** keys. The [Composite keys](#composite-keys--they-belong-on-the-keyless-families) routing table is generalized from *"two or more properties together"* to **"no single stored property of type `TKey`"**, with the computed case named as a second row. **A33 is not softened**: the answer is routing, not relaxation, and its reasoning — that `KeySelector`, `KeyEquals` and the A16 ordering default are all built over the resolved property — is untouched |
+| **M1** | **Log correction, no substance.** The Revision 9 log said the `{DaoTypeName}` / `{EntityTypeName}` placeholder form was applied *"at both sites"*. It appears at **one**, in [The two hooks](#the-two-hooks--one-required-at-compile-time-one-at-first-use); the second citation, in [Ordering and paging](#ordering-and-paging), asserts on the two names without quoting the message. The row is corrected |
+| **Obligation count** | **149 → 150, and the single addition is named.** [A37](#revision-10-additions)'s inverse-navigation guard is the only new checkbox; it is `[C]`, because it traces to the SNAPSHOT RULE. Everything else was **re-cut or extended in place**: the `Guid` obligation and the store-generated obligation onto Q13's distinction (N1), the key-property exclusion obligation onto the genuine trigger (N7/N8), the copy obligation onto `ChangeTracker.Entries()` (N4), the pre-detach obligation with its keyless clause (N10), and the soft-`Insert` stamp obligation with the stored row (N3). **Recounted by hand, tag by tag, rather than derived by addition: `Contract` 131, `Characterization` 11, `Dispatcher` 8 — 150**, and the three sum. Revision 9's 149 = 130 / 11 / 8 was itself re-counted here and confirmed before the delta was applied. Any figure of 149, or of `Contract` 130, is superseded |
+
 #### Revision 9
 
 A `Contract Reviewer` adversarial pass over Revision 8 on **2026-08-19** returned **not fit to be the sole
@@ -185,7 +249,7 @@ rewrite — and **no section is restructured.**
 | **G7** | **`\"a client-generated key (`Guid`, `string`) is used as supplied\"` was half wrong.** EF Core's convention for a `Guid` key is `ValueGenerated.OnAdd` with a **client-side** sequential generator that fires only when the property holds `Guid.Empty` — so a `Guid` behaves as store-generated when unassigned and client-assigned when pre-assigned. Under the unified OD-11 rule it needs no special case, and it is now written as a **consequence** rather than an exception. `int?` left null on insert is addressed with it |
 | **G8** | **Composite keys appeared nowhere.** A8 resolves a single property and `BaseDao<TEntity, TKey>` cannot express a pair. Stated in [Identifier resolution](#identifier-resolution--a8): a composite-key entity belongs on the **keyless** families, where `MatchRow` is the identity and *\"Insert assigns nothing back\"* already holds, with `ICompanyResourceDao` rule 1 as the worked case — and a **declared limitation** that a composite key with a store-generated *component* gets nothing written back, because there is no resolved identifier to write onto |
 | **G9** | **One loose end in S4's otherwise-clean carry-through.** A16 plus `KeySelector` over a `string` key orders **by collation**, and the two certified legs order differently. Stability holds per leg so the ORDERING RULE survives, but no obligation said so and a reader would assume the ordering obligations are leg-independent. Stated in [Stable Ordering](#stable-ordering) and split into two obligations — `[C]` for per-leg stability, `[X]` for the divergence |
-| **M1** | The A15 exception message quoted as a **contract term** named `CompanyResourceDao`, a type from another repository, inside this library's own exception. Replaced with a `{DaoTypeName}` / `{EntityTypeName}` placeholder form at both sites |
+| **M1** | The A15 exception message quoted as a **contract term** named `CompanyResourceDao`, a type from another repository, inside this library's own exception. Replaced with a `{DaoTypeName}` / `{EntityTypeName}` placeholder form. **Corrected in Revision 10:** this row said *"at both sites"* and the form appears at **one** — the message is quoted only in [The two hooks](#the-two-hooks--one-required-at-compile-time-one-at-first-use); the obligation in [Ordering and paging](#ordering-and-paging) asserts on the two names without quoting it. Nothing was left unfixed in substance |
 | **M2** | `BaseEFDataAccess.Ownership` was `protected` *\"for a derived `DisposeCore()` override that needs to know\"* — but `DisposeCore()` runs at **step 4**, before the ownership-conditional **step 5**, and cannot act on it. The stated justification is **retracted** and replaced with the one that survives: a derived Data Access Layer's **own custom members**. Visibility is unchanged |
 | **M3** | The [Contents](#contents) omitted the Stage 2 sub-tables, [Design Decisions Made Here](#design-decisions-made-here) and **all four OD tables** — five heavily-cited anchor targets that could not be reached from the top of the file. All added as sub-bullets |
 | **M4** | The [Provider fidelity](#provider-fidelity-sql-server-leg-only) group mixed two checkboxes with two prose pointers. The pointers are now marked **↳ *pointer — counted where it is stated***, so a reader tallying checkboxes cannot mistake them for obligations |
@@ -369,6 +433,7 @@ It cites both and duplicates neither.
     - [Revision 5 additions](#revision-5-additions) — A23–A29
     - [Revision 6 additions](#revision-6-additions) — A30–A31
     - [Revision 9 additions](#revision-9-additions) — A32–A36
+    - [Revision 10 additions](#revision-10-additions) — A37, and the A32/A34/A35/A36 refinements
 - [The Public Surface](#the-public-surface)
 - [Cross-Cutting Rules](#cross-cutting-rules)
 - [The DAL Root — `BaseEFDataAccess<TContext>`](#the-dal-root--baseefdataaccesstcontext)
@@ -481,7 +546,7 @@ so a reader who met the earlier text can see that its removal was deliberate rat
 |---|---|---|
 | **OD-8** | **A26's *"plus any fetched row's whole reachable graph"* clause is retracted.** `Update` and `Delete` locate a row with a tracked fetch that applies **neither `ApplyReadFilter` nor `ApplyIncludes`**, and `item` is **never tracked**, so no relationship fix-up partner exists either — **every navigation on the fetched row is `null`**. The clause described a graph this design cannot produce. Two options were put: widen the fetch so the clause becomes true, or retract it. **The owner chose retraction** — widening would make every write pay for a graph no write uses, and would contradict the opt-in default OD-1 settled. What survives is the fetched **row**, detached in the same `finally` as before. The one route that *does* populate a fetched graph is a consumer-declared model-level `AutoInclude` (H7), and that case is now stated explicitly instead of being reached by accident | [Detachment spans the whole reachable graph](#detachment-spans-the-whole-reachable-graph--a26-od-7), and the replacement obligation in [Writes with a populated navigation graph](#writes-with-a-populated-navigation-graph--od-4-a24a26) |
 | **OD-9** | **The `CompanyResource` counter-example in A25 is replaced by a purpose-built entity, `Assignment`.** `CompanyResource` cannot carry the point three times over: its DAO derives from `RootNonIdDao<CompanyResource>`, which publishes neither `Get` nor `Update`; `ICompanyResourceDao` declares no `Update`; and **both of its two mapped scalars sit in its `MatchRow` predicate**, so an `Update` that changed either would locate nothing and return `0`. It also declares **no navigation property at all**, so it could never have demonstrated that a *relationship* is repointable — only that a scalar is writable. The owner approved specifying an entity for the purpose: one navigation, its foreign key declared explicitly, and a third writable non-key column. It is named as purpose-built and **not present in `ProphetsWay.Example`**, on the same footing as `Country` in the collation obligations | [`Update` writes scalars, and cannot repoint a relationship](#update-writes-scalars-and-cannot-repoint-a-relationship--a25), and the rewritten obligation in [Writes with a populated navigation graph](#writes-with-a-populated-navigation-graph--od-4-a24a26) |
-| **OD-11** | **`Insert` writes back the identifier the store settled on. Ratified by the owner 2026-08-19 and no longer open to reversal** — in his words, *"yes to insert writes back whatever the store settled on."* It resolves not by picking a side but by **one rule covering both cases**, and the rule is stated in full on [`Insert`](#inserttentity-item)'s `Side effects` row. In summary: where the resolved identifier property is store-generated the generated value replaces whatever the caller assigned, and **any pre-assigned value is cleared before the row is sent** (A32) so it is never offered to the store; where it is not store-generated the caller's value is sent and written back unchanged, which is a no-op. **The distinction is read from the model, never from the value** — `0`, `Guid.Empty` and `""` are legal stored key values ([OD-3](#owner-decisions-taken-during-revision-4)), and inspecting them would re-introduce the heuristic A24 rejects `Attach` for. This **narrows** the IDENTIFIER RULE's deliberately-unspecified pre-assigned-key case — *"the one place two conforming implementations may legitimately differ"* — **for this library's implementations only**, which is the move `IDepartmentDao` rule 1 makes for `Department` and which that rule names as narrowing rather than as an exception. **Verified against `IExampleDataAccess`'s IDENTIFIER RULE by opening it: that rule expressly sanctions the narrowing. No upstream change is implied and none may be made from this repository** | [`Insert`](#inserttentity-item)'s `Side effects` row, [A32](#revision-9-additions), and the pre-assigned-key obligation in [CRUD](#crud) |
+| **OD-11** | **`Insert` writes back the identifier the store settled on. Ratified by the owner 2026-08-19 and no longer open to reversal** — in his words, *"yes to insert writes back whatever the store settled on."* It resolves not by picking a side but by **one rule covering both cases**, and the rule is stated in full on [`Insert`](#inserttentity-item)'s `Side effects` row. In summary: where the resolved identifier property is generated **store-side** the generated value replaces whatever the caller assigned, and **any pre-assigned value is cleared before the row is sent** (A32) so it is never offered to the store; where **EF Core** generates it client-side, or where it is not generated at all, the caller's value is sent and written back unchanged. **Revision 10 split what had been one clause into these three** (owner decision **Q13**, finding **N1**) — Revision 9 treated a conventional `Guid` key as store-generated, and clearing it is precisely what makes EF Core's client-side generator replace a caller's value. **The distinction is read from the model, never from the value** — `0`, `Guid.Empty` and `""` are legal stored key values ([OD-3](#owner-decisions-taken-during-revision-4)), and inspecting them would re-introduce the heuristic A24 rejects `Attach` for. This **narrows** the IDENTIFIER RULE's deliberately-unspecified pre-assigned-key case — *"the one place two conforming implementations may legitimately differ"* — **for this library's implementations only**, which is the move `IDepartmentDao` rule 1 makes for `Department` and which that rule names as narrowing rather than as an exception. **Verified against `IExampleDataAccess`'s IDENTIFIER RULE by opening it: that rule expressly sanctions the narrowing. No upstream change is implied and none may be made from this repository** | [`Insert`](#inserttentity-item)'s `Side effects` row, [A32](#revision-9-additions), and the pre-assigned-key obligation in [CRUD](#crud) |
 
 ### Design Decisions Made Here
 
@@ -563,11 +628,20 @@ than an agent's; the other four state a mechanism for behavior that was already 
 
 | # | Decision | Forced by |
 |---|---|---|
-| **A32** | **`Insert` inserts from a copy, and clears a store-generated identifier off that copy.** The caller's `item` is **never** handed to the change tracker. A field-for-field copy of `item`'s mapped scalars is made, tracked `Added`, and — where the resolved identifier property is **`ValueGenerated.OnAdd` or `ValueGenerated.OnAddOrUpdate` in `Context.Model`** — that property on the **copy** is set to `default(TKey)` before `SaveChanges` so it is never offered to the store. Where the property is `ValueGenerated.Never`, the caller's value is sent unchanged. After `SaveChanges`, the identifier the store settled on is read off the copy and written onto `item`. **The distinction is read from the model, never from the value** | **Owner decision Q11, 2026-08-19**, and finding B1. Two independent defects forced it: EF Core omits an `OnAdd` key from the `INSERT` **only when the property holds the CLR default**, so a pre-assigned value is sent and SQL Server answers `IDENTITY_INSERT`; and a tracked `Added` entity receives **every** store-propagated value back — `HasDefaultValueSql`, computed columns, `rowversion` — so *"onto nothing else"* is undeliverable while the caller's instance is the tracked one. The copy is [D15](purpose-and-scope.md#owner-decisions--2026-08-15) read literally, and it is the only version on which [FR 14](feature-requests.md#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) is **closed** on the write path rather than narrowed. See [`Insert` writes the root only](#insert-writes-the-root-only--od-4-a24-a32) |
+| **A32** | **`Insert` inserts from a copy, and clears a *store-side* generated identifier off that copy.** The caller's `item` is **never** handed to the change tracker. A field-for-field copy of `item`'s mapped scalars is made and tracked `Added`, and where the resolved identifier property is one **the store** generates, that property on the **copy** is set to `default(TKey)` before `SaveChanges` so it is never offered to the store. Where EF Core generates it **client-side** — the conventional `Guid` key — nothing is cleared. Where it is `ValueGenerated.Never`, the caller's value is sent unchanged. After `SaveChanges`, the identifier the copy ended up carrying is written onto `item`. **The distinction is read from the model, never from the value.** **Refined by Revision 10 (N1, owner decision Q13):** Revision 9 keyed the clearing step on `ValueGenerated.OnAdd`/`OnAddOrUpdate` alone, which for a `Guid` key is the value that makes EF Core's own client-side generator fire — so a caller-supplied `Guid` came back changed. The three-branch rule and its metadata mechanism are stated in full on [`Insert`](#inserttentity-item) and in [Why the key is cleared](#why-the-key-is-cleared-and-why-the-model-decides-it) | **Owner decision Q11, 2026-08-19**, and finding B1. Two independent defects forced it: EF Core omits an `OnAdd` key from the `INSERT` **only when the property holds the CLR default**, so a pre-assigned value is sent and SQL Server answers `IDENTITY_INSERT`; and a tracked `Added` entity receives **every** store-propagated value back — `HasDefaultValueSql`, computed columns, `rowversion` — so *"onto nothing else"* is undeliverable while the caller's instance is the tracked one. The copy is [D15](purpose-and-scope.md#owner-decisions--2026-08-15) read literally, and it is the only version on which [FR 14](feature-requests.md#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) is **closed** on the write path rather than narrowed. See [`Insert` writes the root only](#insert-writes-the-root-only--od-4-a24-a32) | Two independent defects forced it: EF Core omits an `OnAdd` key from the `INSERT` **only when the property holds the CLR default**, so a pre-assigned value is sent and SQL Server answers `IDENTITY_INSERT`; and a tracked `Added` entity receives **every** store-propagated value back — `HasDefaultValueSql`, computed columns, `rowversion` — so *"onto nothing else"* is undeliverable while the caller's instance is the tracked one. The copy is [D15](purpose-and-scope.md#owner-decisions--2026-08-15) read literally, and it is the only version on which [FR 14](feature-requests.md#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) is **closed** on the write path rather than narrowed. See [`Insert` writes the root only](#insert-writes-the-root-only--od-4-a24-a32) |
 | **A33** | **The entity must carry a conventionally-resolvable identifier property of type `TKey`, and no hook override relaxes that.** The A8 lookup and the A17 step-2 validation run **unconditionally** on every keyed DAO, whether or not the deriving Data Access Object overrides `GetKey`, `KeyEquals`, `MatchRow` or `KeySelector` | B2. A8/A17 made the constructor throw when no such property exists, while `GetKey`'s *Override when* column offered *"the identifier is computed rather than stored"* — an entity that by construction cannot be constructed. **Option (i) of the two the review offered**, and it is the one that costs the consumer less surprise: three of the four hooks are **built over the resolved property** (`KeyEquals` compares it, `KeySelector` selects it, the A16 ordering default orders by it), so making the validation conditional would leave `ApplyStableOrder`'s default undefined and let `GetKey` and `KeySelector` address different columns silently — the exact class of divergence A12 exists to prevent. The clause is **deleted** from `GetKey`'s override column; **`MatchRow` is the documented override point for "the row is not identified by the key"**, and it is unaffected |
-| **A34** | **Every tracked fetch pre-detaches.** Before the `AsTracking()` fetch in `Update`, `Delete`, `UpdateCore` and any custom write, the library detaches every entry already tracked for the row `MatchRow` is about to match. **It detaches what the write is about to touch, and nothing else** — clearing the whole `ChangeTracker` belongs to a Data Access Layer, not to a Data Access Object | G2, and `DepartmentDao.Track`. **A tracking query performs identity resolution rather than re-reading**, so an instance a sibling Data Access Object left tracked for that identifier comes back carrying the sibling's in-memory values instead of the store's — and `IDepartmentDao` rules 3 and 6, both of which compute from stored values, then compute from the wrong numbers **silently**. Revision 8 discussed identity resolution only on the `AsNoTracking()` path. Under `ContextOwnership.Borrowed` the context's owner may have tracked entities this library never touched, so this cannot be argued away as unreachable |
-| **A35** | **`SetValues` never writes the properties `MatchRow` matched on.** `Update` and `UpdateCore` either exclude those properties from the copy, or restore them from the tracked entry immediately after it. **Which of the two, is the implementer's; that they are not written, is not.** Under the default keyed `MatchRow` this is the primary key alone; under an override it is whatever the override reads | B5. `Entry(stored).CurrentValues.SetValues(item)` copies **every mapped scalar by name, primary key included.** Under the default `MatchRow` the values are equal and nothing happens. Under an override that locates by something other than the key — which `MatchRow`'s own *Override when* column invites, and which `RootNonIdDao`/`BaseNonIdDao.UpdateCore` does **by construction** on a keyless entity whose natural key is mapped — `SetValues` attempts to modify a key property of a tracked entity and **EF Core throws `InvalidOperationException`**. A25 knew the shape existed and drew only the "returns `0`" conclusion. Same shape as [A30](#revision-6-additions), which does this for the three soft timestamps |
-| **A36** | **A DAO derives from the single family carrying the largest capability its interface needs.** Any remaining capability interface is satisfied **implicitly by the flat surface** (S2), because the members are already there and public. **No union family exists, and none is added** | B3. `IDepartmentDao : IBaseGetAllDao<Department>, IBasePagedDao<Department>` and the twelve-class surface offers no union of `BaseSoftGetAllDao` and `BaseSoftPagedDao`. Both compile — a base-class public method may implement an interface declared on a derived class — but Revision 8 never said so, never named the pick and carried no sample, while [D16](purpose-and-scope.md#owner-decisions--2026-08-15) makes exactly this conversion the family's acceptance test. See [Choosing a family](#choosing-a-family--a-dao-interface-with-two-capabilities) |
+| **A34** | **Every tracked fetch pre-detaches.** Before the `AsTracking()` fetch in `Update`, `Delete`, `UpdateCore` and any custom write, the library detaches every entry already tracked for the row it is about to match. **It detaches what the write is about to touch, and nothing else** — clearing the whole `ChangeTracker` belongs to a Data Access Layer, not to a Data Access Object. **The matching mechanism is stated by Revision 10 (N10) and is not `MatchRow`:** on the keyed families it is `GetKey(item)` compared in memory, exactly as `DepartmentDao.Track` hard-codes `x.Entity.Id == id`; on the keyless families it is `MatchRow(item).Compile()`, under the purity constraint in [The pre-detach is keyed on the resolved key](#the-pre-detach-is-keyed-on-the-resolved-key-not-on-matchrow--a34) | G2, and `DepartmentDao.Track`. **A tracking query performs identity resolution rather than re-reading**, so an instance a sibling Data Access Object left tracked for that identifier comes back carrying the sibling's in-memory values instead of the store's — and `IDepartmentDao` rules 3 and 6, both of which compute from stored values, then compute from the wrong numbers **silently**. Revision 8 discussed identity resolution only on the `AsNoTracking()` path. Under `ContextOwnership.Borrowed` the context's owner may have tracked entities this library never touched, so this cannot be argued away as unreachable | **A tracking query performs identity resolution rather than re-reading**, so an instance a sibling Data Access Object left tracked for that identifier comes back carrying the sibling's in-memory values instead of the store's — and `IDepartmentDao` rules 3 and 6, both of which compute from stored values, then compute from the wrong numbers **silently**. Revision 8 discussed identity resolution only on the `AsNoTracking()` path. Under `ContextOwnership.Borrowed` the context's owner may have tracked entities this library never touched, so this cannot be argued away as unreachable |
+| **A35** | **`Update` never writes a key property.** `Update` and `UpdateCore` **exclude the entity's key properties from the `SetValues` copy** — read from `Context.Model` as `IProperty.IsKey()`, so primary and alternate keys alike. **Refined twice by Revision 10.** *(N8)* Revision 9's second permitted remedy — restore from the tracked entry immediately after the copy — is **withdrawn**: EF Core raises the exception **during** the copy, so there is no "after" to restore in. *(Mechanism)* Revision 9 defined the exclusion set as *"the properties `MatchRow` matched on … whatever the override reads"*, which gave no way to discover what an arbitrary expression read; keying on the **model's key properties** is deterministic, needs no expression introspection, and is what actually prevents the exception | B5, N7, N8. `Entry(stored).CurrentValues.SetValues(item)` copies **every mapped scalar by name, primary key included** — but it writes a property only where the value **differs**, and the key-is-read-only exception fires **on the change**. So the failure needs a `MatchRow` locating by a **non-key** column while `item`'s key differs from the located row's; the tenant-scoped `(TenantId, Id)` example Revision 9 used **cannot fail**, because the values it compares are the values it matched on. Same family as [A30](#revision-6-additions), which does this for the three soft timestamps — and A30's *restore afterwards* option survives there precisely because a timestamp is not a key property |
+| **A36** | **A DAO derives from the family selected on three axes — soft/hard, keyed/keyless, and capability under a fixed precedence.** Any remaining capability interface is satisfied **implicitly by the flat surface** (S2), because the members are already there and public. **No union family exists, and none is added.** **Made deterministic by Revision 10 (N5):** *"the largest capability"* named no function, because `IBaseGetAllDao<T>` and `IBasePagedDao<T>` are **incomparable** — neither inherits the other. The capability axis is now a stated precedence, `Paged` before `GetAll` before neither | B3. `IDepartmentDao : IBaseGetAllDao<Department>, IBasePagedDao<Department>` and the twelve-class surface offers no union of `BaseSoftGetAllDao` and `BaseSoftPagedDao`. Both compile — a base-class public method may implement an interface declared on a derived class — but Revision 8 never said so, never named the pick and carried no sample, while [D16](purpose-and-scope.md#owner-decisions--2026-08-15) makes exactly this conversion the family's acceptance test. See [Choosing a family](#choosing-a-family--a-dao-interface-with-two-capabilities) |
+
+#### Revision 10 additions
+
+One, plus four refinements recorded at the rows above rather than renumbered. **A37 is the only decision
+Revision 10 adds**, and it exists because [A32](#revision-9-additions) created the condition it governs.
+
+| # | Decision | Forced by |
+|---|---|---|
+| **A37** | **`Insert` leaves no library-made object in the caller's navigation graph.** Before the detach in A24 step 10, and for each related entity the walk attached, the library **removes the copy by reference identity** from that principal's inverse navigation — collection or reference — where relationship fix-up put it. It removes **the copy and nothing else**: an entry the caller placed there is untouched, which is why the removal is by reference identity and never by key | N2. Step 3 copies navigations **by reference**, so the copy and `item` reach the same principals; step 5 tracks those principals `Unchanged`; step 7 tracks the copy `Added`. EF Core's relationship fix-up then writes the copy into any inverse navigation those principals declare — and those principals are **the caller's own objects**. Detaching does not run fix-up in reverse, so step 10 does not take it back out. That is the SNAPSHOT RULE's *"an entity reached through a navigation property on an argument is likewise read rather than adopted"* broken from the other side, and by an object the caller has no name for. **A limitation was the alternative and was rejected**: declaring one against the rule this repository exists to demonstrate, on a mechanism this library chose, is not a limitation of the design but a defect in it. **The whole class is invisible to [D16](purpose-and-scope.md#owner-decisions--2026-08-15)'s acceptance test** — no `ProphetsWay.Example` entity declares an inverse navigation of any kind, verified by searching `Entities/` for `ICollection`, `List<`, `IList<`, `IEnumerable` and `HashSet<` and by reading `Company.cs` and `User.cs` — which is why it needed stating rather than testing into existence. **It is scoped to `Insert`.** `Update` and `Delete` never track `item`, and their located row's navigations are populated only by a consumer's `AutoInclude` (H7, [OD-8](#owner-decisions-taken-during-revision-8)) onto principals this library materialized itself, so no caller-held object is reachable | `IDepartmentDao : IBaseGetAllDao<Department>, IBasePagedDao<Department>` and the twelve-class surface offers no union of `BaseSoftGetAllDao` and `BaseSoftPagedDao`. Both compile — a base-class public method may implement an interface declared on a derived class — but Revision 8 never said so, never named the pick and carried no sample, while [D16](purpose-and-scope.md#owner-decisions--2026-08-15) makes exactly this conversion the family's acceptance test. See [Choosing a family](#choosing-a-family--a-dao-interface-with-two-capabilities) |
 
 ---
 
@@ -663,11 +737,17 @@ times.
 - **`<Nullable>enable</Nullable>`** (S6). `ProphetsWay.BaseDataAccess` 3.1.0 is compiled null-oblivious, so
   declaring `TEntity? Get(TEntity item)` against `T Get(T item)` produces no warning.
 - **No provider package reference.** `Microsoft.EntityFrameworkCore` only. **That includes
-  `Microsoft.EntityFrameworkCore.Metadata`**, which [A32](#revision-9-additions) reads to decide whether an
-  identifier is store-generated. It is a namespace of the **core** package, not of a provider package, so the
-  coupling is **S13-safe** — the library still names no provider. Stated because a reader meeting
-  `IProperty.ValueGenerated` in the `Insert` mechanism will reasonably ask whether provider neutrality just
-  broke. It did not.
+  `Microsoft.EntityFrameworkCore.Metadata` and `Microsoft.EntityFrameworkCore.ValueGeneration`**, which
+  [A32](#revision-9-additions) reads to decide whether an identifier is generated by the **store**, by **EF
+  Core client-side**, or not at all. Both are namespaces of the **core** package, not of a provider package,
+  so the coupling is **S13-safe** — the library still names no provider. Stated because a reader meeting
+  `IProperty.ValueGenerated` and `IValueGeneratorSelector` in the `Insert` mechanism will reasonably ask
+  whether provider neutrality just broke. It did not. **`GetValueGenerationStrategy()` is a different matter
+  and must not be used**: it is an extension in `Microsoft.EntityFrameworkCore.SqlServerPropertyExtensions`,
+  it would put a provider package on this library's dependency list, and **it breaks S13 outright**. Resolving
+  `IValueGeneratorSelector` through `Context.GetService<T>()` is not the same thing: the *interface* is core
+  and the *implementation* the provider registers answers the question, which is exactly the arrangement
+  provider neutrality is supposed to produce.
 - **Minimum EF Core major: 10** (A31). [D7](purpose-and-scope.md#owner-decisions--2026-08-15) fixes the
   target framework at `net10.0`, and EF Core 10 is the major aligned to it — but *"`net10.0` only"* is a
   statement about the TFM, not about the dependency, and several rules here are version-sensitive:
@@ -1314,9 +1394,29 @@ Revision 3 carried was removed in Revision 4 (A21).
 
 #### Choosing a family — a DAO interface with two capabilities
 
-> **Derive from the single family carrying the largest capability your interface needs. Any remaining
-> capability interface is satisfied implicitly by the flat surface (S2), which is what makes a union family
-> unnecessary.** — [A36](#revision-9-additions)
+> **Select the family on three axes — soft/hard, keyed/keyless, and capability under the fixed precedence
+> below. Any remaining capability interface is satisfied implicitly by the flat surface (S2), which is what
+> makes a union family unnecessary.** — [A36](#revision-9-additions)
+
+**Revision 9 said *"the largest capability your interface needs"* and that named no function.**
+`IBaseGetAllDao<T>` and `IBasePagedDao<T>` are **incomparable** — neither inherits the other, both inherit
+`IBaseDao<T>` — so "largest" over a set containing both yields *either*, and a rule the next pass shapes six
+families from cannot be indifferent while sounding decisive. The axes are therefore stated, and the third one
+is a **precedence, not a comparison**:
+
+| Axis | Question | Answer |
+|---|---|---|
+| **1 — soft or hard** | Does the entity carry the `IBaseSoftEntity` timestamps, and does the interface mean `Delete` as a soft delete? | Soft → the `BaseSoft*` half. Otherwise the hard half |
+| **2 — keyed or keyless** | Does the entity carry a single **stored** property of type `TKey`, resolvable by A8? | Yes → the keyed families. No → the keyless four; see [Composite keys](#composite-keys--they-belong-on-the-keyless-families) |
+| **3 — capability** | Which capability interfaces does the DAO interface declare? | **Fixed precedence, highest first: `Paged` → `GetAll` → neither.** `IBasePagedDao` present ⇒ the `*PagedDao` family, whether or not `IBaseGetAllDao` is also present. `IBaseGetAllDao` alone ⇒ the `*GetAllDao` family. Neither ⇒ the plain `BaseDao`/`BaseSoftDao` |
+
+**Why `Paged` wins the tie, stated so it is a reason and not a coin.** `IBasePagedDao<T>` declares **two**
+members — `GetPaged` and `GetCount` — to `IBaseGetAllDao<T>`'s one, so it is the strictly larger declared
+surface even though the two interfaces are incomparable in the type system. And it is the one whose contract
+requires `ApplyStableOrder` to be a genuine **total** order, because partitioning windows depend on it (A16);
+picking it therefore never leaves a requirement unstated, while picking `GetAll` and inheriting `GetPaged`
+through the flat surface would. **A DAO whose interface names both is not choosing between two correct
+answers — it has one.**
 
 **The case that forces the rule is the one this design is graded against.**
 `IDepartmentDao : IBaseGetAllDao<Department>, IBasePagedDao<Department>` — verified by opening
@@ -1365,14 +1465,38 @@ internal class DepartmentDao : BaseSoftPagedDao<Department, int>, IDepartmentDao
 {
 	public DepartmentDao(DbContext context) : base(context) { }
 
-	// Rules 1–6, 8–13, 18 and 19 are the family's. Nothing is overridden to obtain them:
-	//   soft Insert/Update/Delete semantics ......... BaseSoftDao
+	// Rules 1-6 and 8-19 are the family's. Nothing is overridden to obtain them:
+	//   soft Insert/Update/Delete semantics ......... BaseSoftDao            (1-6)
 	//   GetAll / GetPaged / GetCount ................ BaseDao, published by IBasePagedDao here
 	//                                                 and by IBaseGetAllDao through the flat surface (S2)
+	//                                                                        (8-10, 13)
 	//   the DeletedDate == null read filter ......... BaseSoftDao.ApplyReadFilter
+	//                                                                        (9, and 15 - it adds
+	//                                                                         DeletedDate == null and
+	//                                                                         nothing else, which is
+	//                                                                         rule 15 in terms)
 	//   the explicit stable ORDER BY ................ ApplyStableOrder's keyed default, OrderBy(KeySelector)
+	//                                                                        (11)
+	//   the paging boundary rules ................... BaseDao.GetPaged       (12)
+	//   ArgumentNullException on the write members .. the cross-cutting null-arguments table
+	//                                                                        (14 - and GetAll/GetPaged/
+	//                                                                         GetCount accept null, which
+	//                                                                         is the rest of rule 14)
+	//   dispatcher Get<Department>(object) .......... A8 resolves the same int Id the parent dispatcher
+	//                                                 resolves, so the ArgumentException rule 16 requires
+	//                                                 comes from the parent's reflective setter, unchanged
+	//                                                                        (16)
 	//   AsNoTracking, the copy on Insert, the finally detach ... A32, A26/OD-7
+	//                                                                        (17 and 19 - AsNoTracking
+	//                                                                         materializes a fresh
+	//                                                                         instance, which satisfies
+	//                                                                         rule 17 more strongly than
+	//                                                                         it asks: rule 17 permits
+	//                                                                         populating the argument in
+	//                                                                         place and Get's Identity row
+	//                                                                         refuses it outright)
 	//   the DateTimeKind restore .................... NormalizeRetrievedTimestamp's default
+	//                                                                        (18)
 
 	// Rule 7 — the one member the family does not and must not supply. Restore belongs to
 	// IDepartmentDao and to no library contract (D19), and it is written exactly as
@@ -1384,6 +1508,12 @@ internal class DepartmentDao : BaseSoftPagedDao<Department, int>, IDepartmentDao
 
 **`IDepartmentDao` declares no `ApplyIncludes` override and needs none** — `Department` carries scalars only,
 and the opt-in default (OD-1, A18) is therefore correct for it without a line of code.
+
+**All nineteen rules are accounted for above, and that is deliberate.** Revision 9's version of this block
+covered rules 1–13, 18 and 19 and left **14, 15, 16 and 17** unmentioned — all four satisfied, none of them
+said to be. [D16](purpose-and-scope.md#owner-decisions--2026-08-15) grades this conversion **per rule** against
+33 tests, so a rule with nothing beside it reads as a rule nobody checked. Rule 7 is the deliberate exception
+and is the one member the family must not supply ([D19](purpose-and-scope.md#owner-decisions--2026-08-15)).
 
 ##### Which of `DepartmentDao`'s seven helpers the family absorbs — D16's added clause
 
@@ -1399,8 +1529,21 @@ family absorbed and which survived, and why.**"* This table is that statement. *
 | `Save(tracked)` | **Absorbed** | [A26 / OD-7](#detachment-spans-the-whole-reachable-graph--a26-od-7). The helper is `SaveChanges` in a `try` with `Detach` in a `finally`, which is A26's rule with the same reasoning the helper's own doc comment gives — a shared context means an entity left `Added` by a failed `SaveChanges` is flushed by the next sibling's write |
 | `Detach(entity)` | **Absorbed** | The same `finally`. A26 generalizes it from one entity to the whole reachable graph |
 | `AsUtc(...)` | **Absorbed** | `NormalizeRetrievedTimestamp`'s default, `DateTime.SpecifyKind(value, DateTimeKind.Utc)` (A13, S11). Both `DateTime` and `DateTime?` overloads collapse into the one hook, which the family calls only where a nullable timestamp holds a value |
-| `Snapshot(source)` | **Absorbed — both halves** | *Read half*: `AsNoTracking()` materializes fresh instances per query, so the field-for-field copy is unnecessary; the `AsUtc` calls inside it are the row above. *Write half*: the copy `Insert` makes into a fresh `Department` is **[A32](#revision-9-additions)** — Revision 9's addition, and the reason this row now says *both* halves where an earlier reading said only the read half |
+| `Snapshot(source)` | **Absorbed — and it is a read-side helper only** | `AsNoTracking()` materializes fresh instances per query, so the field-for-field copy is unnecessary, and the `AsUtc` calls inside it are the row above. **Revision 9 wrote *"absorbed — both halves,"* crediting a write half to [A32](#revision-9-additions)'s copy, and that was wrong.** `Snapshot` is called from `Get`, `GetAll` and `GetPaged` and **nowhere else** — re-verified by opening the file; `Insert` builds a separate inline `new Department { … }` and never calls it. The **disposition is unchanged** and the row is still *absorbed*; what is corrected is the reason, in a table whose header promises every row was checked against the source |
 | `Track(int id)` | **Absorbed — including the pre-detach** | The `AsTracking()` locating fetch in `Update` and `Delete`, **plus [A34](#revision-9-additions)**, which is the pre-detach loop the helper performs before that fetch. Revision 8 specified the fetch and not the pre-detach; **A34 is what makes this row read \"absorbed\" rather than \"half absorbed\"** |
+
+**The inline copy inside `Insert` is not one of the seven, and it is accounted for here rather than in a row
+above.** `DepartmentDao.Insert` builds a `new Department { Name, Description, CreatedDate = stamp,
+UpdatedDate = null, DeletedDate = null }`, adds *that*, and then assigns four values onto the caller's
+instance. It has no helper to name, so [D16](purpose-and-scope.md#owner-decisions--2026-08-15)'s clause does
+not reach it — but it is the single most load-bearing thing the hand-written DAO does, and it is
+**[A32](#revision-9-additions) and A24 steps 6b/9b** arrived at by hand. Revision 9 tried to fit it into the
+`Snapshot` row, which is how that row came to describe code that does not exist.
+
+**All seven rows were re-verified against
+`ProphetsWay.Example.DataAccess.EF/Daos/DepartmentDao.cs` during Revision 10**, not only the one the review
+named. `Live`, `Read`, `Save`, `Detach`, `AsUtc` and `Track` stand as written; `Snapshot` is the row that
+moved.
 
 **Nothing survives, and one thing is deliberately not absorbed.** `Restore` is not a helper — it is a public
 member of `IDepartmentDao`, and [D19](purpose-and-scope.md#owner-decisions--2026-08-15) settles that it stays
@@ -1687,11 +1830,11 @@ Two consequences worth stating:
 |---|---|
 | **Nulls** | `item` null → `ArgumentNullException` |
 | **Returns** | `void` |
-| **Identity** | **The caller's `item` is never handed to the change tracker.** A copy of it is what gets inserted ([A32](#revision-9-additions)). `item` is read, and one value travels back onto it — the row below |
-| **Side effects** | **`Insert` writes back the identifier the store settled on.** See the rule in full below |
-| **Mechanism** | **A copy of `item` is added; everything reachable through `item`'s navigation properties is set `Unchanged` explicitly** ([A32](#revision-9-additions), OD-4, A24). Related rows are read, never written. **`Dataset.Add(item)` is wrong, and so is `Attach`** — see [Writes and the Navigation Graph](#writes-and-the-navigation-graph) |
+| **Identity** | **The caller's `item` is never handed to the change tracker.** A copy of it is what gets inserted ([A32](#revision-9-additions)). `item` is read, and the values that travel back onto it are the two rows below — **and no others**. `Context.Entry(item)` may be used to build the copy: on an untracked instance it yields a **`Detached`** entry, which is not tracking |
+| **Side effects** | **`Insert` writes back the identifier the copy ended up carrying.** See the rule in full below. **On the soft families it also writes back the three timestamps** — `CreatedDate` stamped, `UpdatedDate` and `DeletedDate` `null` — which come from `GetCurrentTimestamp()` rather than from the store; see [`BaseSoftDao`](#basesoftdaotentity-tkey--the-soft-delete-deltas). **Nothing the library created is left in `item`'s navigation graph** ([A37](#revision-10-additions)) |
+| **Mechanism** | **A copy of `item` is added; everything reachable through `item`'s navigation properties is set `Unchanged` explicitly** ([A32](#revision-9-additions), OD-4, A24). A **store-side** generated identifier is cleared off the copy first; an identifier **EF Core** generates client-side, and one it does not generate at all, are left as the caller set them — the three branches are in [Which identifiers step 6 clears](#which-identifiers-step-6-clears--three-branches-not-two). Related rows are read, never written. **`Dataset.Add(item)` is wrong, and so is `Attach`** — see [Writes and the Navigation Graph](#writes-and-the-navigation-graph) |
 | **Related entities** | Not inserted, not updated, and their keys are not reassigned. EF Core's relationship fix-up writes the foreign key onto the new row, so an association to a stored row is preserved |
-| **Detachment** | **In a `finally`, on success and on failure**, the inserted copy and everything reachable from `item` are detached from the context (A26, OD-7). `item` itself was never tracked, so there is nothing on it to detach — which is the strongest possible form of the "read rather than adopted" half of the SNAPSHOT RULE. **A failed `Insert` therefore leaves nothing pending**, and the caller may fix `item` and call again on the same instance |
+| **Detachment** | **In a `finally`, on success and on failure**, the inserted copy and everything reachable from `item` are detached from the context (A26, OD-7), after the copy has been removed from any inverse navigation fix-up wrote it into ([A37](#revision-10-additions)). `item` itself was never tracked, so there is nothing on it to detach — which is the strongest possible form of the "read rather than adopted" half of the SNAPSHOT RULE. **A failed `Insert` therefore leaves nothing pending**, and the caller may fix `item` and call again on the same instance |
 | **Idempotency** | **Not idempotent.** Two calls insert two rows unless a store constraint prevents it |
 | **Duplicate key** | **A key that names a stored row is a duplicate, not an update.** The provider's uniqueness or primary-key violation propagates **unwrapped**. See *`Insert` is not an upsert* below |
 | **Failure** | Constraint violations surface as the provider's exception, unwrapped |
@@ -1699,33 +1842,63 @@ Two consequences worth stating:
 
 #### `Insert` writes back the identifier the store settled on — OD-11, ratified 2026-08-19
 
-**One rule, covering both cases, and it is the contract term a consumer reads.**
+**One rule, covering every case, and it is the contract term a consumer reads.**
 
-Where the resolved identifier property is **store-generated** — `ValueGenerated.OnAdd` or
-`ValueGenerated.OnAddOrUpdate` in the configured model — the generated value is written onto `item`,
-replacing whatever the caller had assigned; **any value the caller pre-assigned is cleared before the row is
-sent**, so it is never offered to the store ([A32](#revision-9-additions)). Where the property is **not**
-store-generated — `ValueGenerated.Never` — the caller's value is sent and written back unchanged, which is a
-no-op.
+**`Insert` writes back whatever the identifier ended up as.** Which is:
+
+- **Store-side generated** — the store produces the value. Whatever the caller pre-assigned is **cleared
+  before the row is sent**, so it is never offered to the store, and the generated value is what lands on
+  `item` ([A32](#revision-9-additions)).
+- **Generated by EF Core client-side** — the conventional `Guid` key. A value the caller supplied is **used
+  as supplied and written back unchanged**; an unassigned one is generated and written back.
+- **Not generated** — `ValueGenerated.Never`. The caller's value is sent and written back unchanged, which is
+  a no-op.
+
+**Three branches, not two, and Revision 9 had two.** It read *store-generated* as `ValueGenerated.OnAdd`, and
+the conventional `Guid` key is `OnAdd` **with an EF Core client-side generator** — so under Revision 9 a
+caller-supplied `Guid` was cleared, the generator fired on the resulting `Guid.Empty`, and the caller received
+a `Guid` they never supplied while this section promised they would not. The correction is owner decision
+**Q13**, which refines what *store-generated* means and **does not reverse Q11**: `Insert` still inserts from
+a copy, and still clears — the first branch is untouched. The discriminating mechanism, and the two APIs that
+look right and are not, are in
+[Which identifiers step 6 clears](#which-identifiers-step-6-clears--three-branches-not-two).
 
 **The distinction is read from the model, never from the value.** `0`, `Guid.Empty` and `""` are legal
 *stored* key values ([OD-3](#owner-decisions-taken-during-revision-4)), and inspecting them to decide what to
 do would re-introduce the exact heuristic [A24 rejects `Attach` for](#attach-is-the-second-trap-and-it-fails-on-exactly-the-rows-od-3-protects).
 A `default(TKey)` sniff is that heuristic wearing a different name, and it is forbidden on the same grounds.
 
-**A `Guid` key is a consequence of the unified rule, not a separate case** — and Revision 8's *"a
-client-generated key (`Guid`, `string`) is used as supplied"* was half wrong. EF Core's convention for a
-`Guid` primary key is **`ValueGenerated.OnAdd` with a client-side sequential generator**, and that generator
-fires **only when the property holds `Guid.Empty`**. So a `Guid` behaves as store-generated when the caller
-left it unassigned and as client-assigned when the caller supplied one — and under the rule above it needs no
-special-casing at all: A32 clears an `OnAdd` property to `default(TKey)`, which for `Guid` is `Guid.Empty`,
-which is precisely the value that makes EF Core generate one. **A caller who supplied a `Guid` gets that
-`Guid` back** because the generator does not run on a value it did not have to produce. **A `string` key is
-the genuinely client-generated case** — EF Core's convention leaves it `ValueGenerated.Never` unless the
-consumer configures otherwise, so it takes the second branch and is used as supplied. **`int?` left `null` on
-insert** takes whichever branch the model declares: on the usual `OnAdd` identity column the store generates
-and the generated value is written back; on `ValueGenerated.Never` a `null` is sent and the provider rejects
-it if the column is not nullable.
+**A `Guid` key is the second branch, and Revision 8's *"a client-generated key (`Guid`, `string`) is used as
+supplied"* was half right for the wrong reason.** EF Core's convention for a `Guid` primary key is
+**`ValueGenerated.OnAdd` with a client-side sequential generator**, and that generator fires **only when the
+property holds `Guid.Empty`**. So a caller who supplied a `Guid` gets **that same `Guid`** back — the
+generator does not run on a value it did not have to produce — and a caller who left it `Guid.Empty` gets a
+generated one. **Both halves hold because step 6 leaves the property alone**, not because the rule has no
+branch for it. Revision 9 said the opposite: that A32 *"clears an `OnAdd` property to `default(TKey)`, which
+for `Guid` is `Guid.Empty`, which is precisely the value that makes EF Core generate one"* — which is a
+correct description of a mechanism that **destroys** the caller's `Guid`, offered as the reason the caller's
+`Guid` survives. **That sentence is retracted.** **A `string` key is the third branch** — EF Core's
+convention leaves it `ValueGenerated.Never` unless the consumer configures otherwise, so it is used as
+supplied. **`int?` left `null` on insert** takes whichever branch the model declares: on the usual `OnAdd`
+identity column the store generates and the generated value is written back; on `ValueGenerated.Never` a
+`null` is sent and the provider rejects it if the column is not nullable.
+
+**A `ValueGeneratedNever` identifier left at its default is caller error, and this library will not paper
+over it.** `IExampleDataAccess`'s IDENTIFIER RULE says the instance carries, on return, *"an identifier that
+is not the default value of its type"*. Under the third branch the caller owns the value: pass `0` on a
+`.ValueGeneratedNever()` `int` key, have the store accept it — legal, because
+[OD-3](#owner-decisions-taken-during-revision-4) makes `0` an ordinary key value — and the instance returns
+carrying `0`. **That is the caller having chosen the identifier, not this library failing to assign one**, and
+inventing a non-default value to satisfy the letter of the rule would overwrite a value the consumer's own
+model says is theirs.
+
+> **There is an upstream wording problem here, and it is not this repository's to fix.** The IDENTIFIER RULE
+> states *"not the default value of its type"* unconditionally, while the same paradigm insists that `0`,
+> `Guid.Empty` and `""` are legal stored key values. Both cannot hold for an entity legitimately keyed at its
+> default. It is **latent rather than live upstream** — all seven `ProphetsWay.Example` entities are
+> store-keyed, so no conforming implementation there can reach the case. It is recorded here **rather than
+> worked around silently**; the route to fixing it is an entry in `ProphetsWay.Example`'s
+> `docs/feature-requests.md` and a change in that repository, **never an edit from this side**.
 
 **An entity carrying no identifier is outside this rule entirely.** The keyless families assign nothing back,
 per `ICompanyResourceDao` **rule 2**, and there is no property for the rule to speak about. **And where a
@@ -1766,8 +1939,8 @@ consumer who did not want it, and it would do so invisibly.
 | **Returns** | **`1` when a row with that identifier is stored, `0` when none is. Never a negative number, and never greater than `1`** — the **ROW COUNT RULE** on `IExampleDataAccess`, a convention **elected in `ProphetsWay.Example`** rather than inherited from `ProphetsWay.BaseDataAccess`, which says only *"typically 1"*. A write reached through this contract addresses a single row |
 | **The forced change** | 2.2.x threw on an absent row (EF Core branch) or silently inserted one (EF6 branch). **Neither survives.** See [Forced Behavior Changes](#forced-behavior-changes) |
 | **The no-op subtlety** | EF's `SaveChanges()` returns `0` when the incoming values are identical to the stored ones. **That must not leak.** The return value reports whether the row *existed*, not whether EF detected a change: row found → `1`, row absent → `0`. This is provider-independent and testable, and it is the **ROW COUNT RULE**'s most easily lost clause, stated there in terms — *"`Update` reports that a row matched, not that a value changed"* |
-| **Which values are written** | Every mapped scalar on `item`, **less the properties `MatchRow` matched on** — see the row below. `BaseSoftDao` narrows it further |
-| **`SetValues` and the located columns** | **The properties `MatchRow` matched on are excluded from the `SetValues` copy** — or restored from the tracked entry immediately after it. **Which of the two, is the implementer's; that they are not written, is not** ([A35](#revision-9-additions)). Under the default `MatchRow` this is the primary key, the values are equal, and the exclusion changes nothing observable. **Under an override it is load-bearing:** `Entry(stored).CurrentValues.SetValues(item)` copies **every mapped scalar by name, primary key included**, and EF Core **throws `InvalidOperationException`** when the copy attempts to modify a key property of a tracked entity. `MatchRow`'s own *Override when* column invites exactly the override that produces it — a tenant-scoped `(TenantId, Id)` identity — and the keyless `UpdateCore` does it **by construction** on an entity whose natural key is mapped |
+| **Which values are written** | Every mapped scalar on `item`, **less the entity's key properties** — see the row below. `BaseSoftDao` narrows it further |
+| **`SetValues` and the key properties** | **Every property that is part of a key of the entity type — primary or alternate — is excluded from the `SetValues` copy** ([A35](#revision-9-additions), refined by Revision 10). The exclusion set is read from `Context.Model` as `IProperty.IsKey()`. **There is one permitted remedy and it is exclusion**; restoring the value from the tracked entry afterwards was offered by Revision 9 and is **withdrawn** — EF Core raises the exception **during** the copy, so there is no "after". Under the default `MatchRow` the located row's key already equals `item`'s and the exclusion changes nothing observable. **Under a `MatchRow` override that locates by a non-key column it is load-bearing:** `Entry(stored).CurrentValues.SetValues(item)` copies every mapped scalar **by name**, key included, and EF Core throws `InvalidOperationException` — *the property is part of a key and so cannot be modified* — the moment the copy changes one. See [When `SetValues` actually throws](#when-setvalues-actually-throws--and-when-it-cannot--a35) |
 | **Mechanism** | **A pre-detach, then a tracked fetch through `MatchRow`, then `Entry(stored).CurrentValues.SetValues(item)`, then `SaveChanges()`** (A22, [A34](#revision-9-additions), [A35](#revision-9-additions)). The pre-detach releases any entry already tracked for the matched row, **because a tracking query performs identity resolution rather than re-reading** — without it a sibling Data Access Object's in-memory values are what `SetValues` writes over. The fetch calls `IgnoreQueryFilters()` (A28) and applies neither `ApplyReadFilter` nor `ApplyIncludes` — **but a consumer's model-level `AutoInclude` still reaches it**, because that is applied at query compilation and this library has no override for it, so the fetch then materializes and tracks the auto-included graph (H7; see [Navigation Loading](#model-level-autoinclude-is-an-equally-valid-path)). `ExecuteUpdate` is rejected — see below |
 | **What it cannot do** | **Repoint a navigation property that has no foreign-key scalar on the entity** (A25). `SetValues` reads properties by name off the CLR type, and a shadow foreign key has none — so `Update(transaction)` can never change `Transaction.User`. The call still returns `1` and nothing reports the dropped change. See [Writes and the Navigation Graph](#writes-and-the-navigation-graph) |
 | **Concurrent deletion** | **`DbUpdateConcurrencyException`, propagated unwrapped.** The fetch and the `SaveChanges` are two round trips, and outside a transaction there is a window between them. If another connection removes the row inside that window, EF Core finds zero rows affected and throws. **It is not converted to `0`** |
@@ -1805,6 +1978,72 @@ so the detachment guarantee above would have to be re-established by other means
 not deferred.** The performance observation survives as an observation: on a large batch the tracked fetch
 is the dominant cost, and a consumer who needs that cost gone writes a custom DAO method with
 `ExecuteUpdate` in it, where they own the row-count semantics they get.
+
+#### When `SetValues` actually throws — and when it cannot — A35
+
+**`PropertyValues.SetValues` writes a property only where the incoming value differs from the tracked entry's
+current value, and the key-is-read-only exception is raised on the change.** That is why
+`Entry(stored).CurrentValues.SetValues(dto)` is EF Core's ordinary update-from-a-detached-object recipe rather
+than a trap: the `dto` carries the key it was located by, the values are equal, nothing is written to a key
+property, and nothing throws.
+
+**Revision 9 got this backwards, and the cost was a `[C]` obligation that asserted nothing.** Its worked
+example was a tenant-scoped `x => x.TenantId == item.TenantId && x.Id == item.Id`, and its obligation required
+that *"without the exclusion, EF Core throws"*. **In that arrangement `item.Id` equals `stored.Id` and
+`item.TenantId` equals `stored.TenantId` — by construction, because those are the values the row was located
+by.** So the exclusion is unreachable, the exception cannot fire, and the obligation was **green against an
+implementation carrying no exclusion at all**. That is the *"passes while asserting nothing"* trap this
+document names in its own [SQLite limitations](#sqlite-leg-limitations) section, committed inside a `Contract`
+tag. The same objection retires the `CompanyResource` version: both of its mapped scalars sit in its
+`MatchRow` predicate, so both are equal by construction too.
+
+**The genuine trigger is a `MatchRow` that locates by a non-key column while `item`'s key differs from the
+located row's.** Two worked shapes, one per path:
+
+| Path | Arrangement | What happens without the exclusion |
+|---|---|---|
+| **Keyed** | `BaseDao<User, int>` overriding `MatchRow` to `x => x.Email == item.Email` — a natural-key lookup on an entity whose primary key is a surrogate `int Id`. The caller passes `new User { Email = "a@b.c", Name = "changed" }` with `Id` left at `0` | The fetch finds the row with `Id = 42`; `SetValues` writes `0` over it; EF Core throws `InvalidOperationException` |
+| **Keyless** | `BaseNonIdDao<TEntity>` over an entity whose primary key is `(TenantId, Code)` and whose `MatchRow` locates by `Code` alone, the tenant being held by the Data Access Object rather than read off `item` | `item.TenantId` is `0` against a stored `7`; `SetValues` writes `0` over it; same exception |
+
+**The rule is stated over key properties, not over matched properties, and that is a second correction.**
+Revision 9 defined the exclusion set as *"whatever the override reads"* and offered **no mechanism for
+discovering it** — introspecting an arbitrary `Expression<Func<TEntity, bool>>` to recover which properties it
+touched is fragile in a way nothing else in this document depends on, and it is not obviously decidable for a
+predicate built over a closure or a method call. Keying on `IProperty.IsKey()` is deterministic, needs no
+introspection, subsumes the default `MatchRow` and every override, and is what actually prevents the exception
+— EF Core's message names a **key** property, not a matched one. It is also **less restrictive in the one
+place that matters**: under the keyed shape above, a caller may now legitimately change `item.Email`, and
+`Update` writes the new value onto the row located by the old one. Revision 9's wording forbade that for no
+reason anybody had stated.
+
+**And it composes with [A30](#revision-6-additions) by union, not by precedence.** On the soft path the copy
+excludes **the key properties *and* the three timestamps**. The two rules keep different remedy sets, and the
+difference has a reason: A30's alternative — restore from the tracked entry immediately after the copy —
+**survives for the timestamps**, because a timestamp is not a key property and writing one throws nothing;
+A35's does not, because the exception fires inside the copy. An implementer building one exclusion set for
+both gets a correct soft `Update` and never has to know which rule contributed which name.
+
+#### The pre-detach is keyed on the resolved key, not on `MatchRow` — A34
+
+**`MatchRow` returns an `Expression<Func<TEntity, bool>>`, which is a *query* predicate**, and the pre-detach
+runs against objects already in the change tracker. Using `MatchRow` there means `.Compile()` and client
+evaluation — and an override reading a navigation property, or `EF.Functions.*`, or any store-only construct
+would compile happily and then throw or, worse, quietly match the wrong set. Revision 9 required the
+pre-detach and named no mechanism. The hand-written `DepartmentDao.Track` avoided the whole question by
+hard-coding `x.Entity.Id == id`, and the families follow it:
+
+| Family | What the pre-detach matches on | Constraint it implies |
+|---|---|---|
+| **Keyed** | **`GetKey(item)`**, compared in memory against `GetKey(e.Entity)` for each `ChangeTracker.Entries<TEntity>()` entry. `MatchRow` is **never compiled** | None. `GetKey` is an ordinary property read by construction (A33) |
+| **Keyless** | **`MatchRow(item).Compile()`**, applied to each tracked entry — there is no resolved key to use instead | **The keyless `MatchRow` override must be evaluable in memory over the entity's own mapped scalars**: no navigation traversal, no `EF.Functions.*`, no store function. It is already that on every shape this design contemplates — a keyless `MatchRow` *is* the natural key, and `ICompanyResourceDao` rule 1 is the worked case |
+
+**One consequence, stated rather than discovered.** Where a keyed Data Access Object overrides `MatchRow` to
+something *narrower* than the key — the tenant-scoped `(TenantId, Id)` identity — the pre-detach releases a
+**superset** of what the fetch will match: every tracked entry carrying that `Id`, including one for a
+different tenant. Detaching discards that entry's unsaved changes. This is consistent with the posture
+[A26/OD-7](#detachment-spans-the-whole-reachable-graph--a26-od-7) already takes — this library detaches on a
+shared context and does not preserve a sibling's pending state — and it is bounded to one entity type and one
+key value. The alternative, compiling the override, is the one N10 rules out.
 
 ### `Delete(TEntity item)`
 
@@ -1844,9 +2083,9 @@ statement of what soft delete means.
 
 | Member | Contract |
 |---|---|
-| **`Insert`** | Stamps `CreatedDate = GetCurrentTimestamp()` and forces `UpdatedDate = null` and `DeletedDate = null`, **whatever the caller assigned**, then inserts. All three values, and the generated key, are visible on `item` when the call returns |
+| **`Insert`** | Stamps `CreatedDate = GetCurrentTimestamp()` and forces `UpdatedDate = null` and `DeletedDate = null`, **whatever the caller assigned**, then inserts. **Both objects are stamped, and this is the row that says which** ([A24 steps 6b and 9b](#insert-writes-the-root-only--od-4-a24-a32)): the three values are set on the **copy**, so the stored row carries them, and the same three are assigned onto **`item`**, alongside the identifier. The clock is read **once** and one value serves both. All three, and the key, are visible on `item` when the call returns — which is `IDepartmentDao` **rule 1** in full. **`item` is never tracked** (A32), so the write-back is an assignment and not a read-back from the store |
 | **`Update`** | Stamps `UpdatedDate = GetCurrentTimestamp()`. Writes the entity's own data only: **incoming `CreatedDate`, `UpdatedDate` and `DeletedDate` are ignored and the stored `CreatedDate` and `DeletedDate` are preserved.** Returns `1` when a row with that identifier is stored, `0` otherwise. **Only `UpdatedDate` travels back onto `item`** |
-| **`Update` — mechanism** (A30) | The tracked fetch plus `SetValues` of [A22](#revision-4-additions), with **the three timestamp properties excluded from the copy** — or restored from the tracked entry immediately after it. Which of the two, is the implementer's; that they do not arrive from `item`, is not. **`SetValues` copies every mapped scalar by name**, timestamps included, so a soft `Update` written the plain way overwrites the stored `DeletedDate` with whatever the caller's instance holds — normally `null` — and **silently un-deletes the row**. `IDepartmentDao`'s own WHY paragraph names `DeletedDate` as *"the one that gets broken"*; this row is why it does not get broken here. `CreatedDate` fails the same way, less visibly |
+| **`Update` — mechanism** (A30) | The tracked fetch plus `SetValues` of [A22](#revision-4-additions), with **the three timestamp properties excluded from the copy** — or restored from the tracked entry immediately after it. Which of the two, is the implementer's; that they do not arrive from `item`, is not. **The copy also excludes the entity's key properties** ([A35](#revision-9-additions)), and the two exclusion sets compose by **union** — see [When `SetValues` actually throws](#when-setvalues-actually-throws--and-when-it-cannot--a35), which also explains why A30 keeps a second remedy A35 cannot. **`SetValues` copies every mapped scalar by name**, timestamps included, so a soft `Update` written the plain way overwrites the stored `DeletedDate` with whatever the caller's instance holds — normally `null` — and **silently un-deletes the row**. `IDepartmentDao`'s own WHY paragraph names `DeletedDate` as *"the one that gets broken"*; this row is why it does not get broken here. `CreatedDate` fails the same way, less visibly |
 | **`Update` on a deleted row** | **Allowed**, and behaves exactly as above. The row stays deleted |
 | **`Delete`** | **Does not remove the row.** Stamps `DeletedDate = GetCurrentTimestamp()` when a **live** row with that identifier is stored, and returns `1`; the stamped value is written back onto `item`. `CreatedDate` and `UpdatedDate` are not touched |
 | **`Delete` when already deleted or absent** | Returns `0`, changes nothing, and **does not refresh an existing `DeletedDate`** — so `Delete` is idempotent. No write-back onto `item` occurs when it returns `0` |
@@ -2431,11 +2670,11 @@ worth stating:
 
 | Member | Keyless contract |
 |---|---|
-| `Insert` | `ArgumentNullException` on null. **Assigns nothing back onto `item`** — there is no generated identifier ([`ICompanyResourceDao`](#icompanyresourcedao--the-shape-this-exists-to-serve) rule 2), and a composite key with a store-generated component gets nothing back either — see [Composite keys](#composite-keys--they-belong-on-the-keyless-families). **A copy of `item` is what gets inserted** ([A32](#revision-9-additions)); `item` is never tracked. The copy **and everything reachable from `item`** are detached in a `finally`, on success and on failure (A26, OD-7), and the graph is set `Unchanged` rather than inserted (OD-4, A24) |
-| `Delete` | Hard delete on `RootNonIdDao`/`BaseNonIdDao`, soft on the two soft types. **Pre-detaches** ([A34](#revision-9-additions)), locates via `MatchRow`; `1` when the row existed, `0` when not; idempotent |
+| `Insert` | `ArgumentNullException` on null. **Assigns no *identifier* back onto `item`** — there is none to assign ([`ICompanyResourceDao`](#icompanyresourcedao--the-shape-this-exists-to-serve) rule 2), and a composite key with a store-generated component gets nothing back either — see [Composite keys](#composite-keys--they-belong-on-the-keyless-families). **The two soft keyless types still write the three timestamps back**, on the same terms as [`BaseSoftDao.Insert`](#basesoftdaotentity-tkey--the-soft-delete-deltas): stamped onto the copy so the row carries them, and assigned onto `item` so the caller sees them. Revision 9's flat *"assigns nothing back onto `item`"* was true of the identifier and false for `RootSoftNonIdDao` and `BaseSoftNonIdDao`. **A copy of `item` is what gets inserted** ([A32](#revision-9-additions)); `item` is never tracked. The copy **and everything reachable from `item`** are detached in a `finally`, on success and on failure (A26, OD-7), after the copy is removed from any inverse navigation fix-up wrote it into ([A37](#revision-10-additions)), and the graph is set `Unchanged` rather than inserted (OD-4, A24) |
+| `Delete` | Hard delete on `RootNonIdDao`/`BaseNonIdDao`, soft on the two soft types. **Pre-detaches** ([A34](#revision-9-additions)) — on the keyless families by `MatchRow(item).Compile()`, under the purity constraint in [The pre-detach is keyed on the resolved key](#the-pre-detach-is-keyed-on-the-resolved-key-not-on-matchrow--a34) — then locates via `MatchRow`; `1` when the row existed, `0` when not; idempotent |
 | `GetCore` *(protected, all four; virtual)* | Locates via `MatchRow`, **calls `IgnoreQueryFilters()` before the predicate** (A28), applies `ApplyIncludes` — by default none — then `AsNoTracking`, and returns a snapshot or `null`. **Does not apply `ApplyReadFilter`**, so a soft-deleted row is still returned. The soft root overrides it to normalize retrieved timestamps (A13) |
-| `UpdateCore` *(protected virtual, hard types)* | **Pre-detaches** any entry already tracked for the matched row ([A34](#revision-9-additions)), then locates via `MatchRow` with **`IgnoreQueryFilters()` on the locating fetch** (A28); `1` when found, `0` when absent. Writes every mapped scalar **less the properties `MatchRow` matched on** ([A35](#revision-9-additions)). **That exclusion is not optional here, it is structural:** on a keyless entity the `MatchRow` predicate *is* the natural key and its columns are ordinarily **mapped scalars** — `CompanyResource.CompanyId` and `ResourceId` are the worked case — so a plain `SetValues` attempts to modify a key property of a tracked entity and **EF Core throws `InvalidOperationException`**. Revision 8's *"Writes every mapped scalar"* stated the failure as the contract |
-| `UpdateCore` *(protected override, soft types)* | Stamps `UpdatedDate`, preserves the stored `CreatedDate` and `DeletedDate` — by the A30 mechanism, since `SetValues` would otherwise copy all three off `item` — **and excludes the `MatchRow` columns with them** ([A35](#revision-9-additions)). Reached through a `RootNonIdDao<TEntity>`-typed reference by virtual dispatch, so a base-typed caller cannot get the hard body (A2). **Not sealed** — A21 |
+| `UpdateCore` *(protected virtual, hard types)* | **Pre-detaches** any entry already tracked for the matched row ([A34](#revision-9-additions)) — here by the compiled `MatchRow`, since there is no resolved key — then locates via `MatchRow` with **`IgnoreQueryFilters()` on the locating fetch** (A28); `1` when found, `0` when absent. Writes every mapped scalar **less the entity's key properties** ([A35](#revision-9-additions), refined by Revision 10). **That exclusion is not optional here, it is structural:** on a keyless entity the natural key is ordinarily the **primary key**, mapped as scalars — `CompanyResource.CompanyId` and `ResourceId` are the worked case — so a plain `SetValues` will write a key property the moment `item` carries a different value for one, and **EF Core throws `InvalidOperationException`**. Revision 8's *"Writes every mapped scalar"* stated the failure as the contract; Revision 9 scoped the exclusion to *the properties `MatchRow` matched on*, which named no mechanism for discovering them |
+| `UpdateCore` *(protected override, soft types)* | Stamps `UpdatedDate`, preserves the stored `CreatedDate` and `DeletedDate` — by the A30 mechanism, since `SetValues` would otherwise copy all three off `item` — **and excludes the key properties with them**, the two sets composing by union ([A35](#revision-9-additions)). Reached through a `RootNonIdDao<TEntity>`-typed reference by virtual dispatch, so a base-typed caller cannot get the hard body (A2). **Not sealed** — A21 |
 | `Get` / `Update` *(public, `BaseNonIdDao`)* | `GetCore` and `UpdateCore`, published |
 | `Get` / `Update` *(public, `BaseSoftNonIdDao`)* | The soft overrides of `GetCore` and `UpdateCore`, published |
 | `GetAll` / `GetPaged` / `GetCount` | As the keyed families — filtered by `ApplyReadFilter`, then `ApplyIncludes` (`GetAll` and `GetPaged` only), then ordered by `ApplyStableOrder`, which throws until overridden (A15). The composition order is fixed (A20) |
@@ -2711,10 +2950,24 @@ This was absent from Revision 8 entirely.
 
 **The answer is not a new family. It is the keyless one, which already is that family.**
 
+**And the rule generalizes past composite keys.** The keyed families need **one single stored property of
+type `TKey`**; anything that is not that goes keyless, and a composite key is only the commonest instance.
+[A33](#revision-9-additions) forecloses the keyed families to a **computed** identifier for the same reason —
+the property is not there to resolve — and Revision 9 stated the routing for composite keys only, leaving
+`GetKey`'s deleted *"the identifier is computed rather than stored"* clause with no stated destination:
+
 | Situation | Base |
 |---|---|
-| Identity is a single stored property of type `TKey` | The **keyed** families — `BaseDao<TEntity, TKey>` and its five siblings |
+| Identity is a **single stored property of type `TKey`** | The **keyed** families — `BaseDao<TEntity, TKey>` and its five siblings |
 | **Identity is two or more properties together** | The **keyless** families — `RootNonIdDao<TEntity>`, `BaseNonIdDao<TEntity>`, `RootSoftNonIdDao<TEntity>`, `BaseSoftNonIdDao<TEntity>` |
+| **Identity is computed rather than stored**, so no mapped property of type `TKey` exists — or exists but is get-only, which A8 step 4 rejects | The **keyless** families, on the same terms |
+| **Any other shape with no single stored property of type `TKey`** | The **keyless** families |
+
+**This is A33 answered by routing, not by relaxation.** A33 stands exactly as written: the A8 lookup and the
+A17 step-2 validation run **unconditionally** on every keyed Data Access Object, and no hook override
+suppresses them. The question *"what does an entity with a computed identifier do, then"* has an answer, and
+the answer is a different family — not a conditional validation, which would leave `ApplyStableOrder`'s keyed
+default undefined and let `GetKey` and `KeySelector` address different columns silently.
 
 On the keyless side the composite key **is** `MatchRow`, which is `abstract` there precisely because only the
 deriving Data Access Object knows what identifies its row —
@@ -3186,21 +3439,48 @@ survived contact with EF Core**, and the two failures are independent:
 | Step | What happens |
 |---|---|
 | 1 | `item` null → `ArgumentNullException`, before anything is tracked |
-| 2 | Resolve whether the identifier property is store-generated — `ValueGenerated` on the corresponding `IProperty` in `Context.Model`. **On first `Insert`, never in the constructor**, and cached once per closed generic type (A17, A32) |
-| 3 | **Make a copy of `item`.** Every mapped scalar is copied **by value**; every navigation property is copied **by reference**, so the copy reaches the same related instances `item` does and relationship fix-up has the same principals to work with |
+| 2 | Resolve **how the identifier property is generated** — store-side, EF-client-side, or not at all. Read from the model, by the mechanism in [Why the key is cleared](#why-the-key-is-cleared-and-why-the-model-decides-it). **On first `Insert`, never in the constructor**, and cached once per closed generic type (A17, A32) |
+| 3 | **Make a copy of `item`.** Every mapped, non-shadow scalar is copied **by value**; every navigation property is copied **by reference**, so the copy reaches the same related instances `item` does and relationship fix-up has the same principals to work with. **`PropertyValues` covers properties and not navigations**, so an implementer using `CurrentValues.ToObject()` assigns the navigation references onto the copy as a separate move — see [Why the key is cleared](#why-the-key-is-cleared-and-why-the-model-decides-it) for the three permitted mechanisms |
 | 4 | Walk the graph reachable from `item` through its navigation properties, **by reference identity**, so a node reached by two paths is visited once. It is the same graph the copy reaches |
 | 5 | Set every entity in that walk to **`EntityState.Unchanged`, explicitly** — not by calling `Attach`, which infers a state from the key value. This happens **before** the root is added — order matters, see below |
-| 6 | **Where the identifier property is `ValueGenerated.OnAdd` or `ValueGenerated.OnAddOrUpdate`, set it to `default(TKey)` on the copy.** Where it is `ValueGenerated.Never`, leave the caller's value alone. **`item` is not touched by this step** |
+| 6 | **Where the identifier is generated *store-side*, set it to `default(TKey)` on the copy.** Where **EF Core** generates it client-side, or where it is not generated at all, **leave the copy's value alone**. **`item` is not touched by this step** |
+| **6b** | **Soft families only.** Set `CreatedDate = GetCurrentTimestamp()` on the **copy**, and its `UpdatedDate` and `DeletedDate` to `null`, **whatever `item` carried** — so the stored row carries them. The clock is read **once** for the whole operation ([Timestamp Policy](#timestamp-policy)) and the same value serves step 9b |
 | 7 | Mark **the copy** `Added`. **The caller's `item` is never tracked, at any point in the call** |
 | 8 | `SaveChanges()`. EF Core's relationship fix-up writes the foreign keys onto the new row from the attached principals |
 | 9 | **Read the identifier off the copy and write it onto `item`.** See the honest restatement below |
-| 10 | The copy and the whole walked graph are **detached** — in a `finally`, so steps 8 and 9 failing does not skip it (A26, OD-7) |
+| **9b** | **Soft families only.** Write the same three timestamp values step 6b used onto `item`. They are **not read back off the copy** — they never went to the store, and reading them back would put a provider-stripped `DateTimeKind` on a caller's instance ([Timestamp Policy](#timestamp-policy)) |
+| **9c** | **Remove the copy from any inverse navigation on a principal the walk attached** — by reference identity, the copy only ([A37](#revision-10-additions)). Fix-up put it there at step 7, and those principals are the caller's own objects |
+| 10 | The copy and the whole walked graph are **detached** — in a `finally`, so steps 8 through 9c failing does not skip it (A26, OD-7) |
+
+**Step 9c runs before the detach, and it has to.** Detaching an entry does not run relationship fix-up in
+reverse, so once the copy is `Detached` the reference sitting in `company.Users` is an ordinary object
+reference EF Core no longer has an opinion about. The removal is done while the entries are still tracked and
+the model is still the authority on which navigation is the inverse of which.
+
+**A32 created the condition step 9c answers, and Revision 9 did not notice.** Under Revision 8 the object
+relationship fix-up appended to a caller's inverse navigation was the caller's **own** instance — arguable,
+and at worst confusing. Under A32 it is the copy: an object internal to this library, which the caller cannot
+name, cannot have expected, and which step 10 detaches without removing. See [A37](#revision-10-additions)
+for why this is forbidden rather than declared, and for why no test in `ProphetsWay.Example` can see it.
 
 **Step 9, stated honestly.** The **copy** receives every store-propagated value the row carries —
 `rowversion`, computed columns, `HasDefaultValueSql` defaults, and the generated key. **The identifier is the
-only one this contract promises to write back onto `item`**, and it is the only one A32 does write back.
-Revision 8's *"and onto nothing else"* described the copy's fate and attributed it to the caller's instance;
-the mechanism has moved so that the sentence is now true of `item`, which is the object a caller holds.
+only *store-propagated* value this contract promises to write back onto `item`**, and it is the only one A32
+reads off the copy. Revision 8's *"and onto nothing else"* described the copy's fate and attributed it to the
+caller's instance; the mechanism has moved so that the sentence is now true of `item`, which is the object a
+caller holds.
+
+**Step 9b is not a second store write-back, and the distinction is the whole reconciliation.** Revision 9
+wrote *"the identifier is the only one this contract promises to write back onto `item`"* flatly, with no
+stamping step anywhere in the ten — which left `BaseSoftDao.Insert`'s stated contract, and `IDepartmentDao`
+**rule 1** behind it, unreachable from this section. The three soft timestamps **never go to the store and
+come back**: they are read from `GetCurrentTimestamp()` once, at step 6b, and that one value is assigned to
+two objects — the copy, so the row carries it, and `item`, so the caller sees it. Nothing travels *from* the
+store onto `item` except the identifier, which is what step 9's sentence was protecting. **This is what
+`DepartmentDao.Insert` does**, read rather than reasoned about: it builds `new Department { … CreatedDate =
+stamp, UpdatedDate = null, DeletedDate = null }`, saves, and then assigns `item.Id`, `item.CreatedDate`,
+`item.UpdatedDate` and `item.DeletedDate` — four values onto the caller's instance, one of them from the
+store and three of them from the clock.
 
 **A consumer who needs a computed column or a `rowversion` back on their own instance re-reads with `Get`.**
 That is not a gap being conceded — it is [OD-4](#owner-decisions-taken-during-revision-5)'s shape applied
@@ -3232,17 +3512,85 @@ two halves of Q11 look like alternatives and are not.
 A **hand-written** copy can omit the identifier by construction, and `DepartmentDao`'s does — its object
 initializer sets `Name`, `Description` and the three timestamps and **never assigns `Id`**, so the copy leaves
 the identifier at `0` and EF Core omits it from the `INSERT`. **A generic copy cannot do that.** Whatever
-mechanism the implementer chooses — `SetValues` onto a fresh instance, `CurrentValues.ToObject()`, reflection
-over the mapped scalars — copies the identifier along with everything else, because it has no way to know
-which property is special. **Step 6 is what gives the generic copy the property the hand-written one gets for
-free.**
+mechanism the implementer chooses — the three below — copies the identifier along with everything else,
+because it has no way to know which property is special. **Step 6 is what gives the generic copy the property
+the hand-written one gets for free.**
+
+##### Which identifiers step 6 clears — three branches, not two
+
+**Revision 9 had two branches and one of them was wrong.** It cleared any property whose `ValueGenerated` is
+`OnAdd` or `OnAddOrUpdate`. **EF Core's convention for a `Guid` primary key is `ValueGenerated.OnAdd` with a
+client-side sequential generator that fires precisely when the property holds `Guid.Empty`** — so clearing a
+caller-supplied `Guid` to `default(Guid)` is exactly the act that makes EF Core replace it, and the caller
+gets back a `Guid` they never supplied. The prose two paragraphs down promised the opposite, and a `[C]`
+obligation asserted it. **That is B1's own failure shape — a stated mechanism that cannot produce its stated
+outcome — reproduced inside the fix for B1**, and it is worse than B1 was, because a `[C]` no conforming
+implementation can pass obliges every future implementer to fail.
+
+**The question step 6 actually has to answer is not *"is this property generated"* but *"will the value on
+the copy be sent to the store, or will the store produce it?"*** Three answers:
+
+| Branch | Model | Step 6 | Why |
+|---|---|---|---|
+| **Store-side generated** | `ValueGenerated` is `OnAdd`/`OnAddOrUpdate`, and **either no value generator is selected for it, or the selected one produces *temporary* values** | **Clear to `default(TKey)`** | EF Core omits the column from the `INSERT` **only when the property holds the CLR default**. A pre-assigned value is sent, and SQL Server answers *Cannot insert explicit value for identity column*. Clearing is what makes the store the author |
+| **EF-client-side generated** | `ValueGenerated` is `OnAdd`/`OnAddOrUpdate`, and the selected value generator produces **real, non-temporary** values — the conventional `Guid` key | **Leave it alone** | EF Core runs the generator **only when the property holds the CLR default**, so both halves come free: a caller-supplied value survives untouched, an unassigned one is filled. Clearing would destroy the first half and change nothing about the second |
+| **Not generated** | `ValueGenerated.Never` — the conventional `string` key, and any column a consumer declared `.ValueGeneratedNever()` | **Leave it alone** | The caller owns the value. The store accepts it or rejects it on its own terms |
+
+**The mechanism, and it is not the obvious one.** The discriminator between the first two branches is
+**`ValueGenerator.GeneratesTemporaryValues`** — the property EF Core itself uses to decide whether a generated
+value is transmitted or merely held until the store answers. The generator is obtained from
+**`IValueGeneratorSelector`**, resolved as `Context.GetService<IValueGeneratorSelector>()` and asked for the
+resolved identifier property on its entity type; a selector that yields nothing means nothing is generated
+client-side, which is the first branch. `IValueGeneratorSelector` is declared in
+`Microsoft.EntityFrameworkCore.ValueGeneration` in the **core** package, so S13 holds — and it is *right* that
+the provider's registered implementation answers, because whether a value is produced client-side or by the
+store is a provider-dependent fact and asking the provider's own selector is how a provider-neutral library
+gets a provider-accurate answer.
+
+**Two mechanisms that look like they would work and must not be used:**
+
+- **`IProperty.GetValueGeneratorFactory()` is not the discriminator.** It returns only a factory a consumer
+  **explicitly configured** with `HasValueGenerator(...)`, and it is **`null` for a conventionally-configured
+  `Guid` key** — the exact case this branch exists to catch. Keying on it puts the `Guid` in the first branch
+  and reproduces the defect this section was written to remove.
+- **`GetValueGenerationStrategy()` is forbidden outright.** It is a SQL Server extension method, it would put
+  a provider package on this library's dependency list, and **it breaks S13** — see the Framework and language
+  bullet in [Cross-Cutting Rules](#framework-and-language).
+
+**And the definition of *store-generated* everywhere else in this document is the first branch**, not
+`ValueGenerated.ForAdd()`. [OD-11](#owner-decisions-taken-during-revision-8)'s rule, `Insert`'s `Side effects`
+row and the CRUD obligations all read that way; anywhere the phrase appears, it means *the store produces the
+value*, and a conventional `Guid` key is **not** an instance of it. This is owner decision **Q13**, which
+refines Q11 rather than reversing it: *"clear the key from a copy"* stands, and what moved is which keys it
+is speaking about.
+
+##### The three permitted copy mechanisms — and what `Context.Entry(item)` does and does not do
+
+**An implementer needs one of these, and the obligation forbidding `item` from ever being tracked reads as
+though it forbade two of them. It does not**, and the reason is a fact about `DbContext.Entry` rather than a
+concession:
+
+| Mechanism | How | Constraint |
+|---|---|---|
+| **`CurrentValues.ToObject()`** | `Context.Entry(item).CurrentValues.ToObject()` returns a new instance with every mapped property copied | Materializes through **EF Core's own constructor binding**, so it is the mechanism that works for an entity with **no accessible parameterless constructor**. It copies **properties, not navigations** — step 3's navigation references are assigned afterwards |
+| **`SetValues` onto a fresh instance** | Construct a `TEntity`, then `Context.Entry(fresh).CurrentValues.SetValues(item)` | Needs an accessible parameterless constructor. Note this tracks *the fresh instance*, which is the one that becomes the copy — that is intended |
+| **Direct assignment of the mapped scalars** | Construct a `TEntity` and assign each `IProperty` that is not a shadow property and not a navigation, reading through the model | Needs an accessible parameterless constructor, and reaches no shadow property — which is correct, because a shadow property belongs to the store and not to the CLR instance |
+
+**`Context.Entry(item)` on an untracked instance does not begin tracking it.** It returns an `EntityEntry`
+whose `State` is **`Detached`**, and `ChangeTracker.Entries()` **does not return `Detached` entries**. Reading
+values through such an entry is a read. **Setting `State` on it is what would begin tracking**, and A32
+never does that to `item`. The obligation is written against `ChangeTracker.Entries()` for exactly this
+reason, and *"no tracked entry `ReferenceEquals` `item` at any point"* means no entry in a tracked state —
+which is the assertion that has teeth, since a `Detached` entry writes nothing on `SaveChanges`.
 
 **The distinction is read from the model, never from the value, and that is a hard constraint.**
 [OD-3](#owner-decisions-taken-during-revision-4) makes `0`, `Guid.Empty` and `""` **legal stored key values**,
 and [A24 rejects `DbContext.Attach`](#attach-is-the-second-trap-and-it-fails-on-exactly-the-rows-od-3-protects)
 for precisely the crime of treating a default key as "unsaved". **A `default(TKey)` sniff at step 6 would be
-that same forbidden heuristic**, applied one line further down. So step 6 asks `IProperty.ValueGenerated` and
-never asks what the property holds.
+that same forbidden heuristic**, applied one line further down. So step 6 asks the model which of the three
+branches applies and never asks what the property holds. **This is also why the `Guid` case could not be
+repaired by checking for `Guid.Empty`** — that check is the forbidden heuristic wearing the name of a fix, and
+it fails on a `Guid`-keyed sentinel row stored under `Guid.Empty`, which OD-3 exists to keep legal.
 
 **And it applies to the root only.** Step 5 attaches every *related* entity `Unchanged` **whatever its key
 holds** and never consults the model about it — see
@@ -3257,8 +3605,9 @@ what the consumer told EF Core; a library that second-guessed it would be overri
 made, which is the same objection [OD-2](#owner-decisions-taken-during-revision-4) makes to forcing a
 collation.
 
-**The coupling this introduces is `Microsoft.EntityFrameworkCore.Metadata`**, a namespace of the **core**
-package and not of a provider package, so **S13 is intact** — see the Framework and language bullet in
+**The coupling this introduces is `Microsoft.EntityFrameworkCore.Metadata` and
+`Microsoft.EntityFrameworkCore.ValueGeneration`**, both namespaces of the **core** package and neither of a
+provider package, so **S13 is intact** — see the Framework and language bullet in
 [Cross-Cutting Rules](#framework-and-language).
 
 **The worked case the owner confirmed.** After `Insert(user)` where `user.Company` names stored company `7`:
@@ -3942,21 +4291,35 @@ told. This document's own tally is therefore published, so a translated suite ca
 
 | Scope | Obligations |
 |---|---|
-| `Contract` | 130 |
+| `Contract` | 131 |
 | `Characterization` | 11 |
 | `Dispatcher` | 8 |
-| **Total** | **149** |
+| **Total** | **150** |
 
-A suite whose traits do not sum to 149 has dropped or doubled one. **These are this document's obligations,
+A suite whose traits do not sum to 150 has dropped or doubled one. **These are this document's obligations,
 not `ProphetsWay.Example`'s suite**, whose own partition stands separately at 164 tests — Contract 139,
 Characterization 5, Dispatcher 20 — over two legs, 328 executions. The two must not be added together.
 
-**149, not 141 — Revision 9 added eight, and every one is named.** The copy-not-the-instance guard and the
-`ValueGeneratedNever()` pass-through (B1/A32), the pre-detach guard (G2/A34), the `MatchRow`-overridden
-`SetValues` guard run on both the keyed and keyless paths (B5/A35), the duplicate-key non-upsert guard (G4),
-the `Guid` two-case guard (G7), and the two halves of the string-key ordering split (G9) — seven `[C]` and one
-`[X]`. The pre-assigned-key obligation in [CRUD](#crud) was **extended, not duplicated**. Any figure of 141,
-or of `Contract` 123, is superseded, as is the earlier 143.
+**150, not 149 — Revision 10 added exactly one, and re-cut six.** The addition is
+[A37](#revision-10-additions)'s inverse-navigation guard in
+[Writes with a populated navigation graph](#writes-with-a-populated-navigation-graph--od-4-a24a26), tagged
+`[C]` because it traces to the SNAPSHOT RULE. **Six obligations were rewritten in place and none of them
+moved the count:** the `Guid` two-case obligation and the store-generated obligation onto Q13's three-branch
+distinction (N1); the key-property exclusion obligation onto an arrangement that can actually fail (N7, N8);
+the copy obligation onto `ChangeTracker.Entries()` (N4); the pre-detach obligation with its keyless clause
+(N10); and the soft-`Insert` stamp obligation with the stored row (N3). **Recounted by hand, tag by tag:
+`Contract` 131, `Characterization` 11, `Dispatcher` 8 — 150**, and the three sum. Revision 9's
+`Contract` 130 / `Characterization` 11 / `Dispatcher` 8 = 149 was itself re-counted here before the delta was
+applied, and confirmed. Any figure of 149, 141 or 143 is superseded, as is any `Contract` figure of 130, 125
+or 123.
+
+**Two of the six re-cuts were made because the obligation could not have failed, and that is the sharper of
+the two failure modes this tally protects against.** The key-property obligation (B5, N7) was **green against
+an implementation carrying no exclusion at all**, and the `Guid` obligation (G7, N1) was **red against every
+implementation, conforming or not**. A count that sums proves neither was true. Both are named here so a
+reviewer checks the arrangements rather than the arithmetic:
+**a `[C]` no conforming implementation can pass is a worse defect than an untraceable one, and an obligation
+that is green against a deliberately non-compliant implementation asserts nothing.**
 
 **Revision 8's own recount is the argument for publishing the tally**: it restated two SQL Server-only
 obligations in the [Provider fidelity](#provider-fidelity-sql-server-leg-only) group that were already stated,
@@ -3966,8 +4329,8 @@ twice. The duplicates are gone, replaced by pointers marked **↳** so they cann
 
 ### Where these obligations live — the shape-B seam, D10 and D18
 
-**This document publishes 149 obligations and Revision 8 never said where any of them are written.** That
-omission had a specific cost: a `Test Designer` reading it would author 149 tests **inside this repository**,
+**This document publishes 150 obligations and Revision 8 never said where any of them are written.** That
+omission had a specific cost: a `Test Designer` reading it would author 150 tests **inside this repository**,
 and [D18](purpose-and-scope.md#owner-decisions--2026-08-15) says **one test suite, never two**, while
 [D10](purpose-and-scope.md#owner-decisions--2026-08-15) already **declined** a second local copy of the
 assertions — *"a second copy of the assertions inside this repository ends the demonstration
@@ -3990,16 +4353,16 @@ must carry, which is D10's own wording; **what is not deferred is the decision t
 |---|---|---|
 | [Key predicate](#key-predicate--the-riskiest-area-s4) | **New local** | `Country` with a `string` key, `int?` keys, non-public and explicit-implementation identifier properties, `DataAccessConventionException` from the constructor, and interceptor assertions on the emitted command. **None of these entities or failure modes exists upstream**, and `ProphetsWay.Example` has no `string`-keyed entity at all |
 | [Hooks and overrides](#hooks-and-overrides--a12-a18-a20) | **New local** | `MatchRow`, `GetKey`, `KeyEquals`, `ApplyReadFilter`, `ApplyIncludes`, `ApplyStableOrder` and their composition order are **this library's surface**. Upstream has no vocabulary for them |
-| [Navigation loading](#navigation-loading--od-1-a18) | **Mixed \u2014 split it.** The `ApplyIncludes`, `AutoInclude`, split-query, identity-resolution and `Label`/`Article` obligations are **new local**; the *deep snapshot* assertions they support are **already discharged upstream** by `SnapshotDeepCopyTests` | The mechanism is this library's; the guarantee is the paradigm's |
+| [Navigation loading](#navigation-loading--od-1-a18) | **Mixed — split it.** The `ApplyIncludes`, `AutoInclude`, split-query, identity-resolution and `Label`/`Article` obligations are **new local**; the *deep snapshot* assertions they support are **already discharged upstream** by `SnapshotDeepCopyTests` | The mechanism is this library's; the guarantee is the paradigm's |
 | [Global query filters](#global-query-filters--od-5-a28) | **New local** | `HasQueryFilter` needs a model declaring one, which means a context built for these tests and not the Example's. Said in the group already |
-| [CRUD](#crud) | **Mostly already discharged upstream.** Reachable locally as **new** only where the subject is library-specific: the pre-assigned-key narrowing (OD-11), the `ValueGeneratedNever()` pass-through, the duplicate-key non-upsert, and the two `DbUpdateConcurrencyException` obligations | `CompanyDaoTests` and `DepartmentDaoTests` already assert absent-row `0`, identical-values `1`, `Get` miss, null-argument throws and the identifier write-back, against the same contracts |
-| [Writes with a populated navigation graph](#writes-with-a-populated-navigation-graph--od-4-a24a26) | **Mixed.** The `Assignment`, `AutoInclude` and default-keyed-related-entity obligations are **new local** \u2014 all three need entities or model configuration that do not exist upstream. The rest restate `SnapshotDeepCopyTests` and are **already discharged upstream** | |
-| [Snapshot and tracking](#snapshot-and-tracking-1) | **Already discharged upstream** | This is `SnapshotDeepCopyTests` almost line for line. **Do not re-author it here** |
-| [Ordering and paging](#ordering-and-paging) | **Mostly already discharged upstream** \u2014 `DepartmentDaoTests` and `CompanyDaoTests` cover rules 11 and 12. **New local:** the keyless `NotSupportedException` pair and its message (A15, M7), the 10,000-row plus emitted-`ORDER BY` obligation, and the `string`-key collation split (G9) | The upstream suite has no keyless read DAO and no interceptor |
-| [Soft delete](#soft-delete) | **Already discharged upstream, and this is the acceptance test.** `DepartmentDaoTests` is **33 tests against 19 numbered rules**, and [D16](purpose-and-scope.md#owner-decisions--2026-08-15) makes **33/33 after the conversion** the family's bar. **New local** only for the Timestamp Pair Rule on the **`RootSoftNonIdDao` branch** (R4-S2), which has no upstream subject \u2014 `ProphetsWay.Example` has no keyless soft entity | |
+| [CRUD](#crud) | **Mostly already discharged upstream.** Reachable locally as **new** where the subject is library-specific: the pre-assigned-key narrowing (OD-11), the `ValueGeneratedNever()` pass-through, the **`Guid` two-case obligation**, the duplicate-key non-upsert, the two `DbUpdateConcurrencyException` obligations, the **copy-not-the-instance guard** (A32), the **pre-detach guard** (A34) and the **key-property exclusion guard** (A35). **Revision 9's version of this row named the first four and omitted the last four** — every one of which asserts through the change tracker or needs a purpose-built model, so none has an upstream subject | `CompanyDaoTests` and `DepartmentDaoTests` already assert absent-row `0`, identical-values `1`, `Get` miss, null-argument throws and the identifier write-back, against the same contracts. They assert nothing about `ChangeTracker`, `ValueGenerated` or a `MatchRow` override, because upstream has no vocabulary for any of them |
+| [Writes with a populated navigation graph](#writes-with-a-populated-navigation-graph--od-4-a24a26) | **Mixed.** The `Assignment`, `AutoInclude`, default-keyed-related-entity and **inverse-navigation** ([A37](#revision-10-additions)) obligations are **new local** — all four need entities or model configuration that do not exist upstream. The rest restate `SnapshotDeepCopyTests` and are **already discharged upstream** | **No `ProphetsWay.Example` entity declares an inverse navigation of any kind** — verified by searching `Entities/` for `ICollection`, `List<`, `IList<`, `IEnumerable` and `HashSet<`, which returns nothing, and by reading `Company.cs` and `User.cs`. The A37 obligation therefore has no upstream subject |
+| [Snapshot and tracking](#snapshot-and-tracking-1) | **Mostly already discharged upstream** — this is `SnapshotDeepCopyTests` almost line for line, and **do not re-author that part here.** **New local:** the `TrackAll` / `NoTracking` conformance obligation | `QueryTrackingBehavior` is an EF Core concept and **does not exist upstream**, where the Data Access Layer is `NoDB`. Revision 9 marked this row wholly upstream and lost that one test |
+| [Ordering and paging](#ordering-and-paging) | **Mostly already discharged upstream** — `DepartmentDaoTests` and `CompanyDaoTests` cover rules 11 and 12. **New local:** the keyless `NotSupportedException` pair and its message (A15, M7), the 10,000-row plus emitted-`ORDER BY` obligation, and the `string`-key collation split (G9) | The upstream suite has no keyless read DAO and no interceptor |
+| [Soft delete](#soft-delete) | **Mostly already discharged upstream, and this is the acceptance test.** `DepartmentDaoTests` is **33 tests against 19 numbered rules**, and [D16](purpose-and-scope.md#owner-decisions--2026-08-15) makes **33/33 after the conversion** the family's bar. **New local:** the three timestamp-hook obligations — `GetCurrentTimestamp`'s default, once-per-operation and honored override; `NormalizeRetrievedTimestamp` on the retrieval trio; and the `[X]` custom-timezone pairing — **on the keyed branch as well as the keyless one**, plus the R4-S2 obligation that runs the pair on **both** branches | **`GetCurrentTimestamp` and `NormalizeRetrievedTimestamp` are this library's hooks and have no upstream vocabulary at all.** `DepartmentDaoTests` asserts rule 18's *outcome*, not that a hook produced it, and it cannot override something `NoDB` does not declare. Revision 9 marked this row new local **only for the `RootSoftNonIdDao` branch**, which lost three tests on the keyed branch. `ProphetsWay.Example` also has no keyless soft entity, which is the separate reason R4-S2 is local |
 | [Transactions](#transactions-2) | **Already discharged upstream** by `DataAccessTransactionTests`, except the **new local** borrowed-context regression guard for the 2.2.x `EnsureBeginTransaction` no-op, which needs a context the test began a transaction on | |
-| [Disposal](#disposal-1) | **Mixed.** The `ContextOwnership` obligations are **new local** \u2014 the enum is this library's. The rest is upstream | |
-| [Dispatcher](#dispatcher-scopedispatcher) | **Already discharged upstream** \u2014 20 `Scope=Dispatcher` tests | |
+| [Disposal](#disposal-1) | **Mixed.** **New local:** the `ContextOwnership` obligations — the enum is this library's — **and both `DisposeCore()` obligations**, the `[C]` requiring a throwing override not to propagate and the `[X]` pinning the override-and-forget-`ThrowIfDisposed` hazard. The rest is upstream | `DisposeCore()` is [A11](#revision-2-additions)'s hook and the seven overridable dispatcher members are [A19](#revision-4-additions)'s guard placement; **neither has an upstream subject**, since `ProphetsWay.BaseDataAccess` declares `Dispose` abstract and knows nothing of either. Revision 9 marked *"the rest is upstream"* and lost two tests |
+| [Dispatcher](#dispatcher-scopedispatcher) | **Already discharged upstream** — 20 `Scope=Dispatcher` tests | |
 | [Provider fidelity](#provider-fidelity-sql-server-leg-only), [collation](#string-key-collation--a-per-provider-characterization-with-a-stated-expectation-on-each-leg), [SQLite limits](#sqlite-leg-limitations) | **New local, entirely** | Two legs is [D4](purpose-and-scope.md#owner-decisions--2026-08-15)'s test strategy for **this** repository. `ProphetsWay.Example` runs against `NoDB` and knows nothing of a provider |
 
 **What a `Test Designer` does with this.** Author the **new local** rows here. For a row marked *already
@@ -4247,10 +4610,12 @@ The group that pins the defense. Every obligation runs on **both** legs, and eac
 - [ ] **[C]** `Delete` on an absent row returns `0`; a second `Delete` returns `0`; neither throws.
 - [ ] **[C]** `Insert` writes the generated key back onto the argument — the **IDENTIFIER RULE**, elected in
 	`ProphetsWay.Example` rather than promised by `ProphetsWay.BaseDataAccess`.
-- [ ] **[C]** `Insert` with a caller-assigned key on a store-generated column: **the generated key wins, and the
+- [ ] **[C]** `Insert` with a caller-assigned key on a **store-side** generated column: **the generated key wins, and the
 	call does not fail.** `Contract` against *this* library's narrowing of the IDENTIFIER RULE's
 	deliberately-unspecified case, stated on [`Insert`](#inserttentity-item)'s `Side effects` row and recorded as
 	[OD-11](#owner-decisions-taken-during-revision-8) — not against `IExampleDataAccess`, which leaves it open.
+	**Use an `int` identity column, not a `Guid`** — a conventional `Guid` key is the *second* branch of the rule
+	and behaves oppositely; that is the obligation below.
 	**Both halves are required, and the second is the one Revision 8 could not have passed:** on SQL Server the
 	pre-assigned value must not reach the store, so the call must **not** raise
 	*"Cannot insert explicit value for identity column"* — which is the message on nine of this repository's
@@ -4259,25 +4624,40 @@ The group that pins the defense. Every obligation runs on **both** legs, and eac
 	That is [A32](#revision-9-additions)'s clearing step under test. **SQL Server leg carries the failure mode;
 	run it on both.**
 - [ ] **[C]** **`Insert` tracks a copy, never the caller's instance** ([A32](#revision-9-additions)). During and
-	after the call, `item` must **never** appear in the change tracker. Assert through the change tracker — a
-	Data Access Object subclass exposing its `protected` `Context`, or the context the test built and handed to
-	the Data Access Layer — requiring `Context.Entry(item).State == EntityState.Detached` after the call **and**
-	that no tracked entry `ReferenceEquals` `item` at any point. **This is stronger than "detached afterwards"
-	and the difference is the point**: detaching narrows the window,
+	after the call, `item` must **never appear in `ChangeTracker.Entries()`** — reach it through a
+	Data Access Object subclass exposing its `protected` `Context`, or through the context the test built and
+	handed to the Data Access Layer, and require that **no entry returned by `ChangeTracker.Entries()`
+	`ReferenceEquals` `item` at any point**, and that `Context.Entry(item).State == EntityState.Detached` after
+	the call. **Assert against `Entries()` and not against `Entry(item)` alone, and the difference is a fact
+	rather than a hedge**: `Context.Entry` on an untracked instance *creates* a `Detached` entry, which
+	`Entries()` does not return and which writes nothing on `SaveChanges` — so the implementation is free to use
+	`Entry(item)` to build the copy, and a test asserting on the mere existence of an entry would fail a
+	conforming implementation. **This is stronger than "detached afterwards" and the difference is the point**:
+	detaching narrows the window,
 	[FR 14](feature-requests.md#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule)
 	finding 1 is closed only by never tracking it.
 - [ ] **[C]** **A `ValueGeneratedNever()` identifier is sent as supplied** ([A32](#revision-9-additions), OD-11).
 	Declare an `int` key with `.ValueGeneratedNever()` in the test model, `Insert` an entity carrying a chosen
 	non-default value, and require the stored row to carry **that** value and `item` to carry it unchanged.
 	A32's clearing step keys on the **model**, so it must not fire here — an implementation that cleared the key
-	on the value instead would send `0` and store the wrong row. **This and the obligation above are the two
-	branches of one rule and must both be written.**
-- [ ] **[C]** **A `Guid` key is not a special case** (G7, OD-11). Two arrangements against one
-	`BaseDao<Resource, Guid>`: `Insert` with `Id` left `Guid.Empty` yields a non-empty generated value on `item`;
-	`Insert` with a caller-chosen `Guid` yields **that same `Guid`** back on `item` and stores it. EF Core's
-	convention makes a `Guid` key `ValueGenerated.OnAdd` with a **client-side** generator that fires only on
-	`Guid.Empty`, so the unified rule covers both without a branch — pin it, because an implementer reading
-	"store-generated" as "the database generates it" will special-case `Guid` and break the second half.
+	on the value instead would send `0` and store the wrong row. **And the default-valued case belongs in the
+	same test**: `Insert` a second entity on the same `ValueGeneratedNever()` column carrying `0`, and require
+	it to be **sent, stored and returned as `0`** rather than replaced with an invented value. Under this branch
+	the caller owns the identifier; leaving it at its default is caller error and not a breach of the IDENTIFIER
+	RULE, which is stated on [`Insert`](#insert-writes-back-the-identifier-the-store-settled-on--od-11-ratified-2026-08-19).
+	**This and the obligation above are two branches of one rule and must both be written**, and the one below
+	is the third.
+- [ ] **[C]** **A conventional `Guid` key is generated by EF Core client-side, and step 6 must leave it alone**
+	(G7, N1, OD-11). Two arrangements against one `BaseDao<Resource, Guid>`: `Insert` with `Id` left
+	`Guid.Empty` yields a **non-empty** generated value on `item`; `Insert` with a **caller-chosen** `Guid`
+	yields **that same `Guid`** back on `item` and stores it. **The second half is the one that discriminates,
+	and under Revision 9's rule no conforming implementation could have passed it** — that rule cleared any
+	`ValueGenerated.OnAdd` property to `default(TKey)`, and `default(Guid)` is `Guid.Empty`, which is precisely
+	the value that makes EF Core's client-side generator produce a *different* one. Pin both halves: an
+	implementer reading "store-generated" as "anything `OnAdd`" breaks the second, and one reading it as "the
+	database generates it" and special-casing `Guid` by hand breaks nothing but writes a branch the rule already
+	covers. See
+	[Which identifiers step 6 clears](#which-identifiers-step-6-clears--three-branches-not-two).
 - [ ] **[C]** **`Insert` is not an upsert** (G4). `Insert` an entity, then `Insert` a second entity carrying the
 	**same** key on a `ValueGeneratedNever()` column. Require the **provider's** uniqueness or primary-key
 	exception, **unwrapped**, and require the stored row to be **unchanged** — not overwritten with the second
@@ -4307,18 +4687,41 @@ The group that pins the defense. Every obligation runs on **both** legs, and eac
 	the tracked `null`, believes the row is live, and returns `1` while re-stamping a timestamp rule 6 forbids
 	touching. **A tracking query performs identity resolution rather than re-reading**, which is why the wrong
 	answer is silent. Reachable in production under `ContextOwnership.Borrowed`, where the context's owner may
-	have tracked entities this library never touched.
-- [ ] **[C]** **`SetValues` does not write the columns `MatchRow` matched on** ([A35](#revision-9-additions)),
-	**run on both paths**. *Keyed*: a Data Access Object overriding `MatchRow` to a composite
-	`x => x.TenantId == item.TenantId && x.Id == item.Id` over a purpose-built tenant-scoped entity — `Update`
-	must return `1` and write the non-key columns, and must **not** throw. *Keyless*: a `BaseNonIdDao<TEntity>`
-	over an entity whose natural key is two **mapped scalars**, both in its `MatchRow` predicate, plus one
-	writable non-key column — `Update` must write that column and return `1`. **Without the exclusion, EF Core
-	throws `InvalidOperationException` for modifying a key property of a tracked entity**, so the assertion is
-	as much *does not throw* as *writes the right column*. `CompanyResource` will not serve as the keyless
-	subject — it has no non-key column to write, which is
-	[OD-9](#owner-decisions-taken-during-revision-8)'s finding — so declare the entity, as the collation
+	have tracked entities this library never touched. **Run the keyless branch too, because the matching
+	mechanism differs**: on a keyed Data Access Object the pre-detach matches on `GetKey(item)` and never
+	compiles `MatchRow`; on a keyless one it compiles `MatchRow` —
+	[The pre-detach is keyed on the resolved key](#the-pre-detach-is-keyed-on-the-resolved-key-not-on-matchrow--a34).
+	A keyed implementation that compiled `MatchRow` instead would pass this obligation and then break on the
+	first override reading a navigation, so **assert on a Data Access Object whose `MatchRow` is overridden to a
+	predicate that cannot be evaluated in memory** — one traversing a navigation — and require the pre-detach
+	still to work.
+- [ ] **[C]** **`Update` does not write a key property, and a `MatchRow` that locates by a non-key column does not
+	throw** ([A35](#revision-9-additions), refined by Revision 10), **run on both paths**.
+	*Keyed*: a `BaseDao<User, int>` over a purpose-built entity with a surrogate `int Id` and a unique `Email`,
+	overriding `MatchRow` to `x => x.Email == item.Email`. Store a user; it gets `Id = 42`. Call `Update` with a
+	**fresh** instance carrying that email, a changed `Name`, and `Id` left at `0`. Require **`1`** returned,
+	`Name` **written**, the stored `Id` **still `42`**, and **no exception**.
+	*Keyless*: a `BaseNonIdDao<TEntity>` over a purpose-built entity whose primary key is `(TenantId, Code)`,
+	whose `MatchRow` locates by `Code` alone — the tenant being held by the Data Access Object — plus one
+	writable non-key column. Pass an `item` carrying `TenantId = 0` against a stored `7`. Same four assertions.
+	**Without the exclusion EF Core throws `InvalidOperationException` — *the property is part of a key and so
+	cannot be modified* — so the assertion is as much *does not throw* as *writes the right column*.**
+	**Two arrangements are forbidden here, and the reason is the point of the obligation.** A tenant-scoped
+	`x => x.TenantId == item.TenantId && x.Id == item.Id`, and `CompanyResource` with both mapped scalars in its
+	predicate, **cannot fail**: `SetValues` writes a property only where the value **differs**, and in both of
+	those the values `item` carries for the key columns are the values the row was located by. Revision 9 used
+	the first, so its obligation was **green against an implementation with no exclusion at all** — the
+	*"passes while asserting nothing"* trap [SQLite leg limitations](#sqlite-leg-limitations) exists to catch,
+	committed inside a `Contract` tag. See
+	[When `SetValues` actually throws](#when-setvalues-actually-throws--and-when-it-cannot--a35).
+	Both subject entities are purpose-built and absent from `ProphetsWay.Example`; declare them as the collation
 	obligations declare `Country`.
+- [ ] **[C]** **A soft `Update` excludes the key properties *and* the three timestamps** — the union, not either
+	([A30](#revision-6-additions) × [A35](#revision-9-additions)). Take the keyed arrangement above, make the
+	entity soft-delete, soft-delete the row, and call `Update` with `Id` at `0` **and** `DeletedDate` at `null`.
+	Require `1`, the non-key column written, the stored `Id` unchanged, the row **still deleted**, and no
+	exception. An implementation applying one exclusion set and not the other fails exactly one of those
+	assertions, which is what makes running them together worth a checkbox of its own.
 
 ### Writes with a populated navigation graph — OD-4, A24–A26
 
@@ -4340,6 +4743,21 @@ company, job and department first, then hang them off the user.
 	`user.Id` carries the generated value. **This is the assertion the Example suite does not make** — it
 	re-reads through `Get(new Company { Id = co.Id })`, evaluating `co.Id` after a naive `Add` would have
 	overwritten it, so it follows the duplicate and passes.
+- [ ] **[C]** **…and neither is its inverse navigation** ([A37](#revision-10-additions)). Declare a purpose-built
+	principal carrying an **inverse collection** — `Team` with `ICollection<Member> Members`, and `Member` with
+	a `Team` navigation. Store a team, hang a **new** `Member` off the caller's own `Team` instance, and
+	`Insert(member)`. Require that after the call `team.Members` **contains nothing this library put there** —
+	assert on the count the caller left it at, and additionally that no element `ReferenceEquals` anything
+	other than what the caller added. Run the **reference-navigation** form as a second arrangement, where the
+	principal declares a single inverse reference rather than a collection: require it still holds whatever the
+	caller assigned, or `null` if the caller assigned nothing. **This obligation exists because
+	[A32](#revision-9-additions) created the defect it guards**: step 3 copies navigations by reference, so
+	relationship fix-up writes **the copy** — a library-internal object — into the caller's own principal, and
+	step 10's detach does not take it back out. **The entity is purpose-built and must be, because no
+	`ProphetsWay.Example` entity declares an inverse navigation of any kind** — verified by searching
+	`Entities/` for `ICollection`, `List<`, `IList<`, `IEnumerable` and `HashSet<`, which matches nothing.
+	**The whole class is therefore invisible to [D16](purpose-and-scope.md#owner-decisions--2026-08-15)'s
+	acceptance test**, which is exactly why it needs a local test rather than trust.
 - [ ] **[C]** **The client-generated case, which is where luck runs out**: `Insert` a graph whose related entity is a
 	stored `Resource` (`Guid` key). It succeeds. Under `Dataset.Add(item)` it fails on a duplicate primary key.
 	This is the regression guard for A24 and it is the one that cannot pass by accident.
@@ -4519,7 +4937,14 @@ company, job and department first, then hang them off the user.
 - [ ] **[C]** `GetAll` / `GetPaged` / `GetCount` omit deleted rows and agree with one another; all-deleted →
       two empty lists and `0`.
 - [ ] **[C]** `Get` **returns** a soft-deleted row.
-- [ ] **[C]** Stamped values are visible on the caller's instance after the call.
+- [ ] **[C]** **Stamped values are visible on the caller's instance after the call — and the stored row carries the
+	same values** (N3, A24 steps 6b/9b). For `Insert`, assert **both objects**: `item.CreatedDate` stamped,
+	`item.UpdatedDate` and `item.DeletedDate` `null`, **and** a subsequent `Get` returning the same
+	`CreatedDate` to the tick. `item` is never tracked ([A32](#revision-9-additions)), so the two are written
+	separately from one reading of the clock, and **an implementation that stamps only the copy passes the
+	`Get` half and fails `IDepartmentDao` rule 1**, while one that stamps only `item` passes rule 1 and stores
+	a default `CreatedDate`. Asserting one object cannot distinguish either failure. Same for `Update`'s
+	`UpdatedDate` and `Delete`'s `DeletedDate`.
 - [ ] **[C]** `GetCurrentTimestamp` default is UTC; an override is honored by all three stamping members; it is called
       **once** per operation.
 - [ ] **[C]** Timestamps retrieved through `Get`, `GetAll` and `GetPaged` pass through

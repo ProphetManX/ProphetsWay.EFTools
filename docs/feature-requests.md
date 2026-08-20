@@ -76,6 +76,7 @@ deleted. **A green build is not a passing suite** — this repository still cont
 | 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Scheduled** — v3.0.0, as a **release-note obligation only**; the 2.2.x patch is **Rejected** — triaged 2026-08-16, and its retained open question **closed by [D12](purpose-and-scope.md#owner-decisions--2026-08-15)** the same day |
 | 13 | [The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | **Scheduled** — v3.0.0; filed 2026-08-16. Four contract-rule violations in `RootBaseSoftDao` and a structural mismatch in `BaseNonIdDao<T>`; constrains [entry 10](#10--collapse-the-guidintlong-dao-triplication). **2.2.x patch `Rejected` ([D12](purpose-and-scope.md#owner-decisions--2026-08-15))**; the route to the fix is settled by **[D13](purpose-and-scope.md#owner-decisions--2026-08-15)**. **Strengthened 2026-08-18** — the members are `new`, not `virtual`, so the title's claim is structural rather than a judgement; and the entry is no longer a reading finding |
 | 14 | [The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | **Scheduled** — v3.0.0, **triaged 2026-08-19**. A **fourth shipped 2.2.0 defect**, and the fix is **already specified** in `docs/api-contract.md` rev 8 — it needs no new design. It carries **inside** the [entry 10](#10--collapse-the-guidintlong-dao-triplication) collapse under [D14](purpose-and-scope.md#owner-decisions--2026-08-15), is **breaking** against 2.2.0, and the 2.2.x patch is **Rejected** on [D12](purpose-and-scope.md#owner-decisions--2026-08-15). See [the triage](#triaged-2026-08-19--scheduled-for-v300-and-it-is-a-fourth-shipped-defect) |
+| 15 | [`ProphetsWay.EFTools.Guid` shadows `System.Guid` inside this assembly](#15--prophetswayeftoolsguid-shadows-systemguid-inside-this-assembly) | **Proposed** — filed 2026-08-19, awaiting triage. A **compile-time** discovery, not a reading finding: `Guid.NewGuid()` does not compile in `ProphetsWay.EFTools.Tests`. Expected to **close for free** inside [entry 10](#10--collapse-the-guidintlong-dao-triplication); what it asks is that the sub-namespaces' disappearance be treated as a required outcome of that collapse rather than an incidental one |
 
 Numbers are permanent. Entries are never renumbered and never removed —
 [purpose-and-scope.md](purpose-and-scope.md) cites entries by number, and a rejected entry is decision
@@ -1892,3 +1893,47 @@ currently distinguishing a correct implementation from an adopting one.
 
 **The nine red tests are the acceptance criterion for entry 10, not a regression to be cleared first.**
 
+
+## 15 — `ProphetsWay.EFTools.Guid` shadows `System.Guid` inside this assembly
+
+**Status:** **Proposed** — filed 2026-08-19 by an agent under the shared-capture rule, awaiting `Purpose
+Refiner` triage. Nothing in this index covered the ground, so it is a new entry rather than an extension of
+[entry 10](#10--collapse-the-guidintlong-dao-triplication) — but it is **evidence for** entry 10 and should be
+triaged alongside it rather than on its own.
+
+### What was found, and how
+
+Writing `AlternateKeyGuardSpikeTests.cs` in `ProphetsWay.EFTools.Tests` on 2026-08-19, `Guid.NewGuid()` **did
+not compile**. The key-type sub-namespace `ProphetsWay.EFTools.Guid` — the folder holding the six `Guid`-keyed
+DAO bases — is a closer match than `System.Guid` from inside a namespace rooted at `ProphetsWay.EFTools`, so
+the type name resolves to the namespace. The spike worked around it with `global::System.Guid`.
+
+**This is a compile-time discovery, not a reading finding.** It surfaced the moment the first test file was
+written in this assembly, which is also why it had never surfaced before: the project had no tests.
+
+### Why it matters more than an inconvenience
+
+- **It taxes exactly the work this release schedules.** [Entry 6](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits)
+  rebuilds this test project, and [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container)
+  adds certification legs. Every `Guid` a future test needs pays `global::System.` or a using alias.
+- **It reaches consumers, not just this repository.** Any consumer whose own namespace is rooted under
+  `ProphetsWay.EFTools` — and a consumer deriving from these bases plausibly is not — would meet it too, but
+  the sharp case is anyone writing `using ProphetsWay.EFTools;` alongside `Guid` in scope.
+- **The workaround is ugly in a teaching context.** `global::System.Guid` in a sample is noise that has to be
+  explained.
+
+### What the request is — and what it is not
+
+**Not "rename the namespace" as a standalone change.** [Entry 10](#10--collapse-the-guidintlong-dao-triplication)
+already deletes `ProphetsWay.EFTools.Guid`, `.Int` and `.Long` by collapsing the 18 key-specific classes into
+six generic families in the root namespace. **If that collapse lands as specified, this closes with it and
+costs nothing.**
+
+What this entry asks is narrower: that the shape pass **treat the disappearance of these three sub-namespaces
+as a required outcome rather than an incidental one**, and that if any key-type sub-namespace survives the
+collapse for another reason, the `Guid` collision be weighed explicitly before it does.
+
+### What would close it
+
+`ProphetsWay.EFTools.Guid` no longer existing as a namespace, verified by `Guid.NewGuid()` compiling
+unqualified in a file whose namespace is `ProphetsWay.EFTools.Tests`.
