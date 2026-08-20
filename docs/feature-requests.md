@@ -234,6 +234,14 @@ and is wrong. The two cannot drift; the pointer is simply **pinned**.
 > `.git/modules/ProphetsWay.Example/HEAD`, which holds `d84586335a11d7c9efb7277b947015df0c15967e`, the tip
 > of `ProphetsWay.Example`'s `main` and therefore its **3.1.0** tree. **Step 1 of [The work](#the-work)
 > below has landed and steps 2–6 have not**, which is the whole of this repository's current build break.
+
+> **Updated 2026-08-20 — the pointer moved again and `d845863` is no longer current.** It is now
+> **`61d9e7d`** (`61d9e7dfb209c4a92b0c16d058aad1af08031fb5`), re-read from
+> `.git/modules/ProphetsWay.Example/HEAD`. That is **one commit past the `3.1.0` tag** — `git submodule
+> status` renders it `3.1.0-1-g61d9e7d` — being the 2026-08-18 merge of `ProphetsWay.Example` PR #21
+> (`3.1.1-eftool-findings`), which opened the untagged **3.1.1** line and added `TestDataAccessFactory.Use`.
+> **Do not restate `d845863`, and do not describe the pointer as sitting on a tagged release.** The
+> paragraph above is left intact as the record of the first advance; only the SHA is superseded.
 > The table immediately following describes the **pre-advance** pointer and is retained as the record of
 > what the advance brought in; read its left-hand column as history, not as the checked-out tree.
 
@@ -296,8 +304,10 @@ it is this entry's mid-flight state and not a regression. Three independent brea
    is a pointer move rather than a merge. Recorded because "the submodule had uncommitted changes" is
    exactly the kind of finding a later pass would otherwise re-report as an obstacle. **This step is now
    history rather than a precondition — see the note under [D9](purpose-and-scope.md#owner-decisions--2026-08-15).**
-1. ~~Advance the submodule pointer to the published 3.1.0 commit.~~ **Done, 2026-08-16** — the pointer is at
-   `d845863`. **This is the only step of this entry that has landed**, and steps 2–6 not landing with it is
+1. ~~Advance the submodule pointer to the published 3.1.0 commit.~~ **Done, 2026-08-16**, and advanced
+   again on 2026-08-18 — the pointer is at **`61d9e7d`**, one commit past the `3.1.0` tag, on the open and
+   untagged `3.1.1` line. **Earlier text here naming `d845863` is superseded.** **This is the only step of
+   this entry that has landed**, and steps 2–6 not landing with it is
    what leaves the repository non-compiling.
 2. Add `Department` and `CompanyResource` — entities, `I*Dao` implementations, EF mappings in
    `ExampleContext`, and the schema they need. **No longer a build break, and no longer close to done:** the

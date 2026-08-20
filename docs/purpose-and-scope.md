@@ -171,7 +171,9 @@ the construction line be **reachable** from a repository that cannot edit it.
 **D9's precondition has since been met — factual note, 2026-08-16. The decision text above is the owner's
 and is left exactly as written.** D9's closing clause, *"nothing local stands between the repository and
 advancing the pointer,"* was a statement about a pending action. **That action has been taken:** the pointer
-was advanced to `d845863`, verified by reading `.git/modules/ProphetsWay.Example/HEAD`. Read the clause as
+was advanced to `61d9e7d`, verified by reading `.git/modules/ProphetsWay.Example/HEAD` on 2026-08-20
+(earlier text here said `d845863`, which was the first advance on 2026-08-16 and is superseded). Read the
+clause as
 the record of a condition that *was* satisfied and then *was* acted on — not as an outstanding invitation.
 A future agent finding it and concluding there is still a pointer waiting to be moved would be reading a
 closed decision as an open task. The remaining work is
@@ -620,8 +622,10 @@ decision exists to avoid.
 
 ### What this changes for a reader of this document
 
-- **Step 1 is why the submodule pointer does not move again yet.** Anyone finding the pointer at `d845863`
+- **Step 1 is why the submodule pointer does not move again yet.** Anyone finding the pointer at `61d9e7d`
   while `ProphetsWay.Example` has moved on is looking at D11 working as intended, not at a stale pointer.
+  (**SHA corrected 2026-08-20** — this line named `d845863`, the first advance; the pointer moved to
+  `61d9e7d` on 2026-08-18 to pick up `TestDataAccessFactory.Use`.)
 - **Nothing here reopens [D9](#owner-decisions--2026-08-15)**, which was about a discarded local modification
   inside the submodule, nor [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts)
   step 1, which has landed. D11 governs the **next** pointer move, which is step 3 above.
@@ -984,7 +988,7 @@ following the owner decisions above — including row 10, which this document ha
 
 | # | Change | Rationale | Effort | Breaking? | Status |
 |---|---|---|---|---|---|
-| 1 | Advance the `ProphetsWay.Example` submodule onto 3.x and bring the EF DAL with it | The paradigm claim is currently a statement about history. Routed here from [Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md) | **Large** | No (repo-internal), but gates everything | **Scheduled** (D6) — **step 1 of 6 landed 2026-08-16**; the pointer is at `d845863`, the remaining five steps are not done, and the repository does not compile in the interim |
+| 1 | Advance the `ProphetsWay.Example` submodule onto 3.x and bring the EF DAL with it | The paradigm claim is currently a statement about history. Routed here from [Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md) | **Large** | No (repo-internal), but gates everything | **Scheduled** (D6) — **step 1 of 6 landed 2026-08-16**; the pointer is at `61d9e7d` (**SHA corrected 2026-08-20**; `d845863` was the first advance), the remaining five steps are not done, and the repository does not compile in the interim |
 | 2 | `ProphetsWay.BaseDataAccess` `2.5.0` → `3.1.0` | The library advertises a contract it does not reference | Small edit, **large** consequence | **Yes** — transitively | **Scheduled** (D6) |
 | 3 | Implement the 3.x disposal contract in `BaseEFDataAccess` | Required by #2 to compile; the *design* is the real work | Medium | **Yes** — new abstract obligation on derived DALs | **Scheduled** (D6); ~~carries **Q2**~~ **Q2 closed by api-contract S7/S8/A9**. `Dispose` has landed; what remains is `ObjectDisposedException` guarding on seven members (A19) |
 | 4 | **Make 3.x EF Core-only; retire EF6/.NET Framework** | Two semantics under one package ID; blocks #5 | Medium (deletion) | **Yes** — by intent; 2.2.x remains | **Scheduled** (D1) |
@@ -1054,7 +1058,7 @@ not this agent's files to edit** — these are reported for their owners.
 | "`ProphetsWay.Example` is **vendored** here" | `AGENTS.md`, Known Deviations #1 | **False** | [.gitmodules](../.gitmodules) declares `path = ProphetsWay.Example`, `url = …/ProphetsWay.Example.git`, `branch = main`. It is a submodule. It cannot drift; it is *pinned*. `ProphetsWay.Example` corrected the same claim from its side |
 | "Two copies … drift independently" | `AGENTS.md`, Known Deviations #1 | **False**, follows from the above | The problem is **coordination**, not duplication |
 | "**This is the most modern repo in the family** … targets `net9.0` … When conventions conflict, prefer this repo's approach" | `AGENTS.md`, This Repo | **Stale, and actively harmful as guidance** | `ProphetsWay.BaseDataAccess` and `ProphetsWay.Example` are both at `netstandard2.0;net10.0` as of their 3.1.0 releases. This repo is at `net461;net471;net48;net80;net90` with **no `netstandard2.0`** and references the parent at 2.5.0. It is now the **least** modern of the three. An agent following that line will copy the wrong pattern |
-| "EFTools carries an EF implementation of the very same `IExampleDataAccess`, and the tests do not change" | `ProphetsWay.Example/README.md` | **Pending, not permanently false** | **The reason moved on 2026-08-16.** The submodule pointer is no longer behind — it is at `d845863`, the 3.1.0 tree. What has not happened is this repository's own adoption: `ProphetsWay.Example.DataAccess.EF.csproj` and `ProphetsWay.EFTools.csproj` still reference `ProphetsWay.BaseDataAccess` 2.5.0, and `ExampleDataAccess` supplies neither `Dispose` nor the two Data Access Objects `IExampleDataAccess` now aggregates. FR 1's remaining steps are what make the claim true again |
+| "EFTools carries an EF implementation of the very same `IExampleDataAccess`, and the tests do not change" | `ProphetsWay.Example/README.md` | **Pending, not permanently false** | **The reason moved again on 2026-08-20, and this cell's SHA and evidence were both stale.** The pointer is at **`61d9e7d`**, one commit past the `3.1.0` tag \u2014 not `d845863`. Both `ProphetsWay.Example.DataAccess.EF.csproj` and `ProphetsWay.EFTools.csproj` now reference `ProphetsWay.BaseDataAccess` **3.1.0**, and `ExampleDataAccess` supplies `Dispose` (inherited) and a written `IDepartmentDao` group. What is left is narrower: **`CompanyResourceDao` does not exist**, so three `ICompanyResourceDao` forwarders throw and roughly 28 of the 151 harness tests are red. FR 1's remaining steps are what make the claim true again |
 | "The pipeline is green" as evidence the tests ran | general | **Misleading** | `LocalTestsOnly: 'yes'` in [app-variables.yml](../app-variables.yml) — CI skips them |
 | `docs/architecture.md`, per-project `docs/requirements.md` | house convention | **`n/a`, not missing** — ratified by [D5](#owner-decisions--2026-08-15) | Library repo, not a multi-project application solution. The owner has confirmed this document plus `AGENTS.md` and the README are sufficient |
 | `docs/nuget-extraction-proposal.md` | house convention | **`n/a`, not missing** | No candidate clears the dependency test. See [the extraction verdict](#the-extraction-verdict--docsnuget-extraction-proposalmd-is-na-not-missing) |
@@ -1066,7 +1070,10 @@ Recorded here because several statements in this document were written against t
 reader needs the correction in the same place as the text. **No decision or status below has been changed
 by this note; that is `Purpose Refiner`'s to do.**
 
-The `ProphetsWay.Example` submodule is now at **`d845863` — the 3.1.0 tree**, verified by reading
+The `ProphetsWay.Example` submodule is now at **`61d9e7d`** — **SHA corrected 2026-08-20**; this line read
+`d845863 — the 3.1.0 tree`, which was the first advance on 2026-08-16. The current pointer is **one commit
+past the `3.1.0` tag** (`3.1.0-1-g61d9e7d`), the 2026-08-18 merge of `ProphetsWay.Example` PR #21 that
+opened the untagged `3.1.1` line. Verified by reading
 `.git/modules/ProphetsWay.Example/HEAD` and the checked-out working tree. Three consequences are facts
 about the repository as it stands:
 

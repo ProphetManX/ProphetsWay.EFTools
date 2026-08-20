@@ -34,6 +34,15 @@ reading source. **No test was run** — there is nothing here to run — and a g
 conformance. **That build predates the EF Core `10.0.11` bump**, so it is not evidence about the versions
 now pinned in the project files._
 
+_**Corrected again 2026-08-20** by a narrow factual pass — no re-profile. Three classes of claim in this
+document were contradicted by the working tree and are fixed in place: (a) **the test project is not
+empty**; thirteen adapters were re-added on 2026-08-16 at ~23:00 (`8e78b94`), `TestSeam.cs` /
+`TestSeamTests.cs` in `08deda6` and `AdapterCoverageTests.cs` in `b9320fd` on 2026-08-18, and the suite has
+been **run**; (b) **the submodule pointer is `61d9e7d`, not `d845863`** — one commit past the `3.1.0` tag;
+(c) the library's own class inventory was understated by one file. Everything else below is left as its
+author wrote it. Verified by listing `ProphetsWay.EFTools.Tests/` and `ProphetsWay.EFTools/`, opening all
+19 test sources, and reading `.git/modules/ProphetsWay.Example/HEAD`._
+
 ## One-Line Purpose
 
 The **published 2.2.0** package supplies EF6 and EF Core base classes that implement the repetitive CRUD,
@@ -89,19 +98,24 @@ repository and four come from the `ProphetsWay.Example` git submodule
 
 | Project | Type | Role |
 | --- | --- | --- |
-| `ProphetsWay.EFTools` | Packable library | Published product; 26 source files, 24 public classes (23 abstract) |
-| `ProphetsWay.Example.DataAccess.EF` | Library/example | EF implementation of the Example contracts; 7 source files. Being brought onto the 3.1.0 contracts by `Implementer` as this pass ran |
-| `ProphetsWay.EFTools.Tests` | xUnit project | **`Constants.cs` and the `.csproj`, and nothing else.** The six adapter classes were **deleted 2026-08-16**; the project now contains **no tests**, which is correct and temporary — see below |
+| `ProphetsWay.EFTools` | Packable library | Published product; **27 source files** — 24 public abstract classes, one public enum (`ContextOwnership`), and the two internal `Root*Dao` engines. **Corrected 2026-08-20**: the earlier "26 source files, 24 public classes (23 abstract)" predates `ContextOwnership.cs` and counted `BaseEFDataAccess` as non-abstract; it is `public abstract class BaseEFDataAccess<TContext>` |
+| `ProphetsWay.Example.DataAccess.EF` | Library/example | EF implementation of the Example contracts; 7 source files, 6 of them DAOs. **There is no `CompanyResourceDao`** |
+| `ProphetsWay.EFTools.Tests` | xUnit project | **19 source files and a working harness — corrected 2026-08-20.** 13 one-line adapters, `TestSeam.cs`, `TestSeamTests.cs`, `AdapterCoverageTests.cs`, `AlternateKeyGuardSpikeTests.cs`, `Constants.cs`. The earlier "`Constants.cs` and the `.csproj`, and nothing else" was true for about two and a half hours on 2026-08-16 and is now false — see *Tests and Build Facts* |
 | `ProphetsWay.Example.DataAccess` | Submodule library | **3.1.0** entities and DAL contracts, including `Department` and `CompanyResource` |
 | `ProphetsWay.Example.DataAccess.NoDB` | Submodule library | In-memory implementation; the one `TestDataAccessFactory` returns |
-| `ProphetsWay.Example.Tests` | Submodule xUnit project | The 3.1.0 suite. The six classes the deleted adapters used to derive from hold **35** `[Fact]` methods between them — **parked, not lost** |
+| `ProphetsWay.Example.Tests` | Submodule xUnit project | 15 test classes holding **164 cases** (149 `[Fact]`, 6 `[Theory]` yielding 15). **13 of those classes are adapted into `ProphetsWay.EFTools.Tests` and do run against Entity Framework**; the 2 `ConventionShowcase` classes (20 facts) are correctly excluded. **Corrected 2026-08-20** — the earlier "35 `[Fact]` methods, parked, not lost" described the six pre-3.0.0 adapters and is superseded |
 | `ProphetsWay.Example.Database` | Submodule database project | **SDK-style `Microsoft.Build.Sql/2.2.0`** as of the 3.1.0 pointer — not the legacy SSDT format this row previously named |
 
 `ProphetsWay.Example` is a submodule at `path = ProphetsWay.Example`, tracking the standalone repository's
 `main` branch. It is not vendored and must not be edited from this repository
-([.gitmodules](../.gitmodules)). **The pointer is at `d845863`** — read from
-`.git/modules/ProphetsWay.Example/HEAD` and corroborated by the checked-out tree, whose
-`app-variables.yml` reads `3` / `1` / `0`.
+([.gitmodules](../.gitmodules)). **The pointer is at `61d9e7d`** — read from
+`.git/modules/ProphetsWay.Example/HEAD` on 2026-08-20, which holds
+`61d9e7dfb209c4a92b0c16d058aad1af08031fb5`. **It is one commit past the `3.1.0` tag**, not the tag itself:
+`git submodule status` renders it `3.1.0-1-g61d9e7d`, and that one commit is the merge of
+`ProphetsWay.Example` PR #21 (`3.1.1-eftool-findings`) on 2026-08-18 — the commit that added
+`TestDataAccessFactory.Use`, the seam this repository's test harness is built on. Corroborated by the
+checked-out tree, whose `app-variables.yml` reads `3` / `1` / `1` and whose `CHANGELOG.md` opens with
+"v3.1.1 — not yet released". **Earlier text in this document saying `d845863` — "3.1.0" — is superseded.**
 
 The second, malformed `[submodule "Submod"]` declaration this section previously recorded — `branch =
 main`, no `path`, no `url` — **cost more than the cosmetic nuisance it was filed as; see the Source
@@ -114,16 +128,18 @@ Internal `RootDao<T,TIdType>` and `RootNonIdDao<T>` perform the work but are not
 ([RootDao.cs](../ProphetsWay.EFTools/RootDao.cs),
 [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs)).
 
-**The `Tested?` column below describes the *parked upstream* suite, not tests presently in this
-repository.** Since the six adapters were deleted on 2026-08-16, `ProphetsWay.EFTools.Tests` contains no
-tests at all, so the honest current answer for **every** row is "not exercised here." The column is kept
-because it records which behaviours the 35 parked tests would cover once the shape B seam exists, and
-losing that would lose the coverage analysis the redesign needs.
+**The `Tested?` column below is stale and is corrected 2026-08-20.** It was written when
+`ProphetsWay.EFTools.Tests` held no tests. It now holds 151 discoverable cases, of which 144 are the
+adapted upstream `ProphetsWay.Example` suite — but **every one of those is written against
+`IExampleDataAccess`, not against a type in this table**. The types below are therefore reached only
+indirectly, through the five `ProphetsWay.Example.DataAccess.EF` DAOs that derive from them, and
+`DepartmentDao` derives from **none** of them. Read each cell as "exercised transitively, if at all";
+nothing here has a test of its own.
 
 | Type | Public/protected members | Purpose | Tested? |
 | --- | --- | --- | --- |
 | `BaseEFContext` | protected string constructor; EF Core-only protected `DbContextOptions` constructor | Common typed context base; string path chooses SQL Server on Core | Indirect construction only |
-| `BaseEFDataAccess<TContextType,TIdType>` | string constructor; Core-only options constructor; `TransactionStart`, `TransactionCommit`, `TransactionRollBack`; **`Dispose`**; protected `Context` | Instantiates a typed context, implements DAL transactions, and — **as of 2026-08-16** — the 3.x disposal contract | Not exercised here |
+| `BaseEFDataAccess<TContext>` | context + `ContextOwnership` constructors; `TransactionStart`, `TransactionCommit`, `TransactionRollBack`; **`Dispose`**; protected `Context` | Holds a typed context, implements DAL transactions, and — **as of 2026-08-16** — the 3.x disposal contract. **One type parameter, not two — corrected 2026-08-20**; `BaseEFDataAccess<TContextType,TIdType>` no longer exists | Transitively, through `ExampleDataAccess` |
 | `RootBaseDao<T,TIdType>` | `Context`, `Dataset`, `Get`, `Insert`, `Update`, `Delete`, `GetAll`, `GetCount`, `GetPaged`, three `Ensure*Transaction` methods | Public bridge over the internal DAO engine; hidden from IntelliSense | CRUD/read paths yes; helpers no |
 | `RootBaseSoftDao<T,TIdType>` | timestamped/filtering replacements for insert/update/delete/all/count/paged; protected `UseUtcTime` | Soft-delete bridge | No |
 | `BaseNonIdDao<T>` | `Context`, `Dataset`, abstract `Get`/`Update`, insert/delete, three transaction helpers | Extension point for entities without a simple ID | No |
@@ -296,44 +312,95 @@ is implemented; writing future behavior into the current package metadata would 
 
 ## Tests and Build Facts
 
-- **`ProphetsWay.EFTools.Tests` now contains no tests.** The six adapter classes were **deleted on
-  2026-08-16**; `Constants.cs` and the `.csproj` are all that survive. Each adapter was four to five lines
-  holding a `GetIExampleDataAccess` override and no test logic, and the hook they overrode no longer exists
-  upstream — `BaseUnitTests<T>` obtains its subject from `TestDataAccessFactory.CreateAs<T>()`, a `static`
-  method with no parameter and nothing to override. The concept was gone, not merely broken, so the classes
-  were removed rather than rewritten
-  ([BaseUnitTests.cs](../ProphetsWay.Example/ProphetsWay.Example.Tests/BaseUnitTests.cs),
-  [TestDataAccessFactory.cs](../ProphetsWay.Example/ProphetsWay.Example.Tests/TestDataAccessFactory.cs)).
-- **The 35 upstream `[Fact]` methods are parked, not lost.** They still live in the six submodule classes —
-  `BaseDataAccessTests` (7), `CompanyDaoTests` (7), `JobDaoTests` (5), `ResourceDaoTests` (5),
-  `TransactionDaoTests` (6) and `UserDaoTests` (5) — and they will be reachable against the Entity Framework
-  implementation once the shape B seam exists (owner decision **D10**). **Nothing green went red:** they
-  were already not running, because `LocalTestsOnly: 'yes'` skips them in CI and this project had not
-  compiled since the submodule advance. Even had the adapters compiled, `CreateAs<T>()` returns the **NoDB**
-  implementation, so they would not have exercised EF.
+- **`ProphetsWay.EFTools.Tests` holds a working harness — corrected 2026-08-20, superseding the two
+  bullets that stood here.** Those bullets said the project contained no tests and that 35 upstream facts
+  were "parked"; both were accurate on 2026-08-16 at 20:24 and false by 23:00 the same day. What is there,
+  read file by file:
+  - **`TestSeam.cs`** — an `internal static` class whose `[ModuleInitializer]` calls
+    `TestDataAccessFactory.Use(() => Constants.GetExampleDataAccess)`. That one call points the **entire**
+    upstream suite at `ProphetsWay.Example.DataAccess.EF.ExampleDataAccess` for the assembly's whole run.
+    A module initializer rather than a fixture because xUnit runs collections in parallel
+    ([TestSeam.cs](../ProphetsWay.EFTools.Tests/TestSeam.cs),
+    [TestDataAccessFactory.cs](../ProphetsWay.Example/ProphetsWay.Example.Tests/TestDataAccessFactory.cs)).
+  - **13 adapters** — `EFBaseDataAccessTests`, `EFCompanyDaoTests`, `EFCompanyResourceDaoTests`,
+    `EFCompanyResourceDataAccessTests`, `EFDataAccessDisposalTests`, `EFDataAccessTransactionTests`,
+    `EFDepartmentDaoTests`, `EFDepartmentDataAccessTests`, `EFJobDaoTests`, `EFResourceDaoTests`,
+    `EFSnapshotDeepCopyTests`, `EFTransactionDaoTests`, `EFUserDaoTests`. Each is literally
+    `public class EFXxxTests : XxxTests { }` with no test logic — inheritance is all xUnit needs to
+    discover an upstream class in this assembly.
+  - **`TestSeamTests.cs`** — 5 `[Fact]`, `[Trait("Guard","Seam")]`, deriving from
+    `BaseUnitTests<ICompanyDao>` so it asserts on the same `_da` field every adapted test reads. It pins
+    the concrete type, that the provider is **relational** (`Database.IsRelational()`), that the factory
+    hands out a fresh instance per call, and that the store is reachable.
+  - **`AdapterCoverageTests.cs`** — 2 `[Fact]`, same trait. Reflects over the upstream assembly and fails
+    if any class deriving from `BaseUnitTests<>` or carrying `[Collection]` has no adapter here, and
+    separately pins that the two `ConventionShowcase` classes stay excluded.
+  - **`Constants.cs`** — now a single SQL Server connection string
+    (`Data Source=localhost;Initial Catalog=ProphetsWay.Example;Integrated Security=True;TrustServerCertificate=True`)
+    and one expression-bodied `GetExampleDataAccess` property.
+- **Discoverable cases: 151**, or **165** counting the spike. 144 come from the 13 adapted classes — 129
+  `[Fact]` plus 6 `[Theory]` yielding 15 `[InlineData]` cases — and 7 from the two guard classes. The 20
+  `ConventionShowcase` facts are deliberately unadapted. Counted by grepping every `[Fact]`, `[Theory]`
+  and `[InlineData]` in `ProphetsWay.Example.Tests/` and subtracting the showcase; the remainder, 144, plus
+  the local 7, reconciles exactly with the 151 the runner reported.
+- **Last measured result: 2026-08-18 — `dotnet test` = 151 tests, 123 passed, 28 failed**
+  ([feature-requests.md](feature-requests.md) entry 13). The `.trx` files in
+  `ProphetsWay.EFTools.Tests/TestResults/` are earlier laps from the same evening — `baseline`/`efseam2`/
+  `efseam3` at 147/53/94, `lap2`/`final` at 151/57/94 — and `efseam.trx` at 147/15/132 is the run before
+  the seam was fixed. **No build and no test run has happened since**, and
+  `AlternateKeyGuardSpikeTests.cs` was committed in the interim, so 123/28 is the **last known** state and
+  not a current one.
+- **`AlternateKeyGuardSpikeTests.cs` is committed and carries no trait — recorded here as a fact, not a
+  recommendation.** It entered version control in `2691526` (2026-08-19); the 2026-08-19 session handoff
+  describes it as untracked, which is superseded. It declares **7 `[Theory]` methods, each with two
+  `[InlineData]` values (`InMemory`, `Sqlite`) — 14 cases — and zero `[Trait]` attributes**, verified by
+  grepping every attribute in the file. Because xUnit trait filters are allowlists, the repository's
+  stated gate `--filter "Scope=Contract|Guard=Seam"` selects **none** of those 14: the file executes on a
+  bare `dotnet test` and under no filtered invocation. It is also self-contained — its own `SpikeUser`,
+  `SpikeUniqueUser` and `SpikeContext`, asserting about EF Core's read-only-key guard rather than about
+  anything in this library, which its own `<remarks>` state ("an empirical spike, not a specification").
+  **Which trait it should carry, and whether it stays, is an owner decision already queued in the
+  2026-08-19 handoff and is not proposed here**
+  ([AlternateKeyGuardSpikeTests.cs](../ProphetsWay.EFTools.Tests/AlternateKeyGuardSpikeTests.cs)).
+- **What the harness still does not cover.** Every test in it is written against `IExampleDataAccess`, so
+  **no test targets this library's own public surface directly**: the 18 key-specific DAO bases are
+  reached only through the five EF DAOs that derive from them, and `DepartmentDao` derives from no EFTools
+  base at all, leaving `RootBaseSoftDao` and both keyless bases exercised by nothing. The ~28 failures are
+  dominated by `CompanyResourceDao`, which **does not exist** — no `CompanyResourceDao.cs`, no
+  `DbSet<CompanyResource>`, no `ToTable`, and three `ICompanyResourceDao` forwarders that throw
+  `NotWrittenYet`. The suite requires a **local SQL Server** carrying `ProphetsWay.Example` and runs on
+  that provider alone, despite the `Microsoft.EntityFrameworkCore.Sqlite` reference sitting in the test
+  `.csproj` for a certification leg that has not been built. Nothing tests the redesign in
+  [api-contract.md](api-contract.md), which has not been implemented.
 - **The restore mismatch is closed.** `ProphetsWay.EFTools.Tests` now targets `net10.0` alone and
   `ProphetsWay.Example.Tests` is `net48;net10.0`, so the single leg has a compatible asset
   ([ProphetsWay.EFTools.Tests.csproj](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj),
   [ProphetsWay.Example.Tests.csproj](../ProphetsWay.Example/ProphetsWay.Example.Tests/ProphetsWay.Example.Tests.csproj)).
 - **`ProphetsWay.Example.DataAccess.EF` held the last recorded break, and it is closed.**
-  `ExampleDataAccess` declares `: BaseEFDataAccess<ExampleContext, int>, IExampleDataAccess`, and at 3.1.0
-  that interface additionally aggregates `IDepartmentDao` and `ICompanyResourceDao` and inherits
-  `IDisposable`. Opening the file on 2026-08-16 shows member groups for both DAOs present as **deliberately
-  throwing "not written yet" stubs**, and `Dispose` inherited from `BaseEFDataAccess`. The sentence that
-  stood here declining to claim a compile outcome is **superseded \u2014 the project compiled in the 2026-08-16
-  build** (see below). It compiles; it does not conform
+  `ExampleDataAccess` declares `: BaseEFDataAccess<ExampleContext>, IExampleDataAccess` — **one type
+  argument, corrected 2026-08-20**; the `<ExampleContext, int>` this line used to name does not exist. At
+  3.1.x that interface additionally aggregates `IDepartmentDao` and `ICompanyResourceDao` and inherits
+  `IDisposable`. **The `IDepartmentDao` group is now written** — `DepartmentDao.cs` exists, `ExampleContext`
+  declares `DbSet<Department>` and maps it, and the eight forwarders call it behind `ThrowIfDisposed()`.
+  **Only the three `ICompanyResourceDao` forwarders still throw**: `NotWrittenYet` matches four times in
+  the file, three throws plus the helper. The earlier "11 members that throw" is superseded. It compiles;
+  it does not conform
   ([ExampleDataAccess.cs](../ProphetsWay.Example.DataAccess.EF/ExampleDataAccess.cs),
+  [ExampleContext.cs](../ProphetsWay.Example.DataAccess.EF/ExampleContext.cs),
   [IExampleDataAccess.cs](../ProphetsWay.Example/ProphetsWay.Example.DataAccess/IExampleDataAccess.cs)).
-- `Constants.cs` survives and still carries `#if` branches for `NET45`–`NETCOREAPP3_1`, `NET5_0` and
-  `NET6_0_OR_GREATER`. Under the `net10.0`-only target only the last arm compiles, which builds
-  `new ExampleDataAccess()` — the EF Core InMemory path. **The `Data Source=localhost` connection string is
-  now unreachable**, because the Framework legs that used it no longer exist; the dead branches remain to be
-  removed by `Implementer`
+- **`Constants.cs` no longer carries any `#if` branch — corrected 2026-08-20.** The bullet that stood here
+  described `NET45`–`NETCOREAPP3_1`, `NET5_0` and `NET6_0_OR_GREATER` arms and an unreachable
+  `Data Source=localhost` string. The file was rewritten for the seam: it is now one nested
+  `ConnectionStrings` class holding a single SQL Server connection string — `Data Source=localhost`,
+  `Initial Catalog=ProphetsWay.Example`, Integrated Security, `TrustServerCertificate=True` — and one
+  `GetExampleDataAccess` property returning `new ExampleDataAccess(...)` from
+  `ProphetsWay.Example.DataAccess.EF`. **The connection string is live, not dead**, and the InMemory path
+  is gone
   ([Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs),
   [ExampleDataAccess.cs](../ProphetsWay.Example.DataAccess.EF/ExampleDataAccess.cs)).
-- No current test exercises soft-delete classes, keyless classes, transaction methods/helpers, disposal,
-  rollback, provider neutrality, stable `GetAll` ordering, or update of a missing entity (all EFTools and
-  inherited Example test sources were checked).
+- Soft-delete bases, keyless bases, the transaction helpers on the DAO bases, provider portability and
+  stable `GetAll` ordering are still exercised by nothing — the harness reaches `IExampleDataAccess`, and
+  the DAOs behind it do not derive from those types.
 - `LocalTestsOnly: 'yes'` causes the shared pipeline to omit its `dotnet test` task entirely
   ([app-variables.yml](../app-variables.yml),
   [restore-build-test.yml](../../prophets-pipelines/steps/restore-build-test.yml)).
@@ -382,13 +449,15 @@ The proving ground demonstrates the actual assembly pattern:
    ([CompanyDao.cs](../ProphetsWay.Example.DataAccess.EF/Daos/CompanyDao.cs),
    [ResourceDao.cs](../ProphetsWay.Example.DataAccess.EF/Daos/ResourceDao.cs),
    [TransactionDao.cs](../ProphetsWay.Example.DataAccess.EF/Daos/TransactionDao.cs)).
-3. Derive the application DAL from `BaseEFDataAccess<ExampleContext,int>`, construct each DAO with the
-   shared protected context, and forward the application interfaces to those DAOs
+3. Derive the application DAL from `BaseEFDataAccess<ExampleContext>`, pass it a context plus a
+   `ContextOwnership` value, construct each DAO with the shared protected context, and forward the
+   application interfaces to those DAOs
    ([ExampleDataAccess.cs](../ProphetsWay.Example.DataAccess.EF/ExampleDataAccess.cs)).
 
-The default modern constructor uses EF Core InMemory; the string constructor configures SQL Server; and
-the options constructor accepts caller-built options. These are current 2.x examples, not the approved
-provider-neutral 3.x API.
+The string constructor configures SQL Server and takes ownership of the context it builds; the options
+constructor accepts caller-built options and also owns; the context constructor borrows. **Corrected
+2026-08-20** — there is no longer a parameterless EF Core InMemory default. These are current 2.x examples,
+not the approved provider-neutral 3.x API.
 
 ## README Accuracy Check
 
@@ -402,8 +471,8 @@ provider-neutral 3.x API.
 | Context sample is usable as shown | Incorrect | The sample combines EF Core relationship APIs with a `DbModelBuilder` signature |
 | Default modern construction provides an in-memory test database | Accurate current state | `ExampleDataAccess()` calls `UseInMemoryDatabase` |
 | String construction points to SQL Server | Accurate but under-disclosed | The product context itself hardcodes `UseSqlServer`; the package is not provider-neutral |
-| The library has 35 tests | **Stale.** The count survives upstream; the mechanism and the local project do not | The six submodule classes still hold 35 facts, but the adapters that reached them were deleted 2026-08-16 and `ProphetsWay.EFTools.Tests` now defines nothing |
-| Tests are absent from the build pipeline because they need a local database | Accurate only as history | CI skips everything via `LocalTestsOnly: 'yes'`, and there is now nothing here to skip |
+| The library has 35 tests | **Stale, and stale in a new direction — corrected 2026-08-20** | The figure described six pre-3.0.0 adapters. `ProphetsWay.EFTools.Tests` now discovers **151** cases (165 with the untraited spike), of which 144 are the adapted upstream suite. Last measured 2026-08-18: 123 passed, 28 failed |
+| Tests are absent from the build pipeline because they need a local database | **Accurate, and now literally so** | `LocalTestsOnly: 'yes'` skips them in CI, and the harness genuinely needs a local SQL Server carrying `ProphetsWay.Example` — see `Constants.cs` |
 | README describes soft-delete and non-ID APIs added by 2.2.0 | Missing | Public classes and changelog exist; README does not teach them |
 | README describes disposal / BaseDataAccess 3.x compatibility | **Now understated rather than wrong** | The reference is **3.1.0** and `BaseEFDataAccess` now carries an idempotent, non-throwing `Dispose` that rolls back an open transaction and disposes the context it created — verified by opening [BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs) on 2026-08-16. The README teaches none of it |
 
@@ -428,11 +497,13 @@ source, projects, and tests prove them:
 - ~~`ProphetsWay.BaseDataAccess` 3.1.0 adoption~~ **— the reference moved 2026-08-16**, and
   `BaseEFDataAccess.Dispose` has been implemented against it. `ObjectDisposedException` guarding on the
   transaction members has not.
-- ~~Advance the `ProphetsWay.Example` submodule to 3.1.0~~ **— done 2026-08-16, pointer at `d845863`.**
+- ~~Advance the `ProphetsWay.Example` submodule to 3.1.0~~ **— done 2026-08-16 and advanced again
+  2026-08-18; the pointer is at `61d9e7d`**, one commit past the `3.1.0` tag, on the open `3.1.1` line.
 - ~~Retarget every project to `net10.0`~~ **— done 2026-08-16** for the library,
   `ProphetsWay.EFTools.Tests` and `ProphetsWay.Example.DataAccess.EF`.
-- ~~Delete the six test adapters~~ **— done 2026-08-16.** The Entity Framework conformance run they used to
-  stand in for now waits on the upstream seam, per owner decision **D10**.
+- ~~Delete the six test adapters~~ **— done 2026-08-16, and superseded the same night.** Thirteen new
+  adapters plus `TestSeam.cs` replaced them once `TestDataAccessFactory.Use` landed upstream; the Entity
+  Framework conformance run they stood in for **now happens**, per owner decision **D10** shape B.
 
 **The repository compiles — observed in a build on 2026-08-16**, after this document's reading passes.
 The owner ran `dotnet build ProphetsWay.EFTools.sln -c Debug`; it succeeded with 7 warnings and 0
@@ -463,10 +534,13 @@ This direction was supplied by the owner on 2026-08-15 and recorded as D1-D6 in
    published 2.2.0 package and the surviving `#if` branches** — no build produces an EF6 asset any more.
 3. Provider selection leaks into the runtime package through both dependencies and code. **Unchanged.**
 4. `GetPaged` orders by ID, but `GetAll` does not; soft paging has no explicit ordering either.
-5. **There is no test suite in this repository at all.** The six adapters were deleted 2026-08-16 and the 35
-   upstream tests are parked behind a seam that does not exist yet. Nothing regressed — `LocalTestsOnly:
-   'yes'` already skipped them and the project already did not compile — but the verification gap is now
-   total and explicit rather than nominal.
+5. **There is a test suite, and the gap it leaves is narrower and more specific than "none" — corrected
+   2026-08-20.** The bullet that stood here said there was no test suite at all. `ProphetsWay.EFTools.Tests`
+   runs 151 cases through `TestSeam.cs`, last measured at 123 passed / 28 failed on 2026-08-18. What remains
+   uncovered: **this library's own public surface**, since every test targets `IExampleDataAccess`; the
+   soft-delete and keyless bases, which nothing derives from; provider portability, since the suite runs on
+   SQL Server alone; and the entire redesign in [api-contract.md](api-contract.md). `CompanyResourceDao`
+   does not exist and accounts for most of the red.
 6. Packaging is functional but lacks homepage/tags, SourceLink, symbol-package, and explicit CI build
    metadata. **Source Link is measurably off, not merely unconfigured** — the 2026-08-16 build emitted the
    `Submod` submodule-path warning three times, one per project, each ending "The source code won't be
