@@ -23,9 +23,16 @@ does not duplicate them, because duplicated rules drift.
 
 The scope bar every entry below is judged against is in
 [purpose-and-scope.md](purpose-and-scope.md#settled-one-sentence-purpose), and the owner decisions that set
-the statuses below are recorded as **D1–D10** in
+the statuses below are recorded as **D1–D19** in
 [purpose-and-scope.md § Owner Decisions](purpose-and-scope.md#owner-decisions--2026-08-15). **D1–D9 were
-taken 2026-08-15 and D10 on 2026-08-16**; the section heading carries the earlier date only.
+taken 2026-08-15, D10–D13 on 2026-08-16, D14–D18 on 2026-08-18 and D19 on 2026-08-19**; the section heading
+carries the earliest date only. **This preamble said D1–D10 until 2026-08-19, and that was stale by nine
+decisions.**
+
+**A second decision index binds the entries below, and it is not in that file.** `docs/api-contract.md`
+carries owner decisions **S1–S13** (2026-08-15) and **OD-1–OD-11**, and several of them close questions this
+file and `purpose-and-scope.md` still described as open — **S4** closes **Q3**, **S7** closes **Q2**. Read
+all three documents before concluding that anything here awaits a decision.
 
 **Stage 1 is closed as of 2026-08-15.** The two questions that needed the owner — **Q1** (the TFM
 exception) and **Q4** (whether the certification scope is stated publicly) — were answered as **D7** and
@@ -68,7 +75,7 @@ deleted. **A green build is not a passing suite** — this repository still cont
 | 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Scheduled** — v3.0.0 for the test work; **pipeline half Deferred** to its owner; **D8** makes the certification a public claim |
 | 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Scheduled** — v3.0.0, as a **release-note obligation only**; the 2.2.x patch is **Rejected** — triaged 2026-08-16, and its retained open question **closed by [D12](purpose-and-scope.md#owner-decisions--2026-08-15)** the same day |
 | 13 | [The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | **Scheduled** — v3.0.0; filed 2026-08-16. Four contract-rule violations in `RootBaseSoftDao` and a structural mismatch in `BaseNonIdDao<T>`; constrains [entry 10](#10--collapse-the-guidintlong-dao-triplication). **2.2.x patch `Rejected` ([D12](purpose-and-scope.md#owner-decisions--2026-08-15))**; the route to the fix is settled by **[D13](purpose-and-scope.md#owner-decisions--2026-08-15)**. **Strengthened 2026-08-18** — the members are `new`, not `virtual`, so the title's claim is structural rather than a judgement; and the entry is no longer a reading finding |
-| 14 | [The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | **Proposed** — filed 2026-08-18 from a measured test run, awaiting `Purpose Refiner` triage. `RootNonIdDao.Insert` leaves the caller's instance tracked, which is **why several tests are currently green**; `BaseDao.Get` is saved only by a `QueryTrackingBehavior` set on **one of three** constructors |
+| 14 | [The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | **Scheduled** — v3.0.0, **triaged 2026-08-19**. A **fourth shipped 2.2.0 defect**, and the fix is **already specified** in `docs/api-contract.md` rev 8 — it needs no new design. It carries **inside** the [entry 10](#10--collapse-the-guidintlong-dao-triplication) collapse under [D14](purpose-and-scope.md#owner-decisions--2026-08-15), is **breaking** against 2.2.0, and the 2.2.x patch is **Rejected** on [D12](purpose-and-scope.md#owner-decisions--2026-08-15). See [the triage](#triaged-2026-08-19--scheduled-for-v300-and-it-is-a-fourth-shipped-defect) |
 
 Numbers are permanent. Entries are never renumbered and never removed —
 [purpose-and-scope.md](purpose-and-scope.md) cites entries by number, and a rejected entry is decision
@@ -129,26 +136,36 @@ than restated in each — three copies of an obligation drift, and the whole poi
 defects are documented, not patched.** No 2.2.1 will be cut. In exchange, the 3.0.0 release notes owe two
 things:
 
-1. **All three defects appear as `Fixed` in `ProphetsWay.EFTools`' 3.0.0 `CHANGELOG.md` entry** — not
+> **A fourth defect joined the list on 2026-08-19, and the owner did not name it.**
+> [Entry 14](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) was
+> filed 2026-08-18 and triaged 2026-08-19. D12 was taken against **three** defects because three were known;
+> this triage reads it as governing *the shipped defects* rather than *those three*, and adds the fourth row
+> below on that reading. **The reading is stated so it can be corrected** — nothing about the fourth defect
+> distinguishes it from D12's own reasoning (silent, data-corrupting, near-empty consumer base), but the owner
+> is entitled to say the scope was literal.
+
+1. **All four defects appear as `Fixed` in `ProphetsWay.EFTools`' 3.0.0 `CHANGELOG.md` entry** — not
    `Changed`. A reader who sees only "soft-delete DAO bases rewritten" or "implements the new disposal
-   contract" does not learn that the version they are running leaks connections, loses transactions, and can
-   resurrect a deleted row.
+   contract" does not learn that the version they are running leaks connections, loses transactions, can
+   resurrect a deleted row, and writes edits they never submitted.
 
    | Entry | What must be named as `Fixed` |
    |---|---|
    | [3](#3--implement-the-3x-disposal-contract-in-baseefdataaccess) | `BaseEFDataAccess` never disposed the `DbContext` it constructed — a leaked context and connection per Data Access Layer instance |
    | [12](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | `RootNonIdDao`'s commit and rollback **silently no-op** when a transaction was already open |
    | [13](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | `RootBaseSoftDao.Update` **wipes the stored `DeletedDate`**, silently un-deleting a soft-deleted row; a second `Delete` refreshes the timestamp and returns `1` rather than `0` |
+   | [14](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | **Added 2026-08-19.** `Insert` left the caller's own instance tracked, and `Get` returned the store's tracked instance under any context not explicitly set to `NoTracking` — so **an edit the caller never submitted was written on the next `SaveChanges`**. `Update` on an absent row threw rather than returning `0`. **This one changes behaviour a consumer may be relying on**, deliberately or by accident: after 3.0.0 those stray edits stop persisting, and a `catch` around `Update` stops firing |
 
-2. **The release notes carry a known-issues note for 2.2.0** naming all three and recommending 3.0.0 — **with
+2. **The release notes carry a known-issues note for 2.2.0** naming all four and recommending 3.0.0 — **with
    the target-framework caveat stated plainly**: [D7](purpose-and-scope.md#owner-decisions--2026-08-15) makes
    3.x **`net10.0`-only**, so a consumer on `net48`, `net8.0` or `net9.0` **cannot take 3.0.0 at all**.
    "Upgrade to 3.0.0" is not a remedy available to every 2.2.x consumer, and the note must not imply that it
    is.
 
-**Two of the three fail silently** — no exception, just wrong data. That is why this is an obligation rather
-than a formality: a consumer cannot discover either of them from a log, so the release note is the only
-channel that reaches them.
+**Three of the four fail silently** — no exception, just wrong data. That is why this is an obligation rather
+than a formality: a consumer cannot discover any of them from a log, so the release note is the only
+channel that reaches them. **Entry 14 is the only one of the four whose fix is itself a behaviour change a
+consumer may be relying on**, so it owes a second sentence the other three do not: what stops happening.
 
 **The premise this rests on is that the 2.2.x consumer base is near-empty**, and it is recorded so it can be
 re-tested rather than assumed. If it ever turns out someone was on 2.2.x with a `net4x` or `net8.0` target,
@@ -176,6 +193,7 @@ independently breaking. `app-variables.yml` currently reads `Major: '2' / Minor:
 | 11 | Scheduled (test work) / Deferred (pipeline) | **Yes for the suite; the `LocalTestsOnly` removal is separately owned** | The contract cannot be *verified* without it; the CI plumbing is not this repository's decision alone |
 | 12 | Scheduled (release note) / Rejected (2.2.x patch) | **Already, incidentally** | Nothing to schedule in code: the 3.x design removes the members that carry the defect. What **is** scheduled is the release-note obligation — the entry exists so the fix is *named* in the notes rather than shipping as an unannounced side effect. Triaged 2026-08-16 |
 | 13 | Scheduled | **Yes — it is a precondition of 10, not a sibling of it** | The 3.x DAO families cannot be a re-wrap of `RootBaseSoftDao`; its `Update` and `Delete` semantics violate four of `IDepartmentDao`'s rules today. Filed 2026-08-16 |
+| 14 | Scheduled | **Yes — and it cannot be deferred out** | Entry 10 deletes the types carrying the defect, so deferring it means writing six generic families **with** the adoption behaviour and breaking them again in 3.1.0. Triaged 2026-08-19. It is entry 13's counterpart on the **ordinary CRUD** path, and between them they specify every base in the package |
 
 **The honest answer is that this is one indivisible release.** Entries 1–3 and 6 cannot be separated
 without leaving the repository in a non-compiling state, and 4, 5, 7 and 10 are each cheap *now* and
@@ -1248,6 +1266,53 @@ express it.
 this in; it looks adjacent to the retarget and is not." That advice followed from the recommendation the
 owner overturned. Riding the same major is now the cheapest possible way to land it.
 
+### The "18 = 3 key types × 6 shapes" hypothesis — **counted 2026-08-19, and it survives as an inventory only**
+
+Recorded here because it is the fact the `Interface Architect` shape pass is conditioned on, and because it
+had been carried as *likely but unverified*. **It was verified by opening the files**, not by reading this
+entry: a directory listing of `ProphetsWay.EFTools/`, a repository-wide grep for `public abstract class`
+returning **24** declarations in 24 files, and the bodies of `Int/BaseDao.cs`, `Int/BaseGetAllDao.cs`,
+`Int/BasePagedDao.cs`, `Int/BaseSoftDao.cs`, `RootBaseDao.cs`, `RootBaseSoftDao.cs` and `BaseNonIdDao.cs`.
+
+**The count is exactly right.** `Guid/`, `Int/` and `Long/` each hold the same six file names, and the class
+declarations differ only in the key type substituted into the base and the constraint. 3 × 6 = 18, and the
+whole public surface is those 18 plus `BaseNonIdDao`, `BaseSoftNonIdDao`, `RootBaseDao`, `RootBaseSoftDao`,
+`BaseEFContext` and `BaseEFDataAccess` — **24, which is the number `docs/api-contract.md` says it reduces
+from.** That cross-check is now measured rather than asserted on both sides.
+
+**What the hypothesis gets wrong is the word "shapes."** It invites the reading that six behaviours are being
+generalized. They are not:
+
+| Of the 18 | How many | What is in the body |
+|---|---|---|
+| `BaseGetAllDao`, `BasePagedDao`, `BaseSoftGetAllDao`, `BaseSoftPagedDao` | **12** | **Nothing.** A constructor pass-through and one added interface declaration. Zero members |
+| `BaseDao`, `BaseSoftDao` | **6** | **One member each** — `public override T Get(T item)`, and all six bodies are the same expression, `Dataset.Where(i => i.Id == item.Id).SingleOrDefault()`, modulo the key type |
+
+**So the total behaviour distributed across 18 classes is one method.** Everything else — CRUD, the retrieval
+trio, the transaction helpers — lives in `RootBaseDao`, which already implements **all three** capability
+interfaces on a single type; and the soft-delete semantics live entirely in `RootBaseSoftDao`, which is where
+[entry 13](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance)'s
+violations are. The six names are **interface-declaration variants**, not capability variants, which is
+exactly what `docs/api-contract.md` S2 calls the flat method surface and what it preserves.
+
+**Three consequences for the shape pass, and they all point the same way — start.**
+
+1. **The collapse is smaller and safer than the entry implies.** It deletes 12 empty classes, hoists one
+   expression into `KeyEquals` / `MatchRow`, and keeps six names that api-contract **S1** already fixes. There
+   is no behaviour to reconcile across the 18, because there is none in them.
+2. **The one genuine risk is the one this entry already named** — the `Get` predicate's translatability. It is
+   the *only* thing in the 18 that the collapse must reproduce, which is why it is the escape hatch
+   [D3](purpose-and-scope.md#owner-decisions--2026-08-15) names.
+3. **A gap in the family set exists and is already covered — do not "fix" it.** There is **no
+   `BaseSoftGetAllPagedDao`**, and `IDepartmentDao` declares **both** `IBaseGetAllDao<Department>` **and**
+   `IBasePagedDao<Department>` — verified by opening
+   `ProphetsWay.Example.DataAccess/IDaos/IDepartmentDao.cs`, line 230. It compiles anyway, and only because of
+   the flat surface: `BaseSoftPagedDao<Department, int>` carries a working public `GetAll`, which satisfies
+   the second interface implicitly. **A seventh family must not be added to close the gap.** What is owed
+   instead is one sentence of guidance — which base a DAO whose interface declares two capabilities should
+   pick — because four of the six families are empty markers and the choice between them is otherwise
+   arbitrary. That is a documentation obligation on the shape pass, not a design change.
+
 ---
 
 ## 11 — Certify the contract suite on SQLite in-memory and a SQL Server container
@@ -1728,4 +1793,102 @@ rather than papered over by making the new Data Access Object adopt its argument
 option was available and was declined** — taking it would have turned nine tests green while spreading the
 defect to a tenth Data Access Object, and it is recorded here so it is not proposed later as an obvious
 simplification.
+
+### Triaged 2026-08-19 — **Scheduled** for v3.0.0, and it is a **fourth** shipped defect
+
+**Status: `Proposed` → `Scheduled` for v3.0.0.** No new scope decision was needed to move it, and that is the
+finding rather than a formality: **every behaviour this entry asks for is already specified**, in
+`docs/api-contract.md` revision 8, written before this entry was filed. What this entry contributes is the
+**evidence** that the specification was necessary, the **provenance** of nine red tests, and a **fourth** name
+on the [D12](purpose-and-scope.md#owner-decisions--2026-08-15) release-note obligation.
+
+#### It needs no design — the fix is already written down
+
+Re-verified by opening `docs/api-contract.md` on 2026-08-19, section by section, rather than taken from this
+entry's own summary. Each of its three findings has a term against it:
+
+| This entry's finding | Where it is already settled |
+|---|---|
+| **1 — `Insert` adopts the argument.** `Dataset.Add(item)` leaves the caller's instance tracked `Unchanged` | **A24 + OD-4**: the root is added and everything reachable is set `Unchanged` **explicitly**; *"`Dataset.Add(item)` is wrong, and so is `Attach`"*, and **the walk is specified by state, not by API**. **A26 + OD-7**: the argument and its whole reachable graph are detached **in a `finally`, on success and on failure** |
+| **2 — `Get` returns the store's tracked instance, saved only by a setting on one of three constructors** | **`Get`'s `Tracking` row**: `AsNoTracking()`, **explicitly, regardless of the context's configured `QueryTrackingBehavior`**. The constructor asymmetry stops being load-bearing because the library no longer depends on the setting. **S8/A9/A10** replace the three constructors with one taking a configured context and a `ContextOwnership` |
+| **3 — `RootDao.Update` uses `Single`, so an absent row throws where ROW COUNT requires `0`** | **`Update`'s `Returns` and `The forced change` rows**: `1` when the row exists, `0` when it does not, *"never greater than `1`"*, and 2.2.x's throw-or-upsert behaviour named as **not surviving**. **A22** fixes the mechanism as a tracked fetch plus `SetValues` |
+
+**So the correct disposition is not "schedule a fix" but "confirm the fix is inside the collapse."** It is:
+[D14](purpose-and-scope.md#owner-decisions--2026-08-15) requires
+[entry 10](#10--collapse-the-guidintlong-dao-triplication) to carry the corrected `Insert` / `Update` / `Get`
+semantics rather than to collapse first and patch after. **This entry is now the third specification of what
+that collapse must fix**, alongside
+[entry 13](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) — entry 13
+covers the soft-delete and keyless bases, this one covers the ordinary CRUD path, and between them they cover
+every base in the package.
+
+#### In scope for 3.0.0? — **Yes, and it is not separable from it**
+
+Judged against the [purpose sentence](purpose-and-scope.md#settled-one-sentence-purpose). The library's job is
+to supply *"the CRUD … plumbing that is identical in every DAL."* A plumbing layer that aliases the caller's
+objects has not supplied working plumbing; it has supplied plumbing that works only for callers who never look
+at their arguments again. There is nothing to weigh here — the alternative to fixing it is shipping 3.0.0 with
+the ordinary CRUD path violating a rule the release exists to satisfy.
+
+**It is also not separable.** The collapse deletes the types that carry the defect. Scheduling this for a later
+release would mean writing the six generic families **with** the adoption behaviour and then breaking them
+again in 3.1.0 — the "doing the work twice" D14 declined, at a higher price because the second pass would be
+breaking rather than internal.
+
+#### Breaking? — **Yes, against the published 2.2.0 package, and in a way a consumer can be relying on**
+
+**All three findings are behaviour changes a 2.2.0 consumer could have built on**, and that is worth stating
+plainly rather than filed as an obvious win:
+
+- A consumer who calls `Insert(entity)` and then edits `entity` **today gets those edits written** on the next
+  `SaveChanges` through any Data Access Object on the layer. After the fix they do not. Code that relies on it
+  — deliberately or not — silently stops persisting.
+- A consumer who calls `Get`, edits the result, and calls `SaveChanges` through some other path **today gets
+  the edit written without calling `Update`**. After the fix they do not.
+- `Update` on an absent row **today throws**; after the fix it returns `0`. A `try`/`catch` around it stops
+  firing.
+
+The first two are the same shape as this entry's own headline — *"several tests are currently green because of
+this defect"* — read from the consumer's side. A 2.2.0 consumer's *code* can be green for the same prohibited
+reason. **`Changelog Author` must say so**; "corrected snapshot semantics" does not tell that consumer their
+writes have stopped.
+
+**Riding v3.0.0 is therefore correct and cheap**: the release is already breaking on entries 2, 4, 5, 7 and 10.
+
+#### The 2.2.x patch is **Rejected**, on D12 and without carving an exception from it
+
+**Same disposition as entries 3, 12 and 13, on the same owner decision.**
+[D12](purpose-and-scope.md#owner-decisions--2026-08-15) settles that the 2.2.x line receives no new work
+because the consumer base is judged near-empty, and nothing about this defect distinguishes it from the three
+D12 already covers. It is **silent** and it **corrupts stored data** — a stray edit reaching the store through
+an aliased instance — which puts it in the same class as entries 12 and 13 rather than in a new one.
+
+**But D12 named three defects and this is a fourth, so the obligation it created has to grow.** That is a
+triage judgement, and this entry deliberately declined to assert it; it is asserted here, and it is flagged for
+the owner rather than buried: **D12's premise is re-testable and its scope is not.** If the owner meant "these
+three," a fourth row on the changelog obligation needs their word. If they meant "the shipped defects," it is
+already covered. **This triage assumes the latter** and records the assumption where it can be found — see
+[The `Changelog Author` obligation](#the-changelog-author-obligation--d12), which now carries four rows.
+
+#### The one thing that is genuinely blocked, and it is not in this repository
+
+**The upstream test that is green for a prohibited reason** —
+`SnapshotDeepCopyTests.ShouldNotStoreEditsMadeToAUsersNavigationAfterInsertReturned` — is a
+`ProphetsWay.Example` defect and **this triage cannot move it.** That repository's index is separate, its
+numbering is unrelated, and files under `ProphetsWay.Example/` are never edited from this side.
+
+**What is owed there:** an entry recording that the assertion passes by ordering luck rather than by the
+mechanism it is named for, and a `Test Auditor` pass over that class. **It is not blocking 3.0.0** — the test
+will start passing *for the right reason* once the collapse lands, and the risk it carries is the opposite
+one: it would have gone on passing against an implementation that never fixed anything. Recorded here so the
+obligation is not lost when this entry is read as closed.
+
+#### What this entry must **not** be read as authorising
+
+**A fix applied to `RootNonIdDao`, `RootDao` or the 18 key-typed classes in place.** D14 forecloses that route
+explicitly. These types are deleted by entry 10; correcting them first is work thrown away, and worse, it
+would turn the nine `IDENTITY_INSERT` failures green **before** the families exist — removing the only signal
+currently distinguishing a correct implementation from an adopting one.
+
+**The nine red tests are the acceptance criterion for entry 10, not a regression to be cleared first.**
 

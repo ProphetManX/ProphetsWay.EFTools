@@ -85,17 +85,72 @@ pose. Every status change in [feature-requests.md](feature-requests.md) traces t
 | **D11** *(2026-08-16)* | **Release ordering, so each repository is built, pull-requested, merged and published exactly once.** (1) All remaining EFTools 3.x work is done **against the live submodule working tree**, not against a tagged `ProphetsWay.Example`. (2) `ProphetsWay.Example` is **tagged and released only once EFTools' Entity Framework implementation is green against it.** (3) EFTools' submodule pointer is then advanced **to that tag.** (4) `ProphetsWay.EFTools` 3.0.0 is pull-requested, merged and published. `ProphetsWay.BaseDataAccess` **3.1.0 is already published and current** and needs no release in this sequence unless something new is found in it. | [Release Ordering](#release-ordering--settled-d11); binds [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts), [FR 6](feature-requests.md#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits), [ProphetsWay.Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md#5--advance-the-eftools-submodule-pointer-onto-the-3x-contracts) and [FR 13](../../ProphetsWay.Example/docs/feature-requests.md#13--a-seam-letting-another-repository-point-this-suite-at-its-own-implementation) |
 | **D12** *(2026-08-16)* | **The three shipped 2.2.0 defects are documented, not patched.** In the owner's words: *"I don't believe anyone is currently using that library in any meaningful capacity, so it's document the bug and recommend to update to v3.0.0."* **No 2.2.1 patch will be cut.** This **upholds [D1](#owner-decisions--2026-08-15)** rather than carving an exception from it, and puts the reasoning on record: the exposure is judged near-zero because the package has no meaningful consumer base. **The consequence is not softened** — [D7](#owner-decisions--2026-08-15) makes 3.x `net10.0`-only, so a consumer on `net48`, `net8.0` or `net9.0` **cannot take 3.0.0 at all**, and "upgrade to 3.0.0" is therefore not available to every 2.2.x consumer. | [The Three Shipped 2.2.0 Defects](#the-three-shipped-220-defects--settled-d12); closes the 2.2.x-patch question in [FR 3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess), [FR 12](feature-requests.md#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) and [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) |
 | **D13** *(2026-08-16)* | **A hand-written concrete Entity Framework `DepartmentDao` is approved** in `ProphetsWay.Example.DataAccess.EF/Daos/`, explicitly rather than leaning on a generic DAO family first. In the owner's words: *"the point of the generic tests and classes was to just reduce all the duplicative code, but in this case there is a real need for it."* **The generic families of [D3](#owner-decisions--2026-08-15) are to be derived from a concrete implementation proven against `IDepartmentDao`'s 19 rules, not designed ahead of one.** | [The Hand-Written `DepartmentDao`](#the-hand-written-departmentdao--settled-d13); constrains [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication) and [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance); resolves step 2 of [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) |
-| **D14** *(2026-08-18)* · ⏳ | **Collapse first — do not fix-then-collapse.** [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication)'s Guid/Int/Long → six generic families collapse **proceeds now**, carrying the corrected `Insert` / `Update` / `Get` semantics **inside** it. The alternative — patch `RootNonIdDao.Insert`, `RootDao.Update` and `Int.BaseDao.Get` in place first and collapse afterwards — was considered and **declined as doing the work twice**. [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) already requires the collapse to carry these semantics, or it ships the same violations under new type names. | **Closes Blocking Q9** (the scope of the adoption fix) in favour of route (b); binds [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication), [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance), [FR 14](feature-requests.md) |
-| **D15** *(2026-08-18)* · ⏳ | **The six generic families are modelled on the hand-written `DepartmentDao`.** This is [D13](#owner-decisions--2026-08-15) executed rather than extended: the families are derived *from* the concrete DAO, not designed ahead of it. **The precondition D13 named was satisfied on 2026-08-18**, when `DepartmentDao` landed and passed 33 of 33 `DepartmentDaoTests`. | Executes [D13](#owner-decisions--2026-08-15); binds [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication) |
-| **D16** *(2026-08-18)* · ⏳ | **`DepartmentDao` is converted onto the family once the family exists, and that conversion is the family's acceptance test.** `DepartmentDaoTests` is the largest class in the suite — **33 tests against 19 numbered rules**. If `DepartmentDao` reduces to a thin derivation and **all 33 still pass**, the family is proven against the strictest contract in the repository. The hand-written version survives in git history and in FR 13 / FR 14 as the record of why the family looks as it does. | Binds [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication); consumes [D15](#owner-decisions--2026-08-15) |
-| **D17** *(2026-08-18)* · ⏳ | **The line for hand-writing a DAO.** *A hand-written DAO is justified only when it is the source for a generic family that does not yet exist, or when the contract has no family to belong to.* `DepartmentDao` qualifies on the first; `CompanyResourceDao` will qualify on the second — `ICompanyResourceDao` deliberately does not inherit `IBaseDao<T>`. **`CompanyDao`, `JobDao` and `UserDao` qualify on neither and stay on the bases.** The rejected alternative was hand-writing those three to route around the adoption defect: **declined**, because it would leave only 2 of 7 DAOs exercising EFTools — making `ProphetsWay.Example.DataAccess.EF` a demonstration of BaseDataAccess and the Example domain rather than of EFTools — while leaving the defect shipping in the published package. **This reversed an earlier agent recommendation; the owner caught it.** | Governs every DAO in `ProphetsWay.Example.DataAccess.EF`; binds [FR 14](feature-requests.md) |
-| **D18** *(2026-08-18)* · ⏳ | **One test suite, never two.** A second Entity Framework suite — one exercising hand-written DAOs, one the bases — was considered and **rejected**: the seam's whole value is that **one suite has one construction site**, and a second would drift until it proved nothing. **The variable is which DAOs derive from the bases, never which suite runs.** | Upholds [D10](#owner-decisions--2026-08-15); guards `TestSeam.cs` and the `Guard=Seam` gate |
+| **D14** *(2026-08-18)* · **✅ Ratified 2026-08-19** | **Collapse first — do not fix-then-collapse.** [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication)'s Guid/Int/Long → six generic families collapse **proceeds now**, carrying the corrected `Insert` / `Update` / `Get` semantics **inside** it. The alternative — patch `RootNonIdDao.Insert`, `RootDao.Update` and `Int.BaseDao.Get` in place first and collapse afterwards — was considered and **declined as doing the work twice**. [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) already requires the collapse to carry these semantics, or it ships the same violations under new type names. | **Closes Blocking Q9** (the scope of the adoption fix) in favour of route (b); binds [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication), [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance), [FR 14](feature-requests.md#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) |
+| **D15** *(2026-08-18)* · **✅ Ratified 2026-08-19** | **The six generic families are modelled on the hand-written `DepartmentDao`.** This is [D13](#owner-decisions--2026-08-15) executed rather than extended: the families are derived *from* the concrete DAO, not designed ahead of it. **The precondition D13 named was satisfied on 2026-08-18**, when `DepartmentDao` landed and passed 33 of 33 `DepartmentDaoTests`. | Executes [D13](#owner-decisions--2026-08-15); binds [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication) |
+| **D16** *(2026-08-18)* · **✅ Ratified 2026-08-19, with one clause added** | **`DepartmentDao` is converted onto the family once the family exists, and that conversion is the family's acceptance test.** `DepartmentDaoTests` is the largest class in the suite — **33 tests against 19 numbered rules**. If `DepartmentDao` reduces to a thin derivation and **all 33 still pass**, the family is proven against the strictest contract in the repository. The hand-written version survives in git history and in FR 13 / FR 14 as the record of why the family looks as it does. **Added clause — 33/33 is necessary and not sufficient:** the conversion must also not *lose* what the hand-written DAO proves. `DepartmentDao` today derives from no base at all and carries its own `Snapshot`, `Live`, `Track`, `Read`, `Save`, `Detach` and `AsUtc` helpers; a conversion that keeps a helper the family was supposed to absorb has moved the code, not generalized it. **State which helpers the family absorbed and which survived, and why**, or the acceptance test passes on a derivation that is thin in name only. | Binds [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication); consumes [D15](#owner-decisions--2026-08-15) |
+| **D17** *(2026-08-18)* · **⚠️ Ratified 2026-08-19 with an amendment — the rule stands, one of its two worked examples does not** | **The line for hand-writing a DAO.** *A hand-written DAO is justified only when it is the source for a generic family that does not yet exist, or when the contract has no family to belong to.* `DepartmentDao` qualifies on the first; ~~`CompanyResourceDao` will qualify on the second~~ — **see the amendment below; it qualifies on the *first*, not the second.** **`CompanyDao`, `JobDao` and `UserDao` qualify on neither and stay on the bases.** The rejected alternative was hand-writing those three to route around the adoption defect: **declined**, because it would leave only 2 of 7 DAOs exercising EFTools — making `ProphetsWay.Example.DataAccess.EF` a demonstration of BaseDataAccess and the Example domain rather than of EFTools — while leaving the defect shipping in the published package. **This reversed an earlier agent recommendation; the owner caught it.** | Governs every DAO in `ProphetsWay.Example.DataAccess.EF`; binds [FR 14](feature-requests.md#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule). Amendment: [The `CompanyResourceDao` amendment to D17](#the-companyresourcedao-amendment-to-d17--2026-08-19) |
+| **D18** *(2026-08-18)* · **✅ Ratified 2026-08-19** | **One test suite, never two.** A second Entity Framework suite — one exercising hand-written DAOs, one the bases — was considered and **rejected**: the seam's whole value is that **one suite has one construction site**, and a second would drift until it proved nothing. **The variable is which DAOs derive from the bases, never which suite runs.** | Upholds [D10](#owner-decisions--2026-08-15); guards `TestSeam.cs` and the `Guard=Seam` gate |
+| **D19** *(2026-08-19)* · **Ratified by the owner directly** | **`Restore` belongs to `IDepartmentDao` and to no library contract.** In the owner's words: *"`Restore` is only for `IDepartmentDao`, to illustrate a custom method on a consumer's own DAO interface. It is **not** meant to be built into the `ProphetsWay.BaseDataAccess` interface contracts."* It is the "1%" the purpose sentence leaves to the consumer, and it stays there. **Neither the generic soft-delete families nor `ProphetsWay.BaseDataAccess` gains a `Restore` member**, and the option is **rejected rather than deferred**. | **Closes the question the 2026-08-18 session left open** — *does `Restore` belong on the soft-delete family or stay on `IDepartmentDao`?* Constrains the `Interface Architect` shape pass on [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication); reasoning and consequences in [The `Restore` Boundary](#the-restore-boundary--settled-d19) |
 
 **⏳ D14–D18 were taken by the owner in conversation on 2026-08-18 and recorded here by an agent so they
 would not be lost overnight. The substance is the owner's and is not to be re-litigated; the numbering and
 the `Proposed`/ratified status are `Purpose Refiner`'s to confirm.** They are appended, not merged, and no
 earlier decision's text has been altered. If `Purpose Refiner` reassigns a number, it does so once — numbers
 here are permanent and monotonic thereafter.
+
+### Ratification of D14–D18 — 2026-08-19
+
+**Four ratified as written, one ratified with an amendment, none rejected.** The numbering is confirmed and
+is now permanent. What each ratification actually checked, because "confirmed" without a check is the failure
+mode these documents exist to prevent:
+
+| # | Verdict | What was checked, and against what |
+|---|---|---|
+| **D14** | **Ratified as written** | Checked against the artefact that would falsify it — `docs/api-contract.md` revision 8, which **already specifies the corrected `Insert`, `Get` and `Update` semantics** (A24, A26, OD-4, OD-7, A22, and `Get`'s unconditional `AsNoTracking()`). So route (b) is not merely cheaper; **the collapse cannot avoid carrying the fix**, because the document the collapse is built from has the fix in it. Route (a) would have meant patching types the same document deletes. Consistent with the [FR 14 triage](feature-requests.md#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) taken the same day |
+| **D15** | **Ratified as written** | The precondition was verified rather than accepted: `ProphetsWay.Example.DataAccess.EF/Daos/DepartmentDao.cs` exists and declares `internal class DepartmentDao : IDepartmentDao` — **deriving from no EFTools base**, which is the property that makes it usable as a source rather than as a wrapper over the bases it was written to avoid |
+| **D16** | **Ratified, with a clause added** | The 33/33 criterion is sound and is the strictest gate available. The clause was added because `DepartmentDao` carries **seven private helpers** — verified by opening it — and a conversion can keep all seven, pass 33/33, and have generalized nothing. The clause is an addition to the decision, not a qualification of it; if the owner disagrees, **D16 as they stated it wins** |
+| **D17** | **Ratified with an amendment** — see below. The **rule** is right and is the sharpest thing in D14–D18. One of its two worked examples is not | |
+| **D18** | **Ratified as written** | It is [D10](#owner-decisions--2026-08-15) applied one level down, and the reasoning is the same reasoning: two copies of a suite prove nothing once they diverge. Nothing found in this pass touches it |
+
+**None of the five conflicts with the purpose sentence**, and D14 and D17 both actively defend it — D17 by
+refusing to let `ProphetsWay.Example.DataAccess.EF` stop exercising the library it exists to exercise, which
+is the *"proving ground"* clause of the [Audience](#audience) section doing real work.
+
+#### The `CompanyResourceDao` amendment to D17 — 2026-08-19
+
+**D17's second criterion — *"the contract has no family to belong to"* — is stated correctly and applied to
+the wrong DAO.**
+
+The reasoning D17 gives for `CompanyResourceDao` is that `ICompanyResourceDao` deliberately does not inherit
+`IBaseDao<T>`. That is true — verified by opening
+`ProphetsWay.Example.DataAccess/IDaos/ICompanyResourceDao.cs`, which declares a bare
+`public interface ICompanyResourceDao` with `Insert`, `Delete` and the retrieval members, and no base
+interface. And **against the library as it stands today the conclusion follows**: the only keyless base is
+`BaseNonIdDao<T>`, which declares `public abstract T Get(T item)` and `public abstract int Update(T item)` and
+so forces two members the contract declines to declare — the mismatch
+[FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance)
+records.
+
+**Against the library 3.0.0 is being built into, it does not.** `docs/api-contract.md` **S5** and **A1**
+create the keyless family precisely for this shape: `RootNonIdDao<TEntity>` is public plumbing that
+**implements no capability interface at all**, and the document names it *"the recommended base for the
+Example's join-table DAO"* and carries a `CompanyResourceDao : RootNonIdDao<CompanyResource>` sample in two
+places. **`ICompanyResourceDao` will have a family. It just does not have one yet.**
+
+**The amendment, which narrows nothing and changes no work:** `CompanyResourceDao` qualifies for hand-writing
+on D17's **first** criterion — *source for a family that does not yet exist* — and not the second. The
+practical difference is what happens **after** the family lands: under the second criterion it would stay
+hand-written permanently; under the first it is converted onto `RootNonIdDao<CompanyResource>` exactly as
+`DepartmentDao` is converted onto `BaseSoftDao`, and its tests become that family's acceptance test the way
+D16 makes `DepartmentDaoTests` the keyed family's.
+
+**Why this matters rather than being pedantry.** A permanently hand-written `CompanyResourceDao` would leave
+the keyless half of the library with **no consumer in the proving ground at all** — which is the exact failure
+D17's own rejected alternative was rejected for, arrived at from the other direction. The keyless families
+are 4 of the 12 public classes in the 3.0.0 surface; nothing would exercise them.
+
+**If the owner meant the second criterion literally, this amendment is what should be corrected, not D17.**
+The rule as they stated it is unchanged either way.
 
 **D11–D13 were taken on 2026-08-16, in the same session, and are appended rather than merged into the rows
 above.** No earlier decision's text has been altered. **The numbering is not the order they were stated in:**
@@ -490,6 +545,32 @@ own source**, which is worth stating plainly rather than quietly deleting.
 - **The `using ProphetsWay.EFTools.Guid;` namespaces disappear.** `Guid` as a namespace segment shadows
   `System.Guid` inside those files, which is a small ongoing readability tax the collapse also removes.
 
+### What the 18 classes actually contain — counted 2026-08-19
+
+Recorded here because the shape of the collapse had been reasoned about from file *names*, and the `Interface
+Architect` pass is conditioned on it. **The hypothesis "18 classes = 3 key types × 6 shapes" is true as an
+inventory and misleading as a description.** Full working in
+[FR 10](feature-requests.md#the-18--3-key-types--6-shapes-hypothesis--counted-2026-08-19); the purpose-level
+consequence is this:
+
+**Twelve of the eighteen have empty bodies.** `BaseGetAllDao`, `BasePagedDao`, `BaseSoftGetAllDao` and
+`BaseSoftPagedDao`, in each of the three namespaces, are a constructor pass-through and one added interface
+declaration — no members at all. The remaining six carry **one method each**, `override Get`, and all six
+bodies are the same expression modulo the key type. **The total behaviour distributed across 18 public classes
+is one method.** Everything else lives in `RootBaseDao`, which already implements all three capability
+interfaces on a single type, and in `RootBaseSoftDao`.
+
+**This strengthens D3 rather than qualifying it.** The collapse is not generalizing six behaviours into six
+generics; it deletes twelve empty classes, hoists one expression into a `MatchRow` / `KeyEquals` hook, and
+keeps six names that [api-contract.md](api-contract.md) **S1** already fixes. The one genuine risk — the `Get`
+predicate's translatability — is the *only* thing in the eighteen that has to be reproduced, which is exactly
+why D3 names it as the escape hatch.
+
+**The count cross-checks a claim made from the other side.** `api-contract.md` says the 3.0.0 surface is
+*"twelve public classes, down from twenty-four."* The twenty-four was verified independently here: 18 keyed,
+plus `BaseNonIdDao`, `BaseSoftNonIdDao`, `RootBaseDao`, `RootBaseSoftDao`, `BaseEFContext` and
+`BaseEFDataAccess`. Both halves of that reduction are now measured rather than asserted.
+
 ### The strongest argument against, recorded so it is weighed rather than forgotten
 
 Six generic families in one namespace is a *less discoverable* surface than three namespaces of six. A
@@ -586,6 +667,23 @@ the moment implementation finds anything. The owner has weighed the pair and cho
 **Two of the three fail silently — no exception, just wrong data.** That is recorded here because it is what
 makes documenting them a real obligation rather than a formality: a consumer cannot discover either from a log.
 
+> **A fourth defect was triaged into this set on 2026-08-19, and the owner did not name it.**
+> [FR 14](feature-requests.md#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule)
+> — the Entity Framework DAO bases **adopt the caller's instance**, so `Insert` leaves the argument tracked and
+> `Get` hands back the store's own object under any context not explicitly `NoTracking`. **An edit the caller
+> never submitted is written on the next `SaveChanges`.** It is silent and it corrupts stored data, which is
+> the same class as FR 12 and FR 13, so **D12's reasoning covers it and its 2.2.x patch is `Rejected` on the
+> same grounds.** Three of the four now fail silently.
+>
+> **What is assumed, and is the owner's to confirm:** that D12 governs *the shipped defects* rather than
+> *those three specifically*. Nothing about the fourth distinguishes it from D12's own premise. If the owner
+> meant the number literally, the fourth row on the changelog obligation needs their word — and the obligation
+> is the only thing that changes either way, since no patch is being proposed under either reading.
+>
+> **It differs from the other three in one way that matters to `Changelog Author`:** its *fix* is itself a
+> behaviour change a 2.2.0 consumer may be relying on. After 3.0.0 those stray edits stop persisting, and an
+> `Update` on an absent row returns `0` where it used to throw. The other three take nothing away.
+
 All three were re-verified in source on **2026-08-16** by opening
 [BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs),
 [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs) and
@@ -658,21 +756,161 @@ designing six generic families against a specification nobody has yet satisfied 
 
 ---
 
+## The `Restore` Boundary — Settled (D19)
+
+> Settled as [D19](#owner-decisions--2026-08-15) on **2026-08-19**, **ratified by the owner directly** rather
+> than recommended by an agent. It closes a question the 2026-08-18 session left deliberately unanswered —
+> *does `Restore` belong on the generic soft-delete family, or stay on `IDepartmentDao`?* — and it constrains
+> the `Interface Architect` shape pass on [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication).
+
+### Scope Verdict — adding `Restore` to the soft-delete DAO family
+
+| | |
+|---|---|
+| **Verdict** | **Out of scope.** It belongs on the consumer's own DAO interface — `IDepartmentDao` — and stays there |
+| **Purpose it's measured against** | The [settled sentence](#settled-one-sentence-purpose), and specifically its last clause: *"so an implementer writes only the queries that are specific to their application"* |
+| **Because** | In the owner's words: *"`Restore` is only for `IDepartmentDao`, to illustrate a custom method on a consumer's own DAO interface. It is **not** meant to be built into the `ProphetsWay.BaseDataAccess` interface contracts."* This is the out-of-scope test in the purpose sentence returning the answer it was written to return: if a consumer's own DAO can express it, the base class must not |
+| **Owner's decision** | **Approved, and the alternative is rejected rather than deferred.** Neither the six generic families nor `ProphetsWay.BaseDataAccess` gains a `Restore` member |
+
+**It is already in the [Out of Scope](#out-of-scope-and-where-it-should-live-instead) table by category** —
+*"Query specifications, filter builders, LINQ helpers"* → *"the consumer's **custom DAO methods** — the
+deliberate 1%."* D19 names the one member everybody was going to argue about, which is worth more than the
+category is.
+
+**And a second reason, which is the owner's boundary rather than this document's:** `Restore` would have had
+to land on `ProphetsWay.BaseDataAccess` to be a *contract*, and that repository is the root of the Data Access
+family — a member added there is a member every future DAL must implement, including ones with no soft delete
+at all. Putting it on the EFTools family alone would have been worse: a base-class capability that no
+interface declares, discoverable only by whoever reads the base.
+
+### The two consequences the coordinator surfaced — assessed
+
+Both were put forward as following from D19. **The first is correct and is already satisfied. The second is
+correct and is the more valuable of the two.**
+
+#### 1 — the family must leave an accessible seam. **Correct, and already met by the design**
+
+The claim: a concrete DAO must be able to add consumer-authored behaviour on top of the generic family, so the
+family's shape must leave a seam — a **shape** constraint on the `Interface Architect` pass, not a semantics
+one.
+
+**Assessed and upheld, with one correction: it is not a new constraint.** `docs/api-contract.md` revision 8
+already carries the seam, and carries a **worked `Restore` written against it** — read on 2026-08-19, in
+[Writing a `Restore`](api-contract.md), not inherited. Four properties of the specified `BaseSoftDao<TEntity, TKey>`
+are what make it writable, and each is already a stated decision:
+
+| What `Restore` needs | Already specified as |
+|---|---|
+| Reach the store from inside a derived DAO | **S10** — `Context` and `Dataset` are `protected`, where 2.2.x had them `public`. The api-contract says in terms that this *"is exactly what makes it writable"* |
+| See soft-deleted rows | Starting from the raw `Dataset` keeps `ApplyReadFilter`'s `DeletedDate == null` off the query. The hook composes onto the retrieval trio, not onto everything |
+| Locate the row the same way the family does | **A12** — `MatchRow(item)` is `protected virtual`, so a custom member locates rows through the same override every CRUD member uses. The api-contract records an earlier draft that used `KeyEquals(item.Id)` instead and names the tenant-scoping bug it would have caused |
+| Not poison the DAL instance | **A26 / OD-7** — detachment in a `finally`, which the sample demonstrates and which the api-contract calls *"the document's only worked custom write"* |
+
+**So the shape pass inherits this constraint rather than being handed it.** What D19 adds is the instruction
+**not to relax any of the four** — in particular, not to make `Dataset` or `MatchRow` private on the grounds
+that nothing in the library calls them from outside. Something outside the library does: every custom method
+the paradigm's 1% is made of.
+
+**The one thing genuinely owed to the shape pass** is that the `Restore` sample must be re-read against the
+family as actually written, not assumed to still compile. It is a sample in a design document; nothing has
+compiled it.
+
+#### 2 — `Restore` is inside D16's acceptance test. **Correct, and it upgrades D16**
+
+The claim: the 33 `DepartmentDaoTests` that must stay green when `DepartmentDao` converts onto the family
+include the `Restore` tests, so *"can a consumer still write `Restore` cleanly"* gets **proven rather than
+asserted**.
+
+**Assessed and upheld.** `DepartmentDao.cs` declares `public int Restore(Department item)` — verified by
+opening it — and `IDepartmentDao` declares `int Restore(Department item)` at line 271, so the member is part
+of the contract the 33 tests are written against. It follows that D16's gate already covers consequence 1:
+**if the seam were inadequate, the conversion could not be completed and the 33 could not stay green.**
+
+**This is the strongest thing in the whole D14–D19 set**, and it is worth naming why. Every other statement
+about the seam — including this document's table above — is a reading of a design document. The `Restore`
+tests are the only mechanism that can *fail*. A shape pass that produces a family on which `Restore` cannot be
+written cleanly does not produce a warning; it produces red tests, in a class whose 33/33 is already the
+acceptance criterion.
+
+**Two cautions, so the guarantee is not over-read:**
+
+- **It proves the seam is sufficient for `Restore`, not that it is sufficient in general.** `Restore` reads
+  one row, writes one column and detaches. A custom method that loads a graph, or projects, or joins, exercises
+  parts of the seam these 33 tests never reach.
+- **`Restore` is the *only* custom write in the repository**, and the api-contract says so of its own sample
+  as well. The evidence base for "a consumer can write custom methods on this family" is one method. That is
+  one more than the library has ever had, and it is still one.
+
+### What still blocks the `Interface Architect` shape pass — as of 2026-08-19
+
+Recorded here rather than left in a conversation, because "is it safe to start" is the question every lap of
+this cycle opens with and the answer keeps having to be re-derived.
+
+**Blocking: nothing.** Every decision the shape pass consumes is taken.
+
+| What the pass needs decided | Where it is decided |
+|---|---|
+| The six family names, their generic parameters and their namespace | [api-contract.md](api-contract.md) **S1**, **S3** |
+| Whether `TKey` keeps `where TKey : struct` | **S4** — it does not. **This document said the question was open until 2026-08-19; it was not** |
+| Whether each family publishes a narrowed method set | **S2** — flat surface, the consumer's DAO interface selects |
+| Whether the soft families may use `new` | **A2** — `virtual`/`override`, never `new`. Closes [FR 13](feature-requests.md#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance)'s structural finding |
+| Whether the collapse carries the corrected write semantics or patches first | **[D14](#owner-decisions--2026-08-15)** — carries them |
+| What the families are modelled on, and what proves them | **[D15](#owner-decisions--2026-08-15)**, **[D16](#owner-decisions--2026-08-15)** |
+| Whether `Restore` joins the soft family | **[D19](#owner-decisions--2026-08-15)** — it does not |
+| Whether the keyless half gets its own root | **S5**, **A1**, **A14** — four classes, two of which implement no capability interface |
+
+**Not blocking, but the pass must not contradict them:** the four seam properties in the table above (S10,
+A12, A26/OD-7), and the [counted shape of the 18](#what-the-18-classes-actually-contain--counted-2026-08-19).
+
+**Not blocking, and not the shape pass's to settle — one item, and it belongs to the owner.**
+`api-contract.md` **OD-11** is marked *"applied on the `Contract Reviewer`'s recommendation and open to
+reversal by the owner."* It narrows the IDENTIFIER RULE's pre-assigned-key case — on a store-generated column,
+the generated key replaces whatever the caller assigned. **It is a behaviour term on `Insert`, not a shape**,
+so the pass proceeds either way; reversing it retags one test obligation and changes no signature.
+
+---
+
 ## Unresolved Purpose-Level Questions
 
-Everything else in this document is settled. **Two of the original four are now closed** — they are kept in
-the table with their answers rather than deleted, because both were raised as blocking questions elsewhere
-and a reader arriving from those links needs to find the answer here.
+**Nothing in this table is open as of 2026-08-19.** All four are closed, and **Q2 and Q3 were closed on
+2026-08-15 by decisions this document did not cite** — see the correction below the table. They are kept with
+their answers rather than deleted, because all four were raised as blocking questions elsewhere and a reader
+arriving from those links needs to find the answer here.
 
 | # | Question | Status | Where it is tracked |
 |---|---|---|---|
 | **Q1** | **Does this repository take a documented exception to the `netstandard2.0` reach floor?** An EF Core-only library cannot ship that asset | **Closed 2026-08-15 by [D7](#owner-decisions--2026-08-15) — yes.** 3.x targets **`net10.0` only**, library and tests and EF example alike; 2.2.x remains the answer for `net4x`/`net8.0`/`net9.0`. Reasoning in [The `net10.0`-Only Exception](#the-net100-only-exception--settled). **Still owed elsewhere:** the `AGENTS.md` line recording it, which is not this agent's file | [FR 5](feature-requests.md#5--retarget-to-the-house-tfm-standard) |
-| **Q2** | **Does v3.0.0 add a `DbContext`-accepting constructor, or only prepare for one?** | **Open.** It widens the sentence from "constructs your context for you" toward "participates in your composition root" — and D2 makes it more likely a consumer wants it, since they now configure the provider anyway. Answerable by whoever implements | [FR 3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess) |
-| **Q3** | **Do the collapsed generic DAO families keep `where TKey : struct`?** | **Open.** Relaxing it admits `string` keys, which is a reach decision about who can use the library at all, not a refactor detail. Answerable by whoever implements | [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication) |
+| **Q2** | **Does v3.0.0 add a `DbContext`-accepting constructor, or only prepare for one?** | **Closed 2026-08-15 by [api-contract.md](api-contract.md) S7 — yes, it takes the context.** `BaseEFDataAccess<TContext>` accepts a configured `TContext` directly; no `TIdType`, no `Activator.CreateInstance`, and the derived Data Access Layer builds the provider options. Ownership is explicit at construction (**S8**, **A9**). **This row read "Open" until 2026-08-19 and had been stale for four days** | [FR 3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess) |
+| **Q3** | **Do the collapsed generic DAO families keep `where TKey : struct`?** | **Closed 2026-08-15 by [api-contract.md](api-contract.md) S4 — no, the constraint is dropped.** *"Any key type — no `where TKey : struct`."* `string`, nullable-value and value keys are all supported through a provider-translatable equality predicate; **OD-2** settles string equality as the storage engine's collation and **OD-3** settles `default(TKey)` as an ordinary key value. **Also stale until 2026-08-19** | [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication) |
 | **Q4** | **Is "certified on SQLite and SQL Server" stated on the package, or only in this repository's docs?** | **Closed 2026-08-15 by [D8](#owner-decisions--2026-08-15) — on the package.** Public wording states relational EF Core providers **and** certification on SQLite and SQL Server only, and must not imply any other relational provider is certified. Constraint in [Public Wording](#public-wording--settled) | [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) |
 
-**Nothing purpose-level is now waiting on the owner.** Q2 and Q3 are implementation decisions with
-purpose-level consequences — whoever builds v3.0.0 answers them and records the answer here.
+### Correction, 2026-08-19 — Q2 and Q3 were never open, and this document said they were for four days
+
+**They were closed by owner decisions taken the same day as D1–D9, recorded in a document this one does not
+cite as a decision source.** [api-contract.md](api-contract.md) carries **S1–S13**, described there as *"Owner
+decisions taken 2026-08-15, numbered S1–S13 so they cannot be confused with D1–D9"* — and **S7 answers Q2 and
+S4 answers Q3, each saying so in its own row.** This table went on reporting both as *"Open… answerable by
+whoever implements"*, and the sentence beneath it — *"Q2 and Q3 are implementation decisions"* — was wrong
+twice over: they are **owner** decisions, and they were **already made**.
+
+**The mechanism of the error is worth more than the error.** This document and
+[feature-requests.md](feature-requests.md) treat each other as the whole decision record. **There is a third
+register.** An agent reading only these two files sees two open purpose-level questions and either re-asks
+them or, worse, answers them itself. Both were live risks for the `Interface Architect` pass: **Q3 decides a
+generic constraint on every one of the six families**, and a shape pass trusting this table would have kept
+`where TKey : struct` and silently contradicted S4 — excluding `string` keys from a design that specifies
+them.
+
+**The standing correction, not just the fix:** `docs/api-contract.md` is a decision source. Its **S1–S13** are
+owner decisions taken 2026-08-15, and its **OD-1–OD-11** are owner decisions taken during authoring. Anything
+in this document or in `feature-requests.md` describing a question as open must be checked against it before
+the description is repeated. **OD-11 is the one term there that is genuinely unsettled** — it is marked
+*"applied on the `Contract Reviewer`'s recommendation and open to reversal by the owner"* — and it is the only
+one. It concerns whether a store-generated key overwrites a caller's pre-assigned one; it is a term a consumer
+reads, and **it is the owner's to confirm or reverse.**
+
+**Nothing purpose-level is waiting on the owner** — with that single exception, which belongs to
+`api-contract.md` rather than to this file.
 
 ---
 
@@ -712,6 +950,7 @@ Judged against the proposed purpose sentence. These are what the library is *for
 | **Compatibility wrappers preserving `ProphetsWay.EFTools.Int.BaseDao<T>` et al.** | Nowhere — the major is the migration | Keeping 18 shims to soften a break the owner accepted doubles the surface for the life of 3.x. **Rejected by [D3](#owner-decisions--2026-08-15)**, subject to implementation evidence |
 | Migrations, schema generation, seeding, `EnsureCreated` | The consumer's own project, or a `.sqlproj` as in `ProphetsWay.Example` | Schema lifecycle is an application concern; this library reads and writes rows |
 | Query specifications, filter builders, LINQ helpers, `Include` strategies | The consumer's **custom DAO methods** — the deliberate 1% | This is the exact boundary the purpose sentence draws. If a DAO can express it, the base class must not |
+| **`Restore` — as a member of the soft-delete DAO family, or of `ProphetsWay.BaseDataAccess`** | `IDepartmentDao`, the consumer's own DAO interface, where it already is | The named instance of the row above, and the one most likely to be re-proposed — a soft-delete family that stamps `DeletedDate` looks like it owes an un-stamp. It does not. **Rejected, not deferred, by [D19](#owner-decisions--2026-08-15)**; reasoning in [The `Restore` Boundary](#the-restore-boundary--settled-d19) |
 | Async members / `IAsyncDisposable` | `ProphetsWay.BaseDataAccess` first — [BaseDataAccess FR 4](../../ProphetsWay.BaseDataAccess/docs/feature-requests.md) | An implementation cannot add async to a contract it does not own. EFTools **must not lead here** |
 | Nested transactions / savepoints | `ProphetsWay.BaseDataAccess` — [BaseDataAccess FR 2](../../ProphetsWay.BaseDataAccess/docs/feature-requests.md), deferred out of scope by decision | Same reason. `EnsureBeginTransaction` already covers the case that motivated it |
 | A conformance test kit | `ProphetsWay.BaseDataAccess.Conformance` — [BaseDataAccess FR 1](../../ProphetsWay.BaseDataAccess/docs/feature-requests.md) | Shipping a test framework in a runtime package is the coupling the family exists to prevent |
@@ -722,14 +961,18 @@ Judged against the proposed purpose sentence. These are what the library is *for
 
 ### Cannot tell yet — the boundaries that remain open
 
-Two, consolidated into [Unresolved Purpose-Level Questions](#unresolved-purpose-level-questions) above so
-they are in one place. The older of them is **Q2 — who owns the `DbContext`'s lifetime?**
-`BaseEFDataAccess` constructs its own context via `Activator.CreateInstance`, which under the parent's
-disposal contract ("a DAL disposes what it created and not what was handed to it") means it must dispose
-it. But if a future overload accepts an injected context — which is what a DI-hosted consumer will ask for,
-and which [D2](#owner-decisions--2026-08-15) makes *more* likely now that the consumer configures the
-provider themselves — that one must **not** be disposed. The contract is clear; the library has not yet
-been designed to it. This is [FR 3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess).
+**None, as of 2026-08-19.** This subsection previously carried **Q2 — who owns the `DbContext`'s lifetime?** —
+and described the library as *"not yet been designed to it."* **Both halves are stale.**
+[api-contract.md](api-contract.md) **S7** has the Data Access Layer root accept a configured `TContext`
+directly rather than build one with `Activator.CreateInstance`, and **S8 / A9** make ownership an explicit
+`ContextOwnership` argument with no default — `Owned` is disposed, `Borrowed` never is, and the branch cannot
+be inferred. `ContextOwnership.cs` and a `BaseEFDataAccess<TContext>` are **both on disk**, verified
+2026-08-19 by listing `ProphetsWay.EFTools/`. The contract was clear, and the library **has** now been
+designed to it.
+
+The remaining work on [FR 3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess) is
+not a boundary question at all: it is `ObjectDisposedException` guarding on seven members, which **A19**
+specifies and which nothing has yet run.
 
 ---
 
@@ -743,7 +986,7 @@ following the owner decisions above — including row 10, which this document ha
 |---|---|---|---|---|---|
 | 1 | Advance the `ProphetsWay.Example` submodule onto 3.x and bring the EF DAL with it | The paradigm claim is currently a statement about history. Routed here from [Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md) | **Large** | No (repo-internal), but gates everything | **Scheduled** (D6) — **step 1 of 6 landed 2026-08-16**; the pointer is at `d845863`, the remaining five steps are not done, and the repository does not compile in the interim |
 | 2 | `ProphetsWay.BaseDataAccess` `2.5.0` → `3.1.0` | The library advertises a contract it does not reference | Small edit, **large** consequence | **Yes** — transitively | **Scheduled** (D6) |
-| 3 | Implement the 3.x disposal contract in `BaseEFDataAccess` | Required by #2 to compile; the *design* is the real work | Medium | **Yes** — new abstract obligation on derived DALs | **Scheduled** (D6); carries **Q2** |
+| 3 | Implement the 3.x disposal contract in `BaseEFDataAccess` | Required by #2 to compile; the *design* is the real work | Medium | **Yes** — new abstract obligation on derived DALs | **Scheduled** (D6); ~~carries **Q2**~~ **Q2 closed by api-contract S7/S8/A9**. `Dispose` has landed; what remains is `ObjectDisposedException` guarding on seven members (A19) |
 | 4 | **Make 3.x EF Core-only; retire EF6/.NET Framework** | Two semantics under one package ID; blocks #5 | Medium (deletion) | **Yes** — by intent; 2.2.x remains | **Scheduled** (D1) |
 | 5 | Retarget to **`net10.0` only** — off `net4x` and the undotted `net80`/`net90` monikers | `net461`/`net471` are EOL; `net80`/`net90` are non-canonical and EOL 10 Nov 2026; EF Core 10 ships only `net10.0` | Medium — the `#if` conditions go with #4 | **Yes** — TFM removal | **Scheduled** (D1 entails it; destination settled by **D7**) |
 | 6 | Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory + `Scope` traits | The inheritance hook it uses no longer exists upstream | Medium | No — `IsPackable=false` | **Scheduled** (forced by 1); **rescoped 2026-08-16** — there is no adapter to rebuild and the seam is upstream. **The fork that rescope opened is closed by [D10](#owner-decisions--2026-08-15): shape B, direction only.** The six adapters are **deleted**; the seam is `ProphetsWay.Example`'s and its design is deferred until Lap 1 |
@@ -769,14 +1012,31 @@ is a **constraint on row 10**, not a change of its own: it specifies what the si
 rather than proposing a separate edit. It also carries a release-note obligation of its own, for the same
 reason FR 12 does.
 
-**Three 2026-08-16 decisions land on this table without moving a row, and that is the correct outcome.**
+**Row 14 is absent for the same reason as row 13, and it is the more important absence of the two.**
+[FR 14](feature-requests.md#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule)
+specifies what row 10 must fix on the **ordinary CRUD** path, as row 13 does for the soft-delete and keyless
+bases. Between them the two cover **every base in the package**, and neither proposes an edit of its own —
+[D14](#owner-decisions--2026-08-15) forecloses fixing these types in place, because row 10 deletes them. It
+also carries a release-note obligation, which is now the fourth on that list.
+
+**Five 2026-08-18 decisions and one from 2026-08-19 land on this table without moving a row, and that is again
+the correct outcome.** [D14](#owner-decisions--2026-08-15)–[D18](#owner-decisions--2026-08-15) and
+[D19](#owner-decisions--2026-08-15) constrain **how row 10 is executed** — collapse rather than patch-then-
+collapse, families derived from the hand-written `DepartmentDao`, that conversion as the acceptance test, the
+line for hand-writing a DAO, one test suite, and `Restore` staying on the consumer's interface. None changes a
+row's scope, effort or breaking-ness. Ratification and one amendment:
+[Ratification of D14–D18](#ratification-of-d14d18--2026-08-19).
+
+**Three 2026-08-16 decisions land on this table without moving a row either, for the same reason.**
 
 - **[D11](#owner-decisions--2026-08-15)** sequences the release across repositories. It changes *when*, not
   *what*, so no row's scope, effort or breaking-ness moves. See [Release Ordering](#release-ordering--settled-d11).
-- **[D12](#owner-decisions--2026-08-15)** settles the three shipped 2.2.0 defects as **documented, not
-  patched**. Rows 3 and 10 both carry a defect that is live in the published package; neither gains work here,
-  because the fix rides 3.x and the *record* rides the changelog. See
-  [The Three Shipped 2.2.0 Defects](#the-three-shipped-220-defects--settled-d12).
+- **[D12](#owner-decisions--2026-08-15)** settles the shipped 2.2.0 defects as **documented, not
+  patched** — **three when it was taken, four since FR 14 was triaged on 2026-08-19**. Rows 3 and 10 both
+  carry a defect that is live in the published package; neither gains work here, because the fix rides 3.x and
+  the *record* rides the changelog. See
+  [The Three Shipped 2.2.0 Defects](#the-three-shipped-220-defects--settled-d12), whose count is corrected in
+  place rather than in its heading.
 - **[D13](#owner-decisions--2026-08-15)** constrains **row 10** without changing its status: the six generic
   families are now to be **derived from a hand-written concrete `DepartmentDao`** proven against
   `IDepartmentDao`'s 19 rules, rather than designed ahead of one. That is a sequencing constraint inside row 1
@@ -812,12 +1072,17 @@ about the repository as it stands:
 
 - **Step 1 of FR 1 has landed; steps 2–6 have not.** The recommended-refinements table below still reads
   `Scheduled` for that row, which is now a status that trails reality rather than a false statement of it.
-- **The repository does not compile.** `ProphetsWay.EFTools.Tests` targets `net472;net48;net80;net90`
-  against a `net48;net10.0` project reference and overrides an upstream member that no longer exists;
-  `ExampleDataAccess` does not satisfy the 3.1.0 `IExampleDataAccess`. This is the mid-flight state FR 1
-  and FR 6 both predicted, not a new regression.
-- **No EFTools-owned `.cs` or `.csproj` has been changed to match.** The library still references
-  `ProphetsWay.BaseDataAccess` 2.5.0, still carries the EF6 `#if` branches, still declares no `Dispose`,
-  and still exposes the 18 key-specific DAO classes — checked file by file, not inferred.
+- ~~**The repository does not compile.**~~ **Superseded 2026-08-16, corrected here 2026-08-19.** It was true
+  when written — `ProphetsWay.EFTools.Tests` targeted `net472;net48;net80;net90` against a `net48;net10.0`
+  project reference and overrode an upstream member that no longer existed, and `ExampleDataAccess` did not
+  satisfy the 3.1.0 `IExampleDataAccess`. **All three breaks closed the same day**, and
+  `dotnet build ProphetsWay.EFTools.sln -c Debug` was green on SDK 10.0.400. Left visible rather than deleted
+  because two later paragraphs in this document reason from it.
+- ~~**No EFTools-owned `.cs` or `.csproj` has been changed to match.**~~ **Also superseded, and only one
+  clause of it survives.** The reference is at **3.1.0**, the TFMs are `net10.0`, `BaseEFDataAccess` has a
+  `Dispose`, and the Data Access Layer root has been rebuilt as `BaseEFDataAccess<TContext>` with a
+  `ContextOwnership` enum beside it — verified 2026-08-19 by listing `ProphetsWay.EFTools/`. **What is still
+  true: the EF6 `#if` branches are still in the C# sources, dead under a `net10.0`-only build, and the 18
+  key-specific DAO classes are still there.** Those two are the whole of what this bullet now says.
 | "The key-type namespaces are **required** so the default `Get` can build a proper select by Id" | `README.md`, and **restated by this document** in its first pass | **False** | [RootDao.cs](../ProphetsWay.EFTools/RootDao.cs) already compares generically on the EF Core branch — `Single(x => x.Id.Equals(item.Id))` in `Update`, `OrderBy(x => x.Id)` in `GetPaged`. `Int/BaseDao.Get` uses `==` because `int` allows it, not because a generic form is untranslatable. **This document inherited the claim from the README without opening `RootDao.cs`**, and it was the load-bearing argument in the recommendation the owner overturned as [D3](#owner-decisions--2026-08-15) |
 | "Retarget to `netstandard2.0;net10.0`" as this repo's house-standard destination | this document, first pass; house convention | **Unachievable here — and now a ratified exception, not a violation** | `ProphetsWay.EFTools.csproj` pins `Microsoft.EntityFrameworkCore` **9.0.4**, which ships no `netstandard2.0` asset — EF Core has been runtime-targeted since 5.0, and **EF Core 10 exposes only `net10.0`**. An EF Core-only library cannot carry the family's reach floor. Raised as **Q1**; **closed by [D7](#owner-decisions--2026-08-15)** — the destination is `net10.0` alone. `AGENTS.md` still needs the line recording it |
