@@ -8,6 +8,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.ValueGeneration;
@@ -209,38 +210,14 @@ namespace ProphetsWay.EFTools
 			if (item == null)
 				throw new ArgumentNullException(nameof(item));
 
-			var key = GetKey(item);
-
-			if (IsNullKey(key))
-				return 0;
-
-			DetachTrackedRowsCarrying(key);
-
-			var stored = Dataset
-				.AsTracking()
-				.IgnoreQueryFilters()
-				.Where(MatchRow(item))
-				.SingleOrDefault();
+			var stored = TrackForWrite(item);
 
 			if (stored == null)
 				return 0;
 
 			try
 			{
-				var entry = Context.Entry(stored);
-
-				// Copied into a detached buffer first: writing a key property on a tracked entry throws, and the
-				// exception is raised during the copy, so there is no "after" in which to restore it.
-				var incoming = entry.CurrentValues.Clone();
-				incoming.SetValues(item);
-
-				foreach (var property in entry.CurrentValues.Properties)
-				{
-					if (property.IsKey())
-						continue;
-
-					entry.CurrentValues[property] = incoming[property];
-				}
+				ApplyUpdateValues(Context.Entry(stored), item);
 
 				Context.SaveChanges();
 
@@ -264,18 +241,7 @@ namespace ProphetsWay.EFTools
 			if (item == null)
 				throw new ArgumentNullException(nameof(item));
 
-			var key = GetKey(item);
-
-			if (IsNullKey(key))
-				return 0;
-
-			DetachTrackedRowsCarrying(key);
-
-			var stored = Dataset
-				.AsTracking()
-				.IgnoreQueryFilters()
-				.Where(MatchRow(item))
-				.SingleOrDefault();
+			var stored = TrackForWrite(item);
 
 			if (stored == null)
 				return 0;
@@ -363,6 +329,67 @@ namespace ProphetsWay.EFTools
 			ApplyStableOrder(filtered);
 
 			return filtered.Count();
+		}
+
+		/// <summary>
+		/// Locates the row <paramref name="item"/> refers to and tracks it, so a write can be made against it.
+		/// </summary>
+		/// <param name="item">The entity naming the row.</param>
+		/// <returns>The tracked stored row, or <c>null</c> when the key is absent or no row matches.</returns>
+		/// <remarks>
+		/// <para>
+		/// The whole locating half of a write, in one place: the caller of this member owes only the write itself
+		/// and the <c>finally</c> that detaches what it tracked. <c>Update</c>, <c>Delete</c>, the soft-delete
+		/// families' own writes and a consumer's custom write all go through it, which is what makes one
+		/// <see cref="MatchRow"/> override reach every one of them.
+		/// </para>
+		/// <para>
+		/// It starts from the raw <see cref="Dataset"/> and adds <c>IgnoreQueryFilters()</c>, so neither
+		/// <see cref="ApplyReadFilter"/> nor a consumer's global query filter can hide the row from a write —
+		/// a soft-delete family could otherwise never reach the rows it has already deleted.
+		/// </para>
+		/// </remarks>
+		protected TEntity? TrackForWrite(TEntity item)
+		{
+			var key = GetKey(item);
+
+			if (IsNullKey(key))
+				return null;
+
+			DetachTrackedRowsCarrying(key);
+
+			return Dataset
+				.AsTracking()
+				.IgnoreQueryFilters()
+				.Where(MatchRow(item))
+				.SingleOrDefault();
+		}
+
+		/// <summary>
+		/// Writes <paramref name="item"/>'s values onto the tracked row <see cref="Update"/> located, immediately
+		/// before <c>SaveChanges</c>.
+		/// </summary>
+		/// <param name="entry">The tracked entry for the stored row.</param>
+		/// <param name="item">The entity supplying the values.</param>
+		/// <remarks>
+		/// Every mapped scalar less the entity's key properties — primary and alternate alike. The override point
+		/// for "this family owns a column and the caller does not": a soft-delete family restores its timestamps
+		/// from <paramref name="entry"/> here, so they cannot arrive from <paramref name="item"/>.
+		/// </remarks>
+		protected virtual void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)
+		{
+			// Copied into a detached buffer first: writing a key property on a tracked entry throws, and the
+			// exception is raised during the copy, so there is no "after" in which to restore it.
+			var incoming = entry.CurrentValues.Clone();
+			incoming.SetValues(item);
+
+			foreach (var property in entry.CurrentValues.Properties)
+			{
+				if (property.IsKey())
+					continue;
+
+				entry.CurrentValues[property] = incoming[property];
+			}
 		}
 
 		/// <summary>Reads the identifier value off <paramref name="item"/>.</summary>
