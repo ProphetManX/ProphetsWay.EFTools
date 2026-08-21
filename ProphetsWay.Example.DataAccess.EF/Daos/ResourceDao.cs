@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 #if NET471 || NET48
 using System.Data.Entity;
 #endif
-using ProphetsWay.EFTools.Guid;
+using ProphetsWay.EFTools;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.IDaos;
 
@@ -12,7 +12,7 @@ using System;
 
 namespace ProphetsWay.Example.DataAccess.EF.Daos
 {
-	internal class ResourceDao : BaseGetAllDao<Resource>, IResourceDao
+	internal class ResourceDao : BaseGetAllDao<Resource, Guid>, IResourceDao
 	{
 		public ResourceDao(DbContext context) : base(context) { }
 

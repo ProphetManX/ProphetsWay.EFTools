@@ -192,6 +192,8 @@ namespace ProphetsWay.EFTools.Tests
 		[Theory]
 		[InlineData(InMemory)]
 		[InlineData(Sqlite)]
+		[Trait("Scope", "Characterization")]
+		[Trait("Area", "AlternateKeys")]
 		public void ShouldThrowWhenPrimaryKeyIsChangedByDirectAssignment(string provider)
 		{
 			//setup
@@ -215,6 +217,8 @@ namespace ProphetsWay.EFTools.Tests
 		[Theory]
 		[InlineData(InMemory)]
 		[InlineData(Sqlite)]
+		[Trait("Scope", "Characterization")]
+		[Trait("Area", "AlternateKeys")]
 		public void ShouldThrowWhenAlternateKeyIsChangedByDirectAssignment(string provider)
 		{
 			//setup
@@ -239,6 +243,8 @@ namespace ProphetsWay.EFTools.Tests
 		[Theory]
 		[InlineData(InMemory)]
 		[InlineData(Sqlite)]
+		[Trait("Scope", "Characterization")]
+		[Trait("Area", "AlternateKeys")]
 		public void ShouldThrowWhenPrimaryKeyIsChangedBySetValues(string provider)
 		{
 			//setup
@@ -271,6 +277,8 @@ namespace ProphetsWay.EFTools.Tests
 		[Theory]
 		[InlineData(InMemory)]
 		[InlineData(Sqlite)]
+		[Trait("Scope", "Characterization")]
+		[Trait("Area", "AlternateKeys")]
 		public void ShouldThrowWhenAlternateKeyIsChangedBySetValues(string provider)
 		{
 			//setup
@@ -304,6 +312,8 @@ namespace ProphetsWay.EFTools.Tests
 		[Theory]
 		[InlineData(InMemory)]
 		[InlineData(Sqlite)]
+		[Trait("Scope", "Characterization")]
+		[Trait("Area", "AlternateKeys")]
 		public void ShouldReportTheAlternateKeyPropertyAsAKeyButNotAPrimaryKey(string provider)
 		{
 			//setup
@@ -342,6 +352,8 @@ namespace ProphetsWay.EFTools.Tests
 		[Theory]
 		[InlineData(InMemory)]
 		[InlineData(Sqlite)]
+		[Trait("Scope", "Characterization")]
+		[Trait("Area", "AlternateKeys")]
 		public void ShouldNotThrowWhenAUniqueIndexedNonKeyColumnIsChangedBySetValues(string provider)
 		{
 			//setup
@@ -395,6 +407,8 @@ namespace ProphetsWay.EFTools.Tests
 		[Theory]
 		[InlineData(InMemory)]
 		[InlineData(Sqlite)]
+		[Trait("Scope", "Characterization")]
+		[Trait("Area", "AlternateKeys")]
 		public void ShouldNotThrowWhenSetValuesCarriesAnUnchangedAlternateKey(string provider)
 		{
 			//setup

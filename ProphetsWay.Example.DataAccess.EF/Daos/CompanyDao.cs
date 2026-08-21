@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 #if NET471 || NET48
 using System.Data.Entity;
 #endif
+using ProphetsWay.EFTools;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.IDaos;
 using System.Linq;
-using ProphetsWay.EFTools.Int;
 
 namespace ProphetsWay.Example.DataAccess.EF.Daos
 {
-	internal class CompanyDao : BasePagedDao<Company>, ICompanyDao
+	internal class CompanyDao : BasePagedDao<Company, int>, ICompanyDao
 	{
 		public CompanyDao(DbContext context) : base(context) { }
 
