@@ -222,6 +222,7 @@ reversing **Q11**. One new decision is recorded in [Revision 10 additions](#revi
 | **N11** | **Minor.** The upstream IDENTIFIER RULE says the instance carries an identifier *"not the default value of its type"*, while OD-11's `ValueGeneratedNever` branch permits returning with `item.Id == 0` where the caller passed `0` and the store accepted it — legal under [OD-3](#owner-decisions-taken-during-revision-4). One clause closes it: **a `ValueGeneratedNever` identifier left at its default is caller error**, because under that configuration the caller owns the value and asking for a non-default one back asks this library to invent one. **The upstream wording problem is noted and not worked around**: `IExampleDataAccess`'s unconditional *"not the default value of its type"* and the paradigm's own insistence that `0`/`Guid.Empty`/`""` are legal stored keys cannot both hold for an entity legitimately keyed at its default. It is latent upstream — all seven Example entities are store-keyed — and it is **not this repository's to fix**; the route is an entry in `ProphetsWay.Example`'s index, never an edit from here |
 | **N12** | **Minor.** [A33](#revision-9-additions) forecloses the keyed families to an entity with a **computed** identifier, and the answer — the keyless families — was stated only for **composite** keys. The [Composite keys](#composite-keys--they-belong-on-the-keyless-families) routing table is generalized from *"two or more properties together"* to **"no single stored property of type `TKey`"**, with the computed case named as a second row. **A33 is not softened**: the answer is routing, not relaxation, and its reasoning — that `KeySelector`, `KeyEquals` and the A16 ordering default are all built over the resolved property — is untouched |
 | **M1** | **Log correction, no substance.** The Revision 9 log said the `{DaoTypeName}` / `{EntityTypeName}` placeholder form was applied *"at both sites"*. It appears at **one**, in [The two hooks](#the-two-hooks--one-required-at-compile-time-one-at-first-use); the second citation, in [Ordering and paging](#ordering-and-paging), asserts on the two names without quoting the message. The row is corrected |
+| **Owner amendment — 2026-08-20** | **Not a review finding, and it reverses a term this document stated. [A16](#design-decisions-made-here) is amended and every passage restating it is brought in line.** The keyed ordering default is now `OrderBy(KeySelector)` **plus a `ThenBy` over every primary-key property the model declares that the leading selector does not already name** — so it is **total wherever the model declares a primary key**. Where the identifier *is* that key the tie-breaker is redundant, is dropped, and the emitted SQL is unchanged; a shadow key is routed through `EF.Property<T>`; the redundancy test reads `KeySelector`'s expression tree, so a `KeySelector` override keeps every key property; and a type mapped with **no** primary key falls back to `OrderBy(KeySelector)` alone and **does not throw**, because `GetCount` invokes the hook and discards the result ([A27](#revision-5-additions)) and a throw there would break counting for an entity that never needed an ordering. **The obligation is narrowed with it**: totality binds a Data Access Object that publishes `GetPaged` — `BasePagedDao`/`BaseSoftPagedDao` — and no other, so a `BaseDao` or `BaseGetAllDao` consumer with a nullable or duplicate-capable identifier overrides nothing. `GetAll` still applies the ordering; only the stated obligation moved. **This landed in code before it landed here — commit `e52ee43`, 2026-08-20 — and was verified against `ProphetsWay.EFTools/BaseDao.cs` at that state rather than taken from the commit message. The document was the thing that was wrong**, and this row exists so a reader can tell an implemented decision from an unimplemented proposal. **Sites corrected:** A3 and A16; the keyed signature block; *Choosing a family*; the `DepartmentDao` conversion comment; the hook-default table; the `GetCount` composition bullet; *Locating a row*; all of [Stable Ordering](#stable-ordering); [The two hooks](#the-two-hooks--one-required-at-compile-time-one-at-first-use); and one obligation in [Ordering and paging](#ordering-and-paging). **[G9](#a-string-key-orders-by-collation-and-the-two-legs-order-differently--s4-od-2-a16) survives untouched, and is restated as surviving** — the tie-breaker makes the order *total*, not *identical across providers*, because two distinct `string` identifiers never reach it. **[A15](#revision-2-additions) is unchanged**: the keyless default still throws, there being no `KeySelector` to lead a model-derived order, and that asymmetry is recorded at *The two hooks* rather than smoothed over. **No decision is renumbered, no decision letter is added, no section is restructured**, and the **obligation count is unchanged at 150** — the single ordering obligation asserting the old rule was **re-cut in place**, not removed |
 | **Obligation count** | **149 → 150, and the single addition is named.** [A37](#revision-10-additions)'s inverse-navigation guard is the only new checkbox; it is `[C]`, because it traces to the SNAPSHOT RULE. Everything else was **re-cut or extended in place**: the `Guid` obligation and the store-generated obligation onto Q13's distinction (N1), the key-property exclusion obligation onto the genuine trigger (N7/N8), the copy obligation onto `ChangeTracker.Entries()` (N4), the pre-detach obligation with its keyless clause (N10), and the soft-`Insert` stamp obligation with the stored row (N3). **Recounted by hand, tag by tag, rather than derived by addition: `Contract` 131, `Characterization` 11, `Dispatcher` 8 — 150**, and the three sum. Revision 9's 149 = 130 / 11 / 8 was itself re-counted here and confirmed before the delta was applied. Any figure of 149, or of `Contract` 130, is superseded |
 
 #### Revision 9
@@ -558,7 +559,7 @@ them widens the purpose sentence, and none is a preference exercised over an own
 |---|---|---|
 | **A1** | The keyless set is **four** classes — `RootNonIdDao<TEntity>`, `BaseNonIdDao<TEntity>`, `RootSoftNonIdDao<TEntity>`, `BaseSoftNonIdDao<TEntity>` — retaining the `NonId` vocabulary | S5, and the naming convention in `AGENTS.md`. The soft root is A14 |
 | **A2** | Soft-delete method overriding uses `virtual`/`override`, **never `new`** | Today's `new` hiding silently hard-deletes through a base-typed reference. That cannot satisfy the Example contract |
-| **A3** | One **row-matching predicate hook** and one **ordering hook** serve both keyed and keyless families; the keyed families supply a `MatchRow` default composed from `GetKey` + `KeyEquals` (A12) and an ordering default that is valid only under the conditions in A16 | S5 requires the ordering hook; making it the same shape in both halves is the smaller surface |
+| **A3** | One **row-matching predicate hook** and one **ordering hook** serve both keyed and keyless families; the keyed families supply a `MatchRow` default composed from `GetKey` + `KeyEquals` (A12) and an ordering default whose totality A16 states | S5 requires the ordering hook; making it the same shape in both halves is the smaller surface |
 | **A4** | A null **resolved key** — the value `GetKey(item)` returns — **never matches**, and is answered **without issuing a query** | `= NULL` is never true in SQL; leaving it to the provider makes SQLite and SQL Server disagree |
 | **A5** | `BaseEFDataAccess` supplies `protected void ThrowIfDisposed()`. The library applies it to the seven inherited dispatcher members itself (A19); the derived DAL **must** call it from its own **custom** members and forwarders | The parent holds no state and cannot guard. **Narrowed by A19** — Revision 3 made the guard a consumer obligation on all of them, which left `IBaseDataAccess` members unguarded. Answers [FR 3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess) open question 2 |
 | **A6** | `BaseEFContext` is **retained**, provider-free, with only the `DbContextOptions` constructor | D2 kills its `UseSqlServer` body; deleting the type as well would break every consumer context declaration for no gain |
@@ -579,7 +580,7 @@ decision meeting a contract this family already publishes.
 | **A13** | The soft bases add **`protected virtual DateTime NormalizeRetrievedTimestamp(DateTime value)`**, defaulting to `DateTime.SpecifyKind(value, DateTimeKind.Utc)`, applied to every timestamp on every soft entity **that Data Access Object's own reads** materialize | `IDepartmentDao` rule 18 requires `Kind == Utc` on an instance retrieved by `Get`, `GetAll` or `GetPaged` **on that interface**, and relational providers do not store `Kind`. Without this hook the default derivation cannot satisfy the Example contract — the clock hook alone only covers the write half. **The scope qualifier is load-bearing, and it is the rule's own**: rule 18 expressly does not bind a soft entity materialized as an *include* on some other Data Access Object's query, because the hook belongs to the DAO that owns the query. This hook's reach and the rule's reach are therefore the same reach, not an approximation of it. See [Including a soft-delete entity bypasses its `ApplyReadFilter`](#including-a-soft-delete-entity-bypasses-its-applyreadfilter--and-that-is-correct) |
 | **A14** | **`RootSoftNonIdDao<TEntity>`** is added: soft-delete semantics with **no** capability interface. `BaseSoftNonIdDao<TEntity>` derives from it and adds `IBaseDao<TEntity>` | Without it a keyless soft DAO had to inherit `BaseNonIdDao`, i.e. publish `Get` and `Update` it does not support — the exact coercion S5 exists to prevent, reintroduced one level down |
 | **A15** | `ApplyStableOrder` is **`virtual` on every base**. Its keyless default **throws `NotSupportedException`**, and `GetAll`, `GetPaged` and `GetCount` therefore throw until it is overridden | An `abstract` hook taxes the write-only join DAO — the one shape S5 was written for — to buy a compile error for a member it never publishes. A `NotSupportedException` names the missing override precisely and costs the write-only DAO nothing |
-| **A16** | The **keyed** ordering default is `OrderBy(key)`, and it is a **total** order only when the resolved key is **unique and non-null**. A model whose key is nullable or duplicate-capable **must** override `ApplyStableOrder` with a deterministic tie-breaker | An identifier that is a real primary key satisfies both conditions, which is the normal case. S4's widened reach — `string`, `int?`, alternate-key identifiers — is exactly where it stops holding, and null ordering differs between providers |
+| **A16** | **The keyed ordering default is `OrderBy(KeySelector)` followed by a `ThenBy` over every primary-key property the model declares for `TEntity` that the leading selector does not already name**, in the model's declared order — so the default is a **total** order wherever the model declares a primary key, without the consumer having to know that. Where the identifier **is** the single-column primary key the tie-breaker is redundant, is dropped, and the emitted `ORDER BY` is unchanged. A shadow key property is reached through `EF.Property<T>`. The redundancy test reads **`KeySelector`'s own expression tree**, not the resolved identifier field, so a `KeySelector` **override** selecting something else keeps every key property rather than having one dropped out from under it. A type the model maps with **no** primary key falls back to `OrderBy(KeySelector)` alone and **does not throw**. **And the obligation to override is narrowed to paging:** it binds a Data Access Object deriving from `BasePagedDao`/`BaseSoftPagedDao`, and then only where the model declares no primary key for the tie-breaker to use — a `BaseDao` or `BaseGetAllDao` consumer whose identifier is nullable or duplicate-capable overrides nothing. **Amended by owner decision and landed in code first: commit `e52ee43`, 2026-08-20** | An identifier that is a real primary key is unique and non-null, which is the normal case and is why the identifier alone was enough for as long as it was. **S4's widened reach — `string`, `int?`, alternate-key identifiers — is exactly where that assumption stopped holding**, and null ordering differs between providers. What the amendment changes is who carries the consequence: the model already knows a key that closes the gap, so the library reads it rather than obliging a consumer to notice a precondition whose violation is invisible — a non-total order passes every test at small row counts and starts overlapping windows later. **Totality is a paging property**: `GetPaged` is `Skip`/`Take` over the ordering, so a non-total order lets successive windows overlap or omit rows, while `GetAll` returns the whole set either way. **The no-primary-key fallback is load-bearing, not lenience:** `GetCount` invokes this hook and discards the result (A27), so throwing there would break counting for an entity that never needed an ordering at all |
 | **A17** | A DAO constructor validates **`context` null first** (`ArgumentNullException`), **then** the identifier (`DataAccessConventionException`). `Dataset` is resolved **lazily on first access** and cached for the DAO's lifetime. **The `ValueGenerated` lookup A32 needs is deferred with it** — resolved on first `Insert`, never in the constructor | Argument validation precedes convention validation everywhere else in the family. `Context.Set<TEntity>()` forces EF model initialization, which must not be a side effect of constructing a Data Access Layer — and **`Context.Model` forces the same initialization**, so A32's lookup is subject to the same rule. Both are cached **once per closed generic type** |
 
 #### Revision 4 additions
@@ -1314,7 +1315,7 @@ namespace ProphetsWay.EFTools
 		/// </summary>
 		protected virtual IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> query);
 
-		/// <summary>A total ordering over the set, applied by GetAll and GetPaged alike. Defaults to OrderBy(KeySelector).</summary>
+		/// <summary>A total ordering over the set, applied by GetAll and GetPaged alike. Defaults to OrderBy(KeySelector), then ThenBy over every primary-key property the leading selector does not already name (A16).</summary>
 		protected virtual IOrderedQueryable<TEntity> ApplyStableOrder(IQueryable<TEntity> query);
 	}
 
@@ -1413,10 +1414,12 @@ is a **precedence, not a comparison**:
 **Why `Paged` wins the tie, stated so it is a reason and not a coin.** `IBasePagedDao<T>` declares **two**
 members — `GetPaged` and `GetCount` — to `IBaseGetAllDao<T>`'s one, so it is the strictly larger declared
 surface even though the two interfaces are incomparable in the type system. And it is the one whose contract
-requires `ApplyStableOrder` to be a genuine **total** order, because partitioning windows depend on it (A16);
-picking it therefore never leaves a requirement unstated, while picking `GetAll` and inheriting `GetPaged`
-through the flat surface would. **A DAO whose interface names both is not choosing between two correct
-answers — it has one.**
+requires `ApplyStableOrder` to be a genuine **total** order, because partitioning windows depend on it — and
+**paging is the only capability that obligation attaches to** (A16); picking it therefore never leaves a
+requirement unstated, while picking `GetAll` and inheriting `GetPaged` through the flat surface would. **The
+default meets that requirement by itself** wherever the model declares a primary key, so the pick decides
+which obligations are *stated*, not whether the consumer must write an override. **A DAO whose interface names
+both is not choosing between two correct answers — it has one.**
 
 **The case that forces the rule is the one this design is graded against.**
 `IDepartmentDao : IBaseGetAllDao<Department>, IBasePagedDao<Department>` — verified by opening
@@ -1475,7 +1478,9 @@ internal class DepartmentDao : BaseSoftPagedDao<Department, int>, IDepartmentDao
 	//                                                                         DeletedDate == null and
 	//                                                                         nothing else, which is
 	//                                                                         rule 15 in terms)
-	//   the explicit stable ORDER BY ................ ApplyStableOrder's keyed default, OrderBy(KeySelector)
+	//   the explicit stable ORDER BY ................ ApplyStableOrder's keyed default; Department.Id IS
+	//                                                 the primary key, so A16's tie-breaker is redundant,
+	//                                                 is dropped, and the emitted ORDER BY is unchanged
 	//                                                                        (11)
 	//   the paging boundary rules ................... BaseDao.GetPaged       (12)
 	//   ArgumentNullException on the write members .. the cross-cutting null-arguments table
@@ -1580,7 +1585,7 @@ except the filter, and A27's whole point is that its ordered query is built and 
 |---|---|---|---|
 | `ApplyReadFilter` | **identity** — hides nothing | **`DeletedDate == null`** | `GetAll`, `GetPaged`, `GetCount` |
 | `ApplyIncludes` | **identity** — loads no navigation property | identity | `Get` / `GetCore`, `GetAll`, `GetPaged` |
-| `ApplyStableOrder` | `OrderBy(KeySelector)` — keyed; **throws `NotSupportedException`** — keyless | as the hard families | `GetAll`, `GetPaged` — and **invoked and discarded** by `GetCount` (A27) |
+| `ApplyStableOrder` | `OrderBy(KeySelector)`, **then `ThenBy` over the model's remaining primary-key properties** (A16) — keyed; **throws `NotSupportedException`** — keyless | as the hard families | `GetAll`, `GetPaged` — and **invoked and discarded** by `GetCount` (A27) |
 
 ##### What each hook is handed — A23
 
@@ -1604,6 +1609,9 @@ no override changes it.
   `ApplyReadFilter`'s output, so **no `ORDER BY` is emitted**. The hook is invoked for its *contract* effect
   rather than its query effect: it is what makes the keyless default's `NotSupportedException` reach
   `GetCount`, which is the trio-moves-together rule in [The two hooks](#the-two-hooks--one-required-at-compile-time-one-at-first-use).
+  **It is also why the *keyed* default falls back rather than throwing** where the model declares no primary
+  key to append (A16): the hook runs on every count, so a throw there would break counting for an entity that
+  never needed an ordering.
   **A consequence `Test Designer` must be able to predict: an ordering override with a side effect runs
   during a count.** Counting the *ordered* query instead was rejected — it would make the emitted SQL depend
   on the provider's translator stripping an `ORDER BY` it cannot legally keep, which is exactly the kind of
@@ -1714,7 +1722,7 @@ exists.
 
 **And `KeySelector` is why the requirement cannot be made conditional.** `KeySelector` is
 `Expression<Func<TEntity, TKey?>>` built over the **resolved property**, and
-[`ApplyStableOrder`](#stable-ordering)'s keyed default is `OrderBy(KeySelector)`. With no resolved property
+[`ApplyStableOrder`](#stable-ordering)'s keyed default **leads with** `OrderBy(KeySelector)` (A16). With no resolved property
 there is no `KeySelector`, and the keyed ordering default has no definition at all — so `GetAll` and
 `GetPaged` would need a second, unstated fallback on exactly the DAOs least able to supply one. **A `GetKey`
 override and `KeySelector` must not be able to disagree silently**, and under A33 they cannot: `KeySelector`
@@ -2550,6 +2558,17 @@ with it:
 | `GetCount` | **`NotSupportedException`** |
 | `Insert`, `Delete`, `GetCore`, `UpdateCore` | Unaffected. They never order anything |
 
+**The keyed and keyless halves are asymmetric since A16's amendment, and the asymmetry is recorded rather
+than smoothed over.** The **keyed** default now self-serves — it reads the model's primary key and appends it
+to the identifier, so a keyed Data Access Object gets a total order without writing anything. The **keyless**
+default cannot do the same, and A15 is unchanged by that amendment. There is no resolved identifier and
+therefore no `KeySelector` to lead with, so a model-derived ordering here would be the **whole** order rather
+than a tie-breaker on one — and the shapes these families exist for include the type the model maps with
+`HasNoKey()`, which has no primary key to derive anything from at all. **Whether a keyless default could
+legitimately be built from a composite primary key alone is a question the amendment did not ask and did not
+answer**; until it is asked, the keyless default throws and the deriving Data Access Object names its own
+order.
+
 The exception message must name the type and the override. **Stated as a template, not as a literal**, because
 the message is a contract term of *this* library and must not quote a type that lives in another repository
 (M1):
@@ -3006,21 +3025,54 @@ but stable** while the data is unchanged, so successive `GetPaged` windows parti
 overlap and no omission, and `GetAll` and `GetPaged` order **identically**.
 
 ```csharp
-protected virtual IOrderedQueryable<TEntity> ApplyStableOrder(IQueryable<TEntity> query); // keyed: defaults to the key
+protected virtual IOrderedQueryable<TEntity> ApplyStableOrder(IQueryable<TEntity> query); // keyed: key, then the model's primary key
 protected virtual IOrderedQueryable<TEntity> ApplyStableOrder(IQueryable<TEntity> query); // keyless: default throws
 ```
 
-- **Keyed default:** `query.OrderBy(KeySelector)`, where `KeySelector` is `x => x.Id` built by the same
-  expression machinery as `KeyEquals` and against the same resolved property.
-- **Keyed total-order precondition (A16):** the resolved identifier must be unique and non-null. A model whose
-	key permits nulls or duplicates must override `ApplyStableOrder` and add a deterministic tie-breaker.
+- **Keyed default (A16):** `query.OrderBy(KeySelector)` — where `KeySelector` is `x => x.Id`, built by the
+  same expression machinery as `KeyEquals` and against the same resolved property — **followed by a `ThenBy`
+  over every primary-key property the model declares for `TEntity` that the leading selector does not already
+  name**, in the model's declared order. A shadow key property has no CLR member to address and is reached
+  through `EF.Property<T>`.
+- **The default is therefore a total order wherever the model declares a primary key**, and a consumer does
+  not have to know that to get one. Where the identifier **is** the single-column primary key the tie-breaker
+  is redundant, is dropped, and the emitted `ORDER BY` is unchanged from the identifier-only default.
+- **The redundancy skip reads `KeySelector`'s own expression tree, not the resolved identifier field.** A
+  `KeySelector` **override** that selects something else fails that shape test, so **every** key property is
+  kept rather than one being silently dropped out from under it.
+- **A type the model maps with no primary key falls back to `OrderBy(KeySelector)` alone, and does not
+  throw.** That is load-bearing rather than lenient: `GetCount` invokes this hook and **discards** the result
+  (A27), so throwing here would break counting for an entity that never needed an ordering at all.
+- **The obligation to override is narrowed to paging (A16), and this is the half a reader carries away.**
+  Totality matters to a consumer **only where their Data Access Object publishes `GetPaged`** — that is,
+  derives from `BasePagedDao<TEntity, TKey>` or `BaseSoftPagedDao<TEntity, TKey>` — because `GetPaged` is
+  `Skip`/`Take` over the ordering, so a non-total order lets successive windows silently overlap or omit
+  rows. `GetAll` returns the whole set either way. **A `BaseDao` or `BaseGetAllDao` consumer whose identifier
+  is nullable or duplicate-capable is obliged to override nothing**; `GetAll` still applies the ordering, and
+  only the stated obligation moved, not the behavior. The override is left for the one case the tie-breaker
+  cannot reach — a model declaring no primary key, on a Data Access Object that publishes paging anyway.
 - **Keyless default (A15):** throws `NotSupportedException`. Write-only keyless DAOs therefore need no
 	ordering stub, while any DAO publishing `GetAll`, `GetPaged` or `GetCount` must override the hook.
+- **The two halves are asymmetric since A16's amendment, and deliberately so** — the keyed default
+	self-serves from the model, the keyless default still throws. Recorded at
+	[The two hooks](#the-two-hooks--one-required-at-compile-time-one-at-first-use).
 - **`GetAll` applies it too**, not only `GetPaged`. 2.2.x ordered inside `GetPaged` alone, so a `GetAll`
   page-equivalence test passed by luck.
 - **The return type is `IOrderedQueryable<TEntity>`** so the compiler rejects an unordered query. It cannot
   reject a *non-total* order — ordering by a non-unique column leaves ties broken arbitrarily, which the
-  provider is free to resolve differently between two executions of the same query.
+  provider is free to resolve differently between two executions of the same query. That is the gap the
+  primary-key tie-breaker closes for every model that declares one.
+
+**The five model shapes, and what each emits.** Measured against the emitted SQL rather than reasoned from
+the expression tree:
+
+| Model shape | Emitted `ORDER BY` |
+|---|---|
+| The identifier **is** the single-column primary key — the ordinary case | The identifier alone. The tie-breaker is redundant and dropped, and the SQL is **byte-identical** to the identifier-only default |
+| A `string` identifier over a surrogate `Ordinal` primary key | `ORDER BY "Id", "Ordinal"` |
+| A composite primary key of which the identifier is one column | The identifier, then the remaining key columns in the model's declared order |
+| A **shadow** primary key with no CLR member | The identifier, then the shadow column, routed through `EF.Property<T>` |
+| `HasNoKey()` | The identifier alone — the fallback. **No throw** |
 
 **Why this is stated so insistently:** SQL Server guarantees no order without an explicit `ORDER BY`, and the
 plan it picks for an unordered scan **changes as a table grows**. A DAL that omits it passes every test today
@@ -3037,8 +3089,8 @@ for it.
 ### A `string` key orders by collation, and the two legs order differently — S4, OD-2, A16
 
 **S4's widened reach carries cleanly everywhere else, and this is the one loose end.** The keyed ordering
-default is `OrderBy(KeySelector)`, `KeySelector` selects the resolved identifier column, and for a `string`
-key the resulting `ORDER BY` is resolved **by the storage engine's collation** — the same mechanism
+default **leads with** `OrderBy(KeySelector)`, `KeySelector` selects the resolved identifier column, and for a
+`string` key the resulting `ORDER BY` is resolved **by the storage engine's collation** — the same mechanism
 [OD-2](#owner-decisions-taken-during-revision-4) settles for *equality*, applied to *ordering*. The two
 certified legs therefore return the same rows in **different sequences**:
 
@@ -3046,6 +3098,12 @@ certified legs therefore return the same rows in **different sequences**:
 |---|---|
 | **SQL Server** — `SQL_Latin1_General_CP1_CI_AS` | `apple`, `Banana`, `cherry` — case-insensitive, so it reads alphabetically |
 | **SQLite** — `BINARY` | `Banana`, `apple`, `cherry` — byte-exact, so every upper-case letter sorts before every lower-case one |
+
+**A16's primary-key tie-breaker does not close this, and must not be read as closing it.** The tie-breaker
+makes the order **total**; it does not make it **identical across providers**. Two rows carrying distinct
+`string` identifiers never reach the tie-breaker at all — the leading `ORDER BY` on the identifier column
+decides them, and that comparison is the engine's collation. Everything in this subsection stands exactly as
+written, and the amendment of 2026-08-20 leaves G9 intact.
 
 **The ORDERING RULE survives this, and that is the point of stating it.** The rule is *unspecified but
 stable*, and stability is a property **within** a leg: on either provider two calls with no writes between
@@ -4890,8 +4948,15 @@ company, job and department first, then hang them off the user.
 	ORDERING RULE is *unspecified but stable* and survives intact — stability is a within-leg property. Same
 	family as the [collation obligations](#string-key-collation--a-per-provider-characterization-with-a-stated-expectation-on-each-leg),
 	and it asserts opposite results on the two legs for the same reason.
-- [ ] **[C]** A nullable or duplicate-capable key overrides `ApplyStableOrder` with a deterministic tie-breaker;
-	successive windows remain stable when null or duplicate ordering values exist.
+- [ ] **[C]** **A nullable or duplicate-capable identifier paginates stably with no override** (A16). Seed a
+	`BasePagedDao<TEntity, string>` whose identifier is an ordinary column over a **surrogate** primary key, with
+	rows sharing an identifier value and rows whose identifier is null, and require successive `GetPaged` windows
+	to partition a full `GetAll` pass with no overlap and no omission over two executions with no writes between
+	them. **The default's `ThenBy` over the model's primary key is what makes that hold**, so the arrangement
+	must carry a primary key the identifier does not already name — a subject whose identifier *is* the primary
+	key cannot fail this and therefore asserts nothing. **This obligation replaces the one that required such a
+	model to override `ApplyStableOrder`**, which A16's amendment of 2026-08-20 retired; an implementation that
+	still demands the override fails it.
 - [ ] **[C]** `GetCount` equals `GetAll().Count`.
 - [ ] **[C]** `skip` beyond the count → empty; `take == 0` → empty; `take` past the remainder → the remainder.
 - [ ] **[C]** Negative `skip` or `take` → `ArgumentOutOfRangeException`.
