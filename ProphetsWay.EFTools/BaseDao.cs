@@ -174,8 +174,8 @@ namespace ProphetsWay.EFTools
 				throw new ArgumentNullException(nameof(item));
 
 			var generation = ResolveIdentifierGeneration();
-			var copy = CopyForStore(item);
-			var related = ReachableFrom(item, includeRoot: false);
+			var copy = EntityGraph.CopyForStore(Context, item);
+			var related = EntityGraph.ReachableFrom(Context, item, includeRoot: false);
 
 			try
 			{
@@ -189,12 +189,12 @@ namespace ProphetsWay.EFTools
 				Context.SaveChanges();
 
 				_identifier!.SetValue(item, _identifier!.GetValue(copy));
-				RemoveFromInverseNavigations(copy);
+				EntityGraph.RemoveFromInverseNavigations(Context, copy);
 			}
 			finally
 			{
-				Detach(copy);
-				Detach(related);
+				EntityGraph.Detach(Context, copy);
+				EntityGraph.Detach(Context, related);
 			}
 		}
 
@@ -225,8 +225,7 @@ namespace ProphetsWay.EFTools
 			}
 			finally
 			{
-				Detach(ReachableFrom(stored, includeRoot: true));
-				Detach(ReachableFrom(item, includeRoot: true));
+				DetachAfterWrite(stored, item);
 			}
 		}
 
@@ -255,8 +254,7 @@ namespace ProphetsWay.EFTools
 			}
 			finally
 			{
-				Detach(ReachableFrom(stored, includeRoot: true));
-				Detach(ReachableFrom(item, includeRoot: true));
+				DetachAfterWrite(stored, item);
 			}
 		}
 
@@ -645,84 +643,6 @@ namespace ProphetsWay.EFTools
 		}
 
 		/// <summary>
-		/// Builds the instance the store actually receives: every mapped scalar by value, every navigation by
-		/// reference, so relationship fix-up has the same principals to work with that the caller's instance does.
-		/// </summary>
-		private TEntity CopyForStore(TEntity item)
-		{
-			var source = Context.Entry(item);
-			var copy = (TEntity)source.CurrentValues.ToObject();
-
-			// PropertyValues covers properties and not navigations, so the references are a separate move.
-			foreach (var navigation in source.Navigations)
-				navigation.Metadata.PropertyInfo?.SetValue(copy, navigation.CurrentValue);
-
-			return copy;
-		}
-
-		/// <summary>
-		/// Every entity reachable through navigation properties, visited by reference identity so a node reached
-		/// by two paths is returned once.
-		/// </summary>
-		private IReadOnlyList<object> ReachableFrom(object root, bool includeRoot)
-		{
-			var model = Context.Model;
-			var seen = new HashSet<object>(ReferenceEqualityComparer.Instance);
-			var pending = new Stack<object>();
-			var reached = new List<object>();
-
-			pending.Push(root);
-
-			while (pending.Count > 0)
-			{
-				var current = pending.Pop();
-
-				if (!seen.Add(current))
-					continue;
-
-				var entityType = model.FindEntityType(current.GetType());
-
-				if (entityType == null)
-					continue;
-
-				if (includeRoot || !ReferenceEquals(current, root))
-					reached.Add(current);
-
-				foreach (var navigation in Navigations(entityType))
-				{
-					var value = navigation.PropertyInfo?.GetValue(current);
-
-					if (value == null)
-						continue;
-
-					if (navigation.IsCollection)
-					{
-						foreach (var child in (IEnumerable)value)
-						{
-							if (child != null)
-								pending.Push(child);
-						}
-					}
-					else
-					{
-						pending.Push(value);
-					}
-				}
-			}
-
-			return reached;
-		}
-
-		private static IEnumerable<INavigationBase> Navigations(IEntityType entityType)
-		{
-			foreach (var navigation in entityType.GetNavigations())
-				yield return navigation;
-
-			foreach (var navigation in entityType.GetSkipNavigations())
-				yield return navigation;
-		}
-
-		/// <summary>
 		/// Releases any entry already tracked for the row about to be fetched, because a tracking query performs
 		/// identity resolution rather than re-reading — without this a sibling Data Access Object's in-memory
 		/// values are what a later write would preserve.
@@ -744,64 +664,13 @@ namespace ProphetsWay.EFTools
 		}
 
 		/// <summary>
-		/// Takes the newly inserted copy back out of any inverse navigation relationship fix-up wrote it into.
+		/// Releases the located row, the caller's instance, and everything reachable from either — in the
+		/// <c>finally</c> of every write, on success and on failure alike.
 		/// </summary>
-		/// <remarks>
-		/// Those principals are the caller's own objects, and the copy is an object internal to this library that
-		/// the caller cannot name. It has to happen before the detach: detaching does not run fix-up in reverse.
-		/// </remarks>
-		private void RemoveFromInverseNavigations(TEntity copy)
+		private void DetachAfterWrite(TEntity stored, TEntity item)
 		{
-			var entityType = Context.Model.FindEntityType(typeof(TEntity));
-
-			if (entityType == null)
-				return;
-
-			foreach (var navigation in entityType.GetNavigations())
-			{
-				var inverse = navigation.Inverse;
-
-				if (inverse?.PropertyInfo == null)
-					continue;
-
-				var principal = navigation.PropertyInfo?.GetValue(copy);
-
-				if (principal == null)
-					continue;
-
-				var held = inverse.PropertyInfo.GetValue(principal);
-
-				if (held == null)
-					continue;
-
-				if (!inverse.IsCollection)
-				{
-					if (ReferenceEquals(held, copy))
-						inverse.PropertyInfo.SetValue(principal, null);
-
-					continue;
-				}
-
-				var present = ((IEnumerable)held).Cast<object>().Any(member => ReferenceEquals(member, copy));
-
-				if (!present)
-					continue;
-
-				held.GetType()
-					.GetMethod(nameof(ICollection<object>.Remove), new[] { typeof(TEntity) })
-					?.Invoke(held, new object[] { copy });
-			}
-		}
-
-		private void Detach(object entity)
-		{
-			Context.Entry(entity).State = EntityState.Detached;
-		}
-
-		private void Detach(IReadOnlyList<object> entities)
-		{
-			foreach (var entity in entities)
-				Detach(entity);
+			EntityGraph.Detach(Context, EntityGraph.ReachableFrom(Context, stored, includeRoot: true));
+			EntityGraph.Detach(Context, EntityGraph.ReachableFrom(Context, item, includeRoot: true));
 		}
 	}
 }
