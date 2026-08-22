@@ -173,29 +173,7 @@ namespace ProphetsWay.EFTools
 			if (item == null)
 				throw new ArgumentNullException(nameof(item));
 
-			var generation = ResolveIdentifierGeneration();
-			var copy = EntityGraph.CopyForStore(Context, item);
-			var related = EntityGraph.ReachableFrom(Context, item, includeRoot: false);
-
-			try
-			{
-				foreach (var node in related)
-					Context.Entry(node).State = EntityState.Unchanged;
-
-				if (generation == IdentifierGeneration.Store)
-					_identifier!.SetValue(copy, default(TKey));
-
-				Context.Entry(copy).State = EntityState.Added;
-				Context.SaveChanges();
-
-				_identifier!.SetValue(item, _identifier!.GetValue(copy));
-				EntityGraph.RemoveFromInverseNavigations(Context, copy);
-			}
-			finally
-			{
-				EntityGraph.Detach(Context, copy);
-				EntityGraph.Detach(Context, related);
-			}
+			InsertRoot(item, null);
 		}
 
 		/// <inheritdoc />
@@ -210,23 +188,7 @@ namespace ProphetsWay.EFTools
 			if (item == null)
 				throw new ArgumentNullException(nameof(item));
 
-			var stored = TrackForWrite(item);
-
-			if (stored == null)
-				return 0;
-
-			try
-			{
-				ApplyUpdateValues(Context.Entry(stored), item);
-
-				Context.SaveChanges();
-
-				return 1;
-			}
-			finally
-			{
-				DetachAfterWrite(stored, item);
-			}
+			return UpdateRoot(item, null);
 		}
 
 		/// <inheritdoc />
@@ -387,6 +349,103 @@ namespace ProphetsWay.EFTools
 					continue;
 
 				entry.CurrentValues[property] = incoming[property];
+			}
+		}
+
+		/// <summary>
+		/// The whole of <see cref="Insert"/>, with the soft family's timestamp steps folded in as the one reading
+		/// of the clock they are given.
+		/// </summary>
+		/// <param name="item">The caller's instance. Read, never tracked.</param>
+		/// <param name="stamp">
+		/// <c>null</c> on this class. On <see cref="BaseSoftDao{TEntity, TKey}"/>, the value stamped onto the copy
+		/// before the write and onto <paramref name="item"/> only after it has succeeded — which is what leaves a
+		/// caller's instance untouched when nothing was stored.
+		/// </param>
+		/// <remarks>
+		/// <b><c>private protected</c>, and deliberately not part of the protected surface</b> — A38's reasoning
+		/// for the keyless counterpart applies here unchanged: <paramref name="stamp"/> admits exactly one
+		/// conforming value from outside, which is the one the class already passes.
+		/// </remarks>
+		private protected void InsertRoot(TEntity item, DateTime? stamp)
+		{
+			var generation = ResolveIdentifierGeneration();
+			var copy = EntityGraph.CopyForStore(Context, item);
+			var related = EntityGraph.ReachableFrom(Context, item, includeRoot: false);
+
+			try
+			{
+				foreach (var node in related)
+					Context.Entry(node).State = EntityState.Unchanged;
+
+				if (generation == IdentifierGeneration.Store)
+					_identifier!.SetValue(copy, default(TKey));
+
+				if (stamp.HasValue)
+					SoftTimestamps.StampForInsert(copy, stamp.Value);
+
+				Context.Entry(copy).State = EntityState.Added;
+				Context.SaveChanges();
+
+				// The whole write-back onto the caller's instance sits here, after the save and ahead of every
+				// later step that can throw: once the row is committed the instance must agree with it, and a
+				// restore in a finally cannot un-store a row.
+				_identifier!.SetValue(item, _identifier!.GetValue(copy));
+
+				if (stamp.HasValue)
+					SoftTimestamps.StampForInsert(item, stamp.Value);
+
+				EntityGraph.RemoveFromInverseNavigations(Context, copy);
+			}
+			finally
+			{
+				EntityGraph.Detach(Context, copy);
+				EntityGraph.Detach(Context, related);
+			}
+		}
+
+		/// <summary>
+		/// The whole of <see cref="Update"/>, with the soft family's timestamp steps folded in as the one reading
+		/// of the clock they are given.
+		/// </summary>
+		/// <param name="item">The entity supplying the values.</param>
+		/// <param name="stamp">
+		/// <c>null</c> on this class. On <see cref="BaseSoftDao{TEntity, TKey}"/>, the <c>UpdatedDate</c> written
+		/// onto the tracked row before the write and onto <paramref name="item"/> only after it has succeeded.
+		/// </param>
+		/// <returns><c>1</c> when a row matched, <c>0</c> when none did.</returns>
+		/// <remarks>
+		/// <b><c>private protected</c> for the same reason as <see cref="InsertRoot"/>.</b> The stamp is written
+		/// onto the tracked row <b>after</b> <see cref="ApplyUpdateValues"/> rather than onto
+		/// <paramref name="item"/> before it, so the caller's instance is never mutated on behalf of a write that
+		/// may not happen — and so <see cref="MatchRow"/> is built from values this library never wrote (A40).
+		/// </remarks>
+		private protected int UpdateRoot(TEntity item, DateTime? stamp)
+		{
+			var stored = TrackForWrite(item);
+
+			if (stored == null)
+				return 0;
+
+			try
+			{
+				ApplyUpdateValues(Context.Entry(stored), item);
+
+				if (stamp.HasValue)
+					SoftTimestamps.StampForUpdate(stored, stamp.Value);
+
+				Context.SaveChanges();
+
+				// After the save, never before: the detach in the finally below runs whether or not this line was
+				// reached, so a write-back placed anywhere else can be undone over a committed row.
+				if (stamp.HasValue)
+					SoftTimestamps.StampForUpdate(item, stamp.Value);
+
+				return 1;
+			}
+			finally
+			{
+				DetachAfterWrite(stored, item);
 			}
 		}
 

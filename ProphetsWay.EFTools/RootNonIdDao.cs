@@ -344,23 +344,7 @@ namespace ProphetsWay.EFTools
 			if (item == null)
 				throw new ArgumentNullException(nameof(item));
 
-			var stored = TrackForWrite(item);
-
-			if (stored == null)
-				return 0;
-
-			try
-			{
-				ApplyUpdateValues(Context.Entry(stored), item);
-
-				Context.SaveChanges();
-
-				return 1;
-			}
-			finally
-			{
-				DetachAfterWrite(stored, item);
-			}
+			return UpdateRoot(item, null);
 		}
 
 		/// <summary>
@@ -369,13 +353,27 @@ namespace ProphetsWay.EFTools
 		/// <param name="item">The entity naming the row.</param>
 		/// <returns>The tracked stored row, or <c>null</c> when no row matches.</returns>
 		/// <remarks>
+		/// <para>
+		/// <b>The whole locating half of a write, in one place</b>: the pre-detach by the compiled
+		/// <see cref="MatchRow"/>, then the <c>AsTracking()</c> fetch. The caller of this member owes only the write
+		/// itself and the <c>finally</c> that detaches what it tracked. <see cref="Delete"/>,
+		/// <see cref="UpdateCore"/>, the soft descendants' own writes <b>and a consumer's custom write</b> all go
+		/// through it, which is what makes one <see cref="MatchRow"/> override reach every one of them.
+		/// </para>
+		/// <para>
+		/// <b>It is <c>protected</c> for a reason specific to this half</b> (A38): there is no resolved key here, so
+		/// a consumer hand-rolling the pre-detach would have to compile <see cref="MatchRow"/> themselves — and the
+		/// keyed half's hand-written key comparison has no keyless analogue that does not.
+		/// </para>
+		/// <para>
 		/// It starts from the raw <see cref="Dataset"/> and adds <c>IgnoreQueryFilters()</c>, so neither
 		/// <see cref="ApplyReadFilter"/> nor a consumer's global query filter can hide the row from a write.
 		/// Anything already tracked for that row is released first: a tracking query performs identity resolution
 		/// rather than re-reading, so without it a sibling Data Access Object's in-memory values are what the
 		/// write would compute from.
+		/// </para>
 		/// </remarks>
-		private protected TEntity? TrackForWrite(TEntity item)
+		protected TEntity? TrackForWrite(TEntity item)
 		{
 			var match = MatchRow(item);
 
@@ -392,11 +390,18 @@ namespace ProphetsWay.EFTools
 		/// Writes <paramref name="item"/>'s values onto the tracked row <see cref="UpdateCore"/> located,
 		/// immediately before <c>SaveChanges</c>.
 		/// </summary>
+		/// <param name="entry">The tracked entry for the stored row.</param>
+		/// <param name="item">The entity supplying the values.</param>
 		/// <remarks>
-		/// Every mapped scalar less the entity's key properties — primary and alternate alike. The soft family's
-		/// override point for "this family owns a column and the caller does not".
+		/// Every mapped scalar less the entity's key properties — primary and alternate alike. <b>The override point
+		/// for "this family owns a column and the caller does not"</b>: the soft descendants restore their timestamps
+		/// from <paramref name="entry"/> here, so those cannot arrive from <paramref name="item"/>, and a consumer's
+		/// own <c>RowVersion</c>, tenant discriminator or audit column is defended the same way. <b>Identical in
+		/// signature, default body, contract and accessibility to
+		/// <see cref="BaseDao{TEntity, TKey}.ApplyUpdateValues"/></b> (A38) — no difference is claimed between the
+		/// two halves.
 		/// </remarks>
-		private protected virtual void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)
+		protected virtual void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)
 		{
 			// Copied into a detached buffer first: writing a key property on a tracked entry throws, and the
 			// exception is raised during the copy, so there is no "after" in which to restore it.
@@ -422,6 +427,11 @@ namespace ProphetsWay.EFTools
 		/// and onto <paramref name="item"/> only after it has succeeded — which is what leaves a caller's
 		/// instance untouched when nothing was stored.
 		/// </param>
+		/// <remarks>
+		/// <b><c>private protected</c>, and deliberately not part of the protected surface</b> (A38).
+		/// <paramref name="stamp"/> is meaningless to a deriver outside this assembly — the only conforming value
+		/// is the one the class already passes.
+		/// </remarks>
 		private protected void InsertRoot(TEntity item, DateTime? stamp)
 		{
 			var copy = EntityGraph.CopyForStore(Context, item);
@@ -433,15 +443,15 @@ namespace ProphetsWay.EFTools
 					Context.Entry(node).State = EntityState.Unchanged;
 
 				if (stamp.HasValue)
-					StampForInsert(copy, stamp.Value);
+					SoftTimestamps.StampForInsert(copy, stamp.Value);
 
 				Context.Entry(copy).State = EntityState.Added;
 				Context.SaveChanges();
 
-				// After SaveChanges, never before: a write that threw must leave the caller's instance carrying
-				// exactly the values it arrived with.
+				// After SaveChanges and ahead of every later step that can throw: once the row is committed the
+				// caller's instance must agree with it, and a restore in a finally cannot un-store a row.
 				if (stamp.HasValue)
-					StampForInsert(item, stamp.Value);
+					SoftTimestamps.StampForInsert(item, stamp.Value);
 
 				EntityGraph.RemoveFromInverseNavigations(Context, copy);
 			}
@@ -452,13 +462,49 @@ namespace ProphetsWay.EFTools
 			}
 		}
 
-		private static void StampForInsert(TEntity target, DateTime stamp)
+		/// <summary>
+		/// The whole of <see cref="UpdateCore"/>, with the soft families' timestamp steps folded in as the one
+		/// reading of the clock they are given.
+		/// </summary>
+		/// <param name="item">The entity supplying the values.</param>
+		/// <param name="stamp">
+		/// <c>null</c> on the hard families. On the soft ones, the <c>UpdatedDate</c> written onto the tracked row
+		/// before the write and onto <paramref name="item"/> only after it has succeeded.
+		/// </param>
+		/// <returns><c>1</c> when a row matched, <c>0</c> when none did.</returns>
+		/// <remarks>
+		/// <b><c>private protected</c> for the same reason as <see cref="InsertRoot"/>.</b> The stamp is written
+		/// onto the tracked row <b>after</b> <see cref="ApplyUpdateValues"/> rather than onto
+		/// <paramref name="item"/> before it, so the caller's instance is never mutated on behalf of a write that
+		/// may not happen — and so <see cref="MatchRow"/> is built from values this library never wrote (A40).
+		/// </remarks>
+		private protected int UpdateRoot(TEntity item, DateTime? stamp)
 		{
-			var soft = (IBaseSoftEntity)target;
+			var stored = TrackForWrite(item);
 
-			soft.CreatedDate = stamp;
-			soft.UpdatedDate = null;
-			soft.DeletedDate = null;
+			if (stored == null)
+				return 0;
+
+			try
+			{
+				ApplyUpdateValues(Context.Entry(stored), item);
+
+				if (stamp.HasValue)
+					SoftTimestamps.StampForUpdate(stored, stamp.Value);
+
+				Context.SaveChanges();
+
+				// After the save, never before: the detach in the finally below runs whether or not this line was
+				// reached, so a write-back placed anywhere else can be undone over a committed row.
+				if (stamp.HasValue)
+					SoftTimestamps.StampForUpdate(item, stamp.Value);
+
+				return 1;
+			}
+			finally
+			{
+				DetachAfterWrite(stored, item);
+			}
 		}
 
 		/// <summary>

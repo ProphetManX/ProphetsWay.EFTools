@@ -158,6 +158,9 @@ namespace ProphetsWay.EFTools
 			{
 				// Every exit owes this, the two early returns included: the entry is tracked from the moment
 				// TrackForWrite returns, and one left behind is flushed by the next write on the shared context.
+				// The locating query declares no Include, so ordinarily the one entity is the whole reachable graph
+				// — but a consumer's model-level AutoInclude is applied at query compilation and reaches this fetch
+				// too (H7), in which case the auto-included entities stay tracked here.
 				Context.Entry(stored).State = EntityState.Detached;
 			}
 		}
@@ -212,9 +215,11 @@ namespace ProphetsWay.EFTools
 		/// <para>
 		/// The three timestamps are restored from the tracked entry immediately after the <c>SetValues</c> copy,
 		/// and <b>the entity's key properties are excluded from it</b>, the two sets composing by union. Only
-		/// <c>UpdatedDate</c> travels back onto <paramref name="item"/>, and only where a row was written: a call
-		/// returning <c>0</c>, or one whose <c>SaveChanges</c> throws, leaves the caller's <c>UpdatedDate</c> as
-		/// it was found.
+		/// <c>UpdatedDate</c> travels back onto <paramref name="item"/>, and only once the row carrying that same
+		/// stamp has been written: the tracked row is stamped rather than <paramref name="item"/> ahead of the
+		/// write, so a call returning <c>0</c>, or one whose <c>SaveChanges</c> throws, never touches the caller's
+		/// <c>UpdatedDate</c> at all — and one whose <c>SaveChanges</c> succeeded leaves it agreeing with the row
+		/// however the call ends.
 		/// </para>
 		/// <para>
 		/// <b>Not sealed</b>, and reached through a <see cref="RootNonIdDao{TEntity}"/>-typed reference by
@@ -226,25 +231,7 @@ namespace ProphetsWay.EFTools
 			if (item == null)
 				throw new ArgumentNullException(nameof(item));
 
-			// The stamp is placed on item before the base member copies its values, so the stored row and the
-			// caller's instance carry one reading of the clock. The other two never leave the tracked entry.
-			var carried = item.UpdatedDate;
-			var written = 0;
-
-			item.UpdatedDate = GetCurrentTimestamp();
-
-			try
-			{
-				written = base.UpdateCore(item);
-			}
-			finally
-			{
-				// No row matched, or the write threw. Either way the caller's instance is left as it was found.
-				if (written == 0)
-					item.UpdatedDate = carried;
-			}
-
-			return written;
+			return UpdateRoot(item, GetCurrentTimestamp());
 		}
 
 		/// <inheritdoc />
@@ -254,7 +241,7 @@ namespace ProphetsWay.EFTools
 		/// excluding is safe here only because a timestamp is not a key property: the key-is-read-only exception
 		/// is raised <i>during</i> the copy, so a key has no "after" to be restored in, while a timestamp does.
 		/// </remarks>
-		private protected override void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)
+		protected override void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)
 		{
 			var created = entry.Entity.CreatedDate;
 			var deleted = entry.Entity.DeletedDate;

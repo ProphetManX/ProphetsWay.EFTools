@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -114,33 +115,45 @@ namespace ProphetsWay.EFTools
 				if (inverse?.PropertyInfo == null)
 					continue;
 
-				var principal = navigation.PropertyInfo?.GetValue(copy);
+				var value = navigation.PropertyInfo?.GetValue(copy);
 
-				if (principal == null)
+				if (value == null)
 					continue;
 
-				var held = inverse.PropertyInfo.GetValue(principal);
+				// A collection navigation holds one partner per member and a reference navigation holds exactly
+				// one. Both must be expanded: reflecting the inverse onto the collection object itself raises
+				// TargetException, in the window after SaveChanges has already committed the row.
+				var partners = navigation.IsCollection
+					? ((IEnumerable)value).Cast<object>().Where(member => member != null).ToList()
+					: new List<object> { value };
 
-				if (held == null)
-					continue;
-
-				if (!inverse.IsCollection)
-				{
-					if (ReferenceEquals(held, copy))
-						inverse.PropertyInfo.SetValue(principal, null);
-
-					continue;
-				}
-
-				var present = ((IEnumerable)held).Cast<object>().Any(member => ReferenceEquals(member, copy));
-
-				if (!present)
-					continue;
-
-				held.GetType()
-					.GetMethod(nameof(ICollection<object>.Remove), new[] { typeof(TEntity) })
-					?.Invoke(held, new object[] { copy });
+				foreach (var partner in partners)
+					RemoveFromInverse(inverse, partner, copy, typeof(TEntity));
 			}
+		}
+
+		/// <summary>Clears one partner's inverse navigation of <paramref name="copy"/>, reference or collection.</summary>
+		private static void RemoveFromInverse(INavigation inverse, object partner, object copy, Type elementType)
+		{
+			var held = inverse.PropertyInfo!.GetValue(partner);
+
+			if (held == null)
+				return;
+
+			if (!inverse.IsCollection)
+			{
+				if (ReferenceEquals(held, copy))
+					inverse.PropertyInfo.SetValue(partner, null);
+
+				return;
+			}
+
+			if (!((IEnumerable)held).Cast<object>().Any(member => ReferenceEquals(member, copy)))
+				return;
+
+			held.GetType()
+				.GetMethod(nameof(ICollection<object>.Remove), new[] { elementType })
+				?.Invoke(held, new[] { copy });
 		}
 
 		internal static void Detach(DbContext context, object entity)

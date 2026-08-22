@@ -1,5 +1,27 @@
 # API Contract — ProphetsWay.EFTools 3.0.0
 
+**Status: Stage 2 — Revision 11, *under review*.** A `Code Reviewer` pass over **implementation lap 3** — the
+four keyless Data Access Object classes, which landed green — returned four findings **against this document**
+rather than against the code. They are keyed **F11–F14** in the lap series, and a fifth, **F15**, was found
+while closing them. Revision 11 closes all five. It is a **localized correction pass**: no section is
+restructured, three decisions are added (**A38**, **A39**, **A40**), **A23** and **A34** are refined in place,
+and one false claim in [Stable Ordering](#stable-ordering) is retracted. **No pass has run against the text as
+it now stands**, and nothing here may be described as "closed" or "passed" on Revision 11's own account until
+one does.
+
+> **The failure this revision was written to stop repeating: silence read as sanction.** Three members of the
+> shipped keyless write plumbing — `TrackForWrite`, `InsertRoot` and `ApplyUpdateValues` — were narrowed to
+> `private protected` on the stated ground that *the documented protected surface then matches the
+> api-contract exactly*. It did — because **this document named none of the three**, on either half; a grep
+> for all three returns nothing before this revision. **A specification that does not mention a member
+> sanctions nothing about it**, and an implementer who reads agreement out of an omission is reading their own
+> choice back. Worse, one of the three carried `<remarks>` offering an extension point that its own
+> accessibility withdrew. [A38](#revision-11-additions) states the whole write-plumbing surface, on **both**
+> halves, so the omission cannot recur.
+
+**Revision 10's status block is kept below**, because a later revision closing five findings against it is not
+a reason to lose the record of what it did.
+
 **Status: Stage 2 — Revision 10, *under review*.** A `Contract Reviewer` **delta review** of Revision 9 on
 **2026-08-19** returned **"not yet fit to be the sole source for the shape pass."** It closed 16 of the 20
 prior findings, passed a clean regression sweep and re-verified [D19](purpose-and-scope.md#owner-decisions--2026-08-15)
@@ -192,6 +214,25 @@ rather than re-derive it.
 They were written as bare `S1`–`S8` and collided with the **settled owner decisions** `S1`–`S13`, so five
 obligations cited a finding and resolved to an unrelated decision. The prefix is the fix (Revision 6,
 Finding 5). A bare `S`*n* anywhere in this document now means a **settled decision** and nothing else.
+
+#### Revision 11
+
+A `Code Reviewer` pass over the **lap 3** implementation — `RootNonIdDao<TEntity>`, `BaseNonIdDao<TEntity>`,
+`RootSoftNonIdDao<TEntity>` and `BaseSoftNonIdDao<TEntity>`, all four landing green — raised four findings, and
+**every one of them is a defect in this document rather than in that code.** They are keyed in the **lap**
+series as **F11–F14**, continuing from [F10](#f10--a-failed-insert-must-not-leave-stamps-on-the-callers-instance);
+**F15** was found while closing them and is a retraction of a sentence this document has carried since
+Revision 8. Three decisions are added — **A38**, **A39**, **A40** — and **A23** and **A34** are refined in
+place.
+
+| Finding | What Revision 11 did |
+|---|---|
+| **F11** | **Three members' accessibility contradicted their own documentation, and the specification was silent on all three.** `RootNonIdDao.TrackForWrite`, `RootNonIdDao.InsertRoot` and `RootNonIdDao.ApplyUpdateValues` shipped `private protected`. `ApplyUpdateValues` carries the sentence *"the soft family's override point for 'this family owns a column and the caller does not'"* — **the same sentence `BaseDao.ApplyUpdateValues` carries, where the member is `protected` and the sentence is true** — so the keyless code withdrew an extension point its own `<remarks>` offered. `TrackForWrite`'s keyed counterpart is `protected` and documented as the member *"a consumer's custom write"* goes through. **And this document mentioned none of the three, on either half**, so *"the protected surface matches the contract"* was true only by omission. Closed as **[A38](#revision-11-additions)**, which states the whole write-plumbing surface on both halves: `TrackForWrite` **`protected`**, `ApplyUpdateValues` **`protected virtual`**, `InsertRoot` **`private protected`** and keyless-only, each with its reason |
+| **F12** | **[A34](#revision-9-additions)'s keyless purity constraint was too narrow, and the compiled predicate can throw.** It said *"no navigation traversal, no `EF.Functions`, no store function"* — the constructs that cannot be compiled — and said nothing about **null semantics** or about entries in a **partially-populated state**. The compiled delegate runs over **every** `ChangeTracker.Entries<TEntity>()` entry, including `Added` ones whose scalars are still CLR defaults, so a predicate that is null-safe in SQL throws `NullReferenceException` in memory and `Delete`/`UpdateCore` fail **because of an unrelated tracked entry on a shared context**. Closed as **[A39](#revision-11-additions)**: the constraint becomes **in-memory totality**, and the library's scan **wraps** a throwing predicate in `DataAccessConventionException` rather than swallowing it or letting it surface raw. Both rejected alternatives are recorded |
+| **F13** | **`RootSoftNonIdDao.UpdateCore` mutates `item` before the locating predicate is built.** It stamps `item.UpdatedDate` and only then delegates to `RootNonIdDao.UpdateCore` → `TrackForWrite` → `MatchRow(item)`, so a keyless soft Data Access Object whose natural key includes that timestamp locates nothing. Closed as **[A40](#revision-11-additions)**, and **not** by reordering: the reorder is neither necessary once the rule is stated nor sufficient against the next call, and it would cost a plumbing member bought to hide a shape that is wrong for an independent reason. `MatchRow` is built from values **the caller owns and this library never writes**; the three soft timestamps are named and forbidden, on the keyed half as well |
+| **F14** | **[A23](#revision-5-additions) and the `GetCount` row disagreed.** A23's summary said `ApplyStableOrder` *"receives the filtered, **included** query"* while `GetCount` hands it `ApplyReadFilter(Dataset)` **un-included** — harmless, **identical to `BaseDao.GetCount`**, and therefore pre-existing consistency rather than lap 3 drift, but enough to make a `Test Designer` derive the wrong obligation. Reconciled in one sentence at [What each hook is handed](#what-each-hook-is-handed--a23), with A23's row and both `ApplyStableOrder` `<param>` texts brought in line. **The per-hook table was already correct** and is unchanged |
+| **F15** | **Not a review finding — a false claim this document has carried since Revision 8, found while closing F14.** [Stable Ordering](#stable-ordering) ended *"nothing above applies to `int`, `long`, `Guid` or their nullable forms, which order identically on every relational provider."* **`Guid` does not belong in that list.** SQL Server orders `uniqueidentifier` on a byte order that is neither `Guid.CompareTo`'s nor the value's textual order, so a `Guid`-ordered read produces **different page boundaries on different providers** — and this reaches **`BaseDao<TEntity, Guid>`'s A16 default**, not merely `CompanyResourceDao`'s `ThenBy`. Retracted, and recorded as [A `Guid` key does not order the same way on two providers](#a-guid-key-does-not-order-the-same-way-on-two-providers-either--and-net-makes-it-three) — a known limitation in the same class as G9, **not** a feature request |
+| **Obligation count** | **+4 `Contract`, +1 `Characterization`.** Enumerated at [Test Obligations](#test-obligations) rather than folded into a total, because the published tally is already **disputed by one** and silently adjusting a disputed base hides the dispute. **A40 adds no obligation and says so** — it constrains a deriving Data Access Object, and there is no library behavior to assert |
 
 #### Revision 10
 
@@ -435,6 +476,7 @@ It cites both and duplicates neither.
     - [Revision 6 additions](#revision-6-additions) — A30–A31
     - [Revision 9 additions](#revision-9-additions) — A32–A36
     - [Revision 10 additions](#revision-10-additions) — A37, and the A32/A34/A35/A36 refinements
+    - [Revision 11 additions](#revision-11-additions) — A38–A40, and the A23/A34 refinements
 - [The Public Surface](#the-public-surface)
 - [Cross-Cutting Rules](#cross-cutting-rules)
 - [The DAL Root — `BaseEFDataAccess<TContext>`](#the-dal-root--baseefdataaccesstcontext)
@@ -450,7 +492,7 @@ It cites both and duplicates neither.
 - [Snapshot and Tracking](#snapshot-and-tracking)
 - [Forced Behavior Changes](#forced-behavior-changes)
 - [Two 2.2.0 Defects This Design Retires](#two-220-defects-this-design-retires)
-- [Implementation-Lap Findings](#implementation-lap-findings) — lap F10, and where F2/F3/F7/F8 landed
+- [Implementation-Lap Findings](#implementation-lap-findings) — lap F10–F15, and where F2/F3/F7/F8 landed
 - [Migration](#migration)
 - [Test Obligations](#test-obligations)
 - [Reclassified, Deferred and Rejected](#reclassified-deferred-and-rejected)
@@ -604,7 +646,7 @@ at all; the rest are localized statements the review found missing or self-contr
 
 | # | Decision | Forced by |
 |---|---|---|
-| **A23** | **The per-hook input contract.** `ApplyReadFilter` receives the raw `Dataset` query; `ApplyIncludes` receives the **row-restricted** query for its path; `ApplyStableOrder` receives the filtered, included query. Each returns what the next is handed, and **the wiring is fixed and not overridable**. Stated once as a table in [How the read hooks compose](#how-the-read-hooks-compose--a20-a23) | N1. Revision 4 added "`ApplyIncludes` receives the filtered query" in three places without retracting Revision 3's "an override of any hook receives the raw `Dataset` query" in three others, leaving **two mutually exclusive test obligations**. The old sentence was also incoherent alone: if `ApplyStableOrder` received the raw `Dataset`, "the base wires them together in the order above" would produce an ordered **unfiltered** query |
+| **A23** | **The per-hook input contract.** `ApplyReadFilter` receives the raw `Dataset` query; `ApplyIncludes` receives the **row-restricted** query for its path; `ApplyStableOrder` receives the filtered query — **included on `GetAll`/`GetPaged`, un-included on `GetCount`, which invokes `ApplyIncludes` on no path at all** (A18, A27). Each returns what the next is handed, and **the wiring is fixed and not overridable**. Stated once as a table in [How the read hooks compose](#how-the-read-hooks-compose--a20-a23) | N1. Revision 4 added "`ApplyIncludes` receives the filtered query" in three places without retracting Revision 3's "an override of any hook receives the raw `Dataset` query" in three others, leaving **two mutually exclusive test obligations**. The old sentence was also incoherent alone: if `ApplyStableOrder` received the raw `Dataset`, "the base wires them together in the order above" would produce an ordered **unfiltered** query. **The `GetCount` qualifier is Revision 11's (F14)**: the summary said *filtered, **included*** unconditionally while the per-hook table below it said otherwise, and a `Test Designer` deriving an obligation from the summary would have required includes on a query that materializes no entity |
 | **A24** | **`Insert` adds a copy of the root and attaches everything reachable from the caller's instance as `Unchanged`.** A naive `Dataset.Add(item)` is **wrong**, not merely suboptimal, and so is a naive `Attach` — **the walk is specified by *state*, not by API**. **The root that is added is a copy, not `item`** — [A32](#revision-9-additions), owner decision Q11 | OD-4. `DbContext.Add` tracks the given entity **and every reachable untracked entity** as `Added`, so already-stored related rows are re-inserted and the caller's key is overwritten with the duplicate's. `DbContext.Attach` fails differently and just as badly: it applies its own heuristic and marks any entity carrying a **default key value** `Added` rather than `Unchanged`. **The copy is Revision 9's addition**, and it closes the second half B1 raised: an entity tracked `Added` receives every store-propagated value back, so *"the identifier and nothing else"* is undeliverable while the caller's instance is the tracked one. See [Writes and the Navigation Graph](#writes-and-the-navigation-graph) |
 | **A25** | **`SetValues` cannot change a relationship, and that limitation is declared.** `Update` can never repoint a navigation property that has no foreign-key scalar on the entity. A Data Access Object needing it writes a custom method | OD-4 plus A22. `Entry(stored).CurrentValues.SetValues(item)` reads properties **by name off the CLR type**, and a shadow foreign key has no CLR property to read — so `Update(transaction)` can never repoint `Transaction.User`. Accepted, but it must not be silent |
 | **A26** | **"Every write detaches the instances it touched" means the whole reachable graph** — the argument and everything reachable from it, plus any row a tracked fetch loaded and everything reachable from that. **In a `finally`, on success and on failure** — [OD-7](#owner-decisions-taken-during-revision-6), which reverses the failure clause Revision 5 wrote | The existing obligation requires that mutating an argument after a write returns cannot reach the store *"including after an unrelated later `SaveChanges` triggered through a different DAO on the same context."* With one shared context (S8) and a graph left tracked, that obligation fails. "The instances it touched" was undefined and could be read as the root alone |
@@ -644,6 +686,19 @@ Revision 10 adds**, and it exists because [A32](#revision-9-additions) created t
 | # | Decision | Forced by |
 |---|---|---|
 | **A37** | **`Insert` leaves no library-made object in the caller's navigation graph.** Before the detach in A24 step 10, and for each related entity the walk attached, the library **removes the copy by reference identity** from that principal's inverse navigation — collection or reference — where relationship fix-up put it. It removes **the copy and nothing else**: an entry the caller placed there is untouched, which is why the removal is by reference identity and never by key | N2. Step 3 copies navigations **by reference**, so the copy and `item` reach the same principals; step 5 tracks those principals `Unchanged`; step 7 tracks the copy `Added`. EF Core's relationship fix-up then writes the copy into any inverse navigation those principals declare — and those principals are **the caller's own objects**. Detaching does not run fix-up in reverse, so step 10 does not take it back out. That is the SNAPSHOT RULE's *"an entity reached through a navigation property on an argument is likewise read rather than adopted"* broken from the other side, and by an object the caller has no name for. **A limitation was the alternative and was rejected**: declaring one against the rule this repository exists to demonstrate, on a mechanism this library chose, is not a limitation of the design but a defect in it. **The whole class is invisible to [D16](purpose-and-scope.md#owner-decisions--2026-08-15)'s acceptance test** — no `ProphetsWay.Example` entity declares an inverse navigation of any kind, verified by searching `Entities/` for `ICollection`, `List<`, `IList<`, `IEnumerable` and `HashSet<` and by reading `Company.cs` and `User.cs` — which is why it needed stating rather than testing into existence. **It is scoped to `Insert`.** `Update` and `Delete` never track `item`, and their located row's navigations are populated only by a consumer's `AutoInclude` (H7, [OD-8](#owner-decisions-taken-during-revision-8)) onto principals this library materialized itself, so no caller-held object is reachable | `IDepartmentDao : IBaseGetAllDao<Department>, IBasePagedDao<Department>` and the twelve-class surface offers no union of `BaseSoftGetAllDao` and `BaseSoftPagedDao`. Both compile — a base-class public method may implement an interface declared on a derived class — but Revision 8 never said so, never named the pick and carried no sample, while [D16](purpose-and-scope.md#owner-decisions--2026-08-15) makes exactly this conversion the family's acceptance test. See [Choosing a family](#choosing-a-family--a-dao-interface-with-two-capabilities) |
+
+#### Revision 11 additions
+
+Three, all raised by a `Code Reviewer` reading the **lap 3** keyless implementation against this text, plus
+two refinements recorded at the **A23** and **A34** rows rather than renumbered. **None of the three changes a
+behavior this document previously specified** — two of them state a surface and a constraint the document had
+left **unwritten**, which is precisely what let an implementer settle both by inference.
+
+| # | Decision | Forced by |
+|---|---|---|
+| **A38** | **The write plumbing is `protected`, is the same on both halves, and is stated.** `TrackForWrite(TEntity item)` is **`protected`** and `ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)` is **`protected virtual`** on `BaseDao<TEntity, TKey>` **and** on `RootNonIdDao<TEntity>` alike, with identical signatures and identical contracts. **`InsertRoot(TEntity item, DateTime? stamp)` stays `private protected`** and is keyless-only; the asymmetry is stated rather than left to be noticed. Full reasoning per member at [The write plumbing](#the-write-plumbing--trackforwrite-applyupdatevalues-insertroot--a38) | **F11.** `RootNonIdDao.ApplyUpdateValues` shipped `private protected` while carrying `BaseDao.ApplyUpdateValues`'s own sentence — *"the override point for 'this family owns a column and the caller does not'"* — so the code **withdrew an extension point its documentation offered**. `TrackForWrite` shipped the same way while its keyed twin is documented as the member *"a consumer's custom write"* goes through, and on the keyless half a consumer **cannot** hand-roll the A34 pre-detach conformingly: there is no resolved key to match on, so doing it by hand means compiling `MatchRow` and re-implementing all of A39. **And the justification offered — that an external deriver loses nothing they cannot get by overriding `UpdateCore` — is false**: an `UpdateCore` override cannot reach the plumbing either, so overriding it is how a deriver *loses* the pre-detach |
+| **A39** | **The compiled `MatchRow` must be total in memory, and the library does not paper over one that is not.** For **every** instance of `TEntity`, in any state and however incompletely populated, the compiled predicate must **return a `bool` and must not throw**, must be side-effect free, and must read nothing but the entity's own mapped scalars. Where it throws anyway, the pre-detach scan **wraps** the exception in `DataAccessConventionException` — original as `InnerException`, message naming the Data Access Object type, `MatchRow`, and the fact that the evaluation was against an **already-tracked entry rather than against `item`**. **Swallowing is forbidden.** The in-memory pass may match a **superset** of the store pass, and that is accepted | **F12**, and it widens [A34](#revision-9-additions) rather than replacing it. A34's constraint named the constructs that cannot be *compiled* and stopped there. The delegate runs over **every** `ChangeTracker.Entries<TEntity>()` entry — a sibling's leftovers, the owner's own under `ContextOwnership.Borrowed`, and `Added` entries whose scalars are still CLR defaults — so `x => x.Code.Trim() == item.Code.Trim()`, which SQL resolves to `NULL` and no match, throws `NullReferenceException` in memory. `Delete` and `UpdateCore` then fail **on a valid `item` because of an unrelated tracked entry**, invisibly at the call site, with a type in neither the parent's vocabulary nor this library's two additions |
+| **A40** | **`MatchRow` is built from values the caller owns and this library never writes.** On the two soft families — **keyed and keyless alike** — `CreatedDate`, `UpdatedDate` and `DeletedDate` **must not appear in a `MatchRow` override**. It binds every member that locates through the hook: `Delete`, `GetCore`, `UpdateCore`, and any custom write built on `TrackForWrite` | **F13.** `RootSoftNonIdDao.UpdateCore` assigns `item.UpdatedDate = GetCurrentTimestamp()` **before** delegating to the base member, which is what calls `TrackForWrite` → `MatchRow(item)` — so a predicate reading that timestamp is built from the value this method has just overwritten and locates nothing. `BaseSoftDao.Update` has the same shape. **The assignment is deliberate** (A13's one reading of the clock) and is not being changed; **reordering was weighed and rejected** as neither necessary nor sufficient — see [Timestamps are not identity](#timestamps-are-not-identity--a40) |
 
 ---
 
@@ -1403,7 +1458,27 @@ namespace ProphetsWay.EFTools
 		protected virtual IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> query);
 
 		/// <summary>A total ordering over the set, applied by GetAll and GetPaged alike. Defaults to OrderBy(KeySelector), then ThenBy over every primary-key property the leading selector does not already name (A16).</summary>
+		/// <param name="query">The filtered query — with includes on the GetAll/GetPaged path, without them on GetCount, which includes nothing (A23).</param>
 		protected virtual IOrderedQueryable<TEntity> ApplyStableOrder(IQueryable<TEntity> query);
+
+		// --- write plumbing, reachable by a custom write (A38) ---
+
+		/// <summary>
+		/// The whole locating half of a write: the A34 pre-detach, then the AsTracking().IgnoreQueryFilters()
+		/// fetch through MatchRow. Returns the tracked stored row, or null when the key is absent or no row
+		/// matches. Update, Delete, the soft families' own writes and a consumer's custom write all go through
+		/// it, which is what makes one MatchRow override reach every one of them. Its caller owes the write and
+		/// the finally that detaches what it tracked.
+		/// </summary>
+		protected TEntity? TrackForWrite(TEntity item);
+
+		/// <summary>
+		/// Writes item's values onto the tracked row Update located, immediately before SaveChanges: every
+		/// mapped scalar less the entity's key properties (A35). The override point for "this family owns a
+		/// column and the caller does not" — the soft families restore their timestamps from entry here (A30),
+		/// so those cannot arrive from item.
+		/// </summary>
+		protected virtual void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item);
 	}
 
 	public abstract class BaseGetAllDao<TEntity, TKey> : BaseDao<TEntity, TKey>, IBaseGetAllDao<TEntity>
@@ -1442,6 +1517,7 @@ namespace ProphetsWay.EFTools
 		public override IList<TEntity> GetAll(TEntity? item);
 		public override IList<TEntity> GetPaged(TEntity? item, int skip, int take);
 		protected override IQueryable<TEntity> ApplyReadFilter(IQueryable<TEntity> query); // DeletedDate == null
+		protected override void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item); // restores CreatedDate/DeletedDate (A30, A38)
 	}
 
 	public abstract class BaseSoftGetAllDao<TEntity, TKey> : BaseSoftDao<TEntity, TKey>, IBaseGetAllDao<TEntity>
@@ -1691,6 +1767,15 @@ one is handed.** `ApplyIncludes` therefore never sees a set larger than the one 
 either path — the filtered set on the trio, the single matched row on the key lookup. The wiring is fixed;
 no override changes it.
 
+**And the one sentence that reconciles A23's summary with the `GetCount` row, because the two have read as
+disagreeing** (F14). A23's *"the filtered, **included** query"* is the `GetAll`/`GetPaged` path stated in
+shorthand; **`GetCount` hands `ApplyStableOrder` the filtered query with no includes on it**, because
+`GetCount` invokes `ApplyIncludes` on no path at all (A18) — so *included* is a property of two of the three
+paths and **not** part of the obligation, and an implementation that included the counted query would be wrong
+rather than generous. **This is not keyless drift and must not be reported as one:** `BaseDao.GetCount` and
+`RootNonIdDao.GetCount` do the identical thing, deliberately, and both are correct. The per-hook table above
+already said so; only the summary was loose.
+
 - **`GetCount` applies the filter, invokes `ApplyStableOrder` and throws the result away, and includes
   nothing.** It materializes no entity, so there is nothing to include, and the counted query is
   `ApplyReadFilter`'s output, so **no `ORDER BY` is emitted**. The hook is invoked for its *contract* effect
@@ -1887,6 +1972,83 @@ somebody's data happened to contain the value.
 this logic: a value key never short-circuits, a nullable value key short-circuits on `HasValue == false`, and
 a reference key short-circuits on a null reference and additionally has to survive a *stored* row whose key
 column is null. See [Test Obligations](#test-obligations).
+
+### The write plumbing — `TrackForWrite`, `ApplyUpdateValues`, `InsertRoot` — A38
+
+**Every keyed and keyless base shares this surface**, as they share the constructor contract above. It is
+stated here because **this document named none of these three members before Revision 11**, and that silence
+is what let the lap 3 implementation narrow two of them to `private protected` on the ground that *the
+documented protected surface then matched the contract exactly* — which it did, vacuously. **A specification
+that does not mention a member sanctions nothing about it** (lap finding F11).
+
+| Member | Declared on | Visibility | Signature |
+|---|---|---|---|
+| `TrackForWrite` | `BaseDao<TEntity, TKey>` **and** `RootNonIdDao<TEntity>` | **`protected`** | `protected TEntity? TrackForWrite(TEntity item)` |
+| `ApplyUpdateValues` | `BaseDao<TEntity, TKey>` **and** `RootNonIdDao<TEntity>` | **`protected virtual`** | `protected virtual void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)` |
+| `InsertRoot` | **`RootNonIdDao<TEntity>` only** | **`private protected`** | `private protected void InsertRoot(TEntity item, DateTime? stamp)` |
+
+**Not `virtual`, not `protected`, and not part of this surface:** the per-entry detach scan behind
+`TrackForWrite` (`DetachTrackedRowsCarrying` on the keyed half, `DetachTrackedRowsMatching` on the keyless
+one) and the post-write detach behind every write. They are `private` on both halves and stay there —
+`TrackForWrite` is how a custom write reaches the first, and the `finally` in the sample below is how it
+discharges the second.
+
+#### `TrackForWrite` is `protected` — and on the keyless half that is not a convenience
+
+It carries **the whole locating half of a write**: the [A34](#revision-9-additions) pre-detach, then the
+`AsTracking().IgnoreQueryFilters()` fetch through `MatchRow`. Its caller owes only the write itself and the
+`finally` that detaches what it tracked.
+
+- **Its `<remarks>` already promise it to a consumer.** *"`Update`, `Delete`, the soft-delete families' own
+  writes **and a consumer's custom write** all go through it, which is what makes one `MatchRow` override
+  reach every one of them."* On the keyed member that sentence is true. Shipped `private protected` on the
+  keyless member, it was false there, and nothing said so.
+- **A keyless consumer cannot hand-roll the pre-detach conformingly.** [Writing a `Restore`](#writing-a-restore)
+  hand-writes `e.Entity.Id == item.Id`, which works because a keyed Data Access Object has a resolved key.
+  **There is no keyless analogue that does not compile `MatchRow`** — and compiling it correctly now means
+  implementing all of [A39](#revision-11-additions): totality over partially-populated entries, the accepted
+  superset, and the `DataAccessConventionException` wrap. Asking a consumer to reproduce that is asking them
+  to re-implement a mechanism the library exists to own, and the document's own warning is that a
+  hand-rolled version *"quietly matches the wrong set."*
+- **The counter-argument offered for `private protected` does not hold.** It was that an external deriver
+  loses nothing they cannot get by overriding `UpdateCore`. **An `UpdateCore` override cannot reach the
+  plumbing either** — overriding it is precisely how a deriver *loses* the pre-detach and the
+  `IgnoreQueryFilters()` fetch, not how they keep them.
+
+#### `ApplyUpdateValues` is `protected virtual` — the code contradicted its own documentation
+
+It writes `item`'s values onto the tracked row immediately before `SaveChanges`: every mapped scalar less the
+entity's key properties ([A35](#revision-9-additions)). It is **the** override point for *"this family owns a
+column and the caller does not"*, and `RootSoftNonIdDao` is the library's own use of it — restoring
+`CreatedDate` and `DeletedDate` off the entry ([A30](#revision-6-additions)).
+
+- **The keyless member shipped carrying that exact sentence while being unreachable from outside the
+  assembly.** The keyed member carries the same sentence and **is** `protected virtual`, so one of the two was
+  wrong on its face; the code was.
+- **The extension point is real on the keyless half, not theoretical.** A keyless Data Access Object over an
+  entity with a `RowVersion`, a tenant discriminator, or an audit column the caller must not supply needs
+  exactly the hook `RootSoftNonIdDao` uses for its three timestamps. Restricting it to the one in-assembly
+  subclass says the library may own a column and a consumer may not, and nothing justifies that split.
+- **Consistency with the keyed family is therefore identity, not analogy**: same signature, same default body,
+  same contract, same accessibility. **No difference is claimed and none needs justifying.**
+
+#### `InsertRoot` stays `private protected` — the one asymmetry, stated
+
+It is the whole of `Insert` with the soft families' timestamp steps folded in, taking the stamp as a
+parameter so that one reading of the clock reaches the stored copy and the caller's instance alike.
+
+- **Its `DateTime? stamp` parameter is meaningless to an external deriver.** It is `null` on the hard
+  families and the soft families' single clock reading on the soft ones, so the only conforming argument an
+  outside caller could pass is the one the class already passes. **A `protected` member is a promise, and
+  this one has nothing to promise.**
+- **It has no keyed counterpart.** `BaseSoftDao.Insert` stamps `item`, delegates to `base.Insert`, and
+  restores in a `finally` — [F10](#f10--a-failed-insert-must-not-leave-stamps-on-the-callers-instance)'s
+  second permitted remedy. The keyless half takes the first remedy instead, which is where `InsertRoot` comes
+  from. Publishing it would put a member on the keyless protected surface with **nothing opposite it**, and
+  would freeze a private division of labour between two classes in one assembly into public API.
+- **Both remedies are sanctioned by F10 and neither branch is required to adopt the other's.** The asymmetry
+  is in the mechanism, not in the contract: both branches deliver *an `Insert` that stores no row leaves the
+  caller's instance exactly as it arrived*.
 
 ### `Get(TEntity item)`
 
@@ -2130,7 +2292,7 @@ hard-coding `x.Entity.Id == id`, and the families follow it:
 | Family | What the pre-detach matches on | Constraint it implies |
 |---|---|---|
 | **Keyed** | **`GetKey(item)`**, compared in memory against `GetKey(e.Entity)` for each `ChangeTracker.Entries<TEntity>()` entry. `MatchRow` is **never compiled** | None. `GetKey` is an ordinary property read by construction (A33) |
-| **Keyless** | **`MatchRow(item).Compile()`**, applied to each tracked entry — there is no resolved key to use instead | **The keyless `MatchRow` override must be evaluable in memory over the entity's own mapped scalars**: no navigation traversal, no `EF.Functions.*`, no store function. It is already that on every shape this design contemplates — a keyless `MatchRow` *is* the natural key, and `ICompanyResourceDao` rule 1 is the worked case |
+| **Keyless** | **`MatchRow(item).Compile()`**, applied to each tracked entry — there is no resolved key to use instead | **The keyless `MatchRow` override must be *total* in memory over the entity's own mapped scalars**: no navigation traversal, no `EF.Functions.*`, no store function — **and it must not throw, on any entity, in any state** ([A39](#revision-11-additions)). It is already the first half on every shape this design contemplates — a keyless `MatchRow` *is* the natural key, and `ICompanyResourceDao` rule 1 is the worked case — but the second half is **not** free, and Revision 10 left it unsaid |
 
 **One consequence, stated rather than discovered.** Where a keyed Data Access Object overrides `MatchRow` to
 something *narrower* than the key — the tenant-scoped `(TenantId, Id)` identity — the pre-detach releases a
@@ -2139,6 +2301,116 @@ different tenant. Detaching discards that entry's unsaved changes. This is consi
 [A26/OD-7](#detachment-spans-the-whole-reachable-graph--a26-od-7) already takes — this library detaches on a
 shared context and does not preserve a sibling's pending state — and it is bounded to one entity type and one
 key value. The alternative, compiling the override, is the one N10 rules out.
+
+##### The keyless constraint is *in-memory totality*, not merely translatability — A39
+
+**Revision 10 wrote the constraint as *"no navigation traversal, no `EF.Functions.*`, no store function"*,
+which names the constructs that cannot be compiled and stops there. That is the smaller half of the
+obligation** (lap finding F12).
+
+**What the delegate is actually applied to.** Every entry `ChangeTracker.Entries<TEntity>()` returns, in
+whatever state that entry is in and whatever the write is about to touch: an entry a sibling Data Access
+Object left behind, an entry the context's owner tracked under `ContextOwnership.Borrowed` that this library
+never saw, and an **`Added` entry whose scalars are still their CLR defaults** because the caller has not
+finished populating it. **It is not applied only to the row the fetch will match** — the whole point of the
+scan is that the library does not yet know which entry that is.
+
+**So a predicate that is null-safe *in SQL* is not null-safe *in memory*.** `x => x.Code.Trim() ==
+item.Code.Trim()` translates to a comparison the store resolves to `NULL` — no match, no error — and in memory
+throws `NullReferenceException` on the first tracked entry whose `Code` is `null`. The consequence is worth
+reading twice: **`Delete`, `UpdateCore` and the soft `Delete` can throw on a perfectly valid `item`, because
+of an unrelated tracked entry on the shared context.** It is invisible at the call site, it is not
+reproducible from the arguments, and `NullReferenceException` appears in neither
+`ProphetsWay.BaseDataAccess`'s documented exception vocabulary nor this library's two additions.
+
+**The obligation on the override, stated as the term a consumer is bound by:**
+
+> **The compiled `MatchRow` must be a total function.** For **every** instance of `TEntity` — fully populated,
+> partially populated, or carrying `null` in every reference-typed scalar — evaluating it must **return a
+> `bool` and must not throw**. It must be free of side effects, must read nothing but the entity's own mapped
+> scalars, and must depend on nothing beyond those and the values `item` carried when the predicate was built.
+> Guard every dereference, or compare raw scalars and let the store's comparison semantics do the work.
+
+**The in-memory pass and the store pass are not required to agree, and cannot be made to.** SQL resolves
+`NULL = NULL` to unknown and .NET resolves `null == null` to `true`, so a predicate over a nullable scalar
+**matches in memory what the fetch will miss**. That is a **superset**, it is accepted, and it is the same
+tolerance the keyed paragraph above already accepts for a narrowing override: the detach is bounded to one
+entity type, and the library's posture on a shared context is A26/OD-7's. **An implementation must not try to
+reconcile the two passes** — doing so means re-implementing three-valued logic over the change tracker, for a
+scan whose only job is to release entries.
+
+**And the library does not paper over an override that breaks the term.** Two things it must not do, and one
+it must:
+
+| Response to a throwing predicate | Verdict |
+|---|---|
+| **Treat the entry as "not a match" and continue** | **Rejected.** It converts a broken predicate into a silently absent pre-detach, which reinstates the identity-resolution defect A34 exists to prevent — the *"quietly matches the wrong set"* failure this section already names, reached from the other side. A wiring error that produces wrong data silently is worse than one that stops |
+| **Restrict the scan to entries whose state implies populated scalars** | **Rejected**, and it closes only half. A column that is legitimately `NULL` in the store materializes as `null` on an `Unchanged` entry exactly as it does on a default `Added` one, so state filtering buys nothing the consumer obligation does not already have to cover, and it would make the pre-detach skip an `Added` entry for the very row the write is about to touch |
+| **Wrap and rethrow** | **Required.** The scan catches an exception out of the compiled predicate and rethrows it as **`DataAccessConventionException`**, the original as `InnerException`, with a message naming the Data Access Object type, `MatchRow`, and — the clause that carries the whole value of the wrap — that the evaluation was **in memory, against an entry already tracked on the shared context, not against `item`**. Without that clause the caller sees a `NullReferenceException` whose cause is an object they never passed and cannot name |
+
+**`DataAccessConventionException` is not a new type in this vocabulary, and the two-additions count is
+unchanged.** It is `ProphetsWay.BaseDataAccess`'s own type, already among those
+[this library may raise](#notsupportedexception-is-reachable-through-the-dispatcher-and-that-is-accepted--r4-s6),
+and the parent's split — *caller error is `ArgumentException`, wiring error is `DataAccessConventionException`*
+— puts a non-total `MatchRow` override squarely on the wiring side. `NotSupportedException` (A15) and
+`DbUpdateConcurrencyException` remain the whole list of **additions**. **One sentence elsewhere must be read
+with this**: *"a constructor on this family never throws `DataAccessConventionException`"* is scoped to the
+**constructor** and stays exactly true — the keyless half now has one throw site for that type, it is here,
+and it is reached at write time rather than at construction time.
+
+**Like A15's, the message is a contract term and the two names in it are what an obligation asserts on**; the
+surrounding words are not.
+
+#### Timestamps are not identity — A40
+
+**`MatchRow` is built from values the caller owns and this library never writes.** On the two soft families —
+**keyed and keyless alike** — that means `CreatedDate`, `UpdatedDate` and `DeletedDate` **must not appear in a
+`MatchRow` override**. They are the family's columns, not the caller's: `Insert` assigns all three whatever
+the caller set, the soft `Update` stamps `UpdatedDate` and restores the other two off the tracked entry (A30),
+and the soft `Delete` stamps `DeletedDate`. A predicate reading any of them locates a row by a value the
+library decides.
+
+**The ordering inside the soft `UpdateCore` is where this stops being a principle and becomes an observable
+defect**, and it is why the rule is written down rather than left implied (lap finding F13).
+`RootSoftNonIdDao.UpdateCore` assigns `item.UpdatedDate = GetCurrentTimestamp()` **before** delegating to
+`RootNonIdDao.UpdateCore`, which is what calls `TrackForWrite` → `MatchRow(item)`. A predicate reading
+`UpdatedDate` is therefore built from the value this method has **just overwritten**: the locating fetch
+searches for a row carrying a timestamp no row can carry yet, matches nothing, and `Update` returns `0` on
+every call — while the A34 pre-detach, running the same predicate, releases nothing. `BaseSoftDao.Update` has
+the identical shape on the keyed half, so this is not a keyless defect. **The assignment is deliberate** — it
+is what lets one reading of the clock reach the stored row and the caller's instance alike ([A13](#the-timestamp-pair-rule--a13-amended-2026-08-22-by-owner-decision-f2-option-c)) — and it is not
+being changed.
+
+**Reordering was weighed and rejected, and the reasoning is the substance of A40.**
+
+- **It is not necessary.** Once the three timestamps are out of the predicate, `UpdateCore` mutates nothing
+  else the predicate can read, so the ordering becomes unobservable. There is no second value at risk.
+- **It is not sufficient.** Build the predicate first and a `MatchRow` over `UpdatedDate` still breaks on the
+  **next** call: `Update` has by then written a new `UpdatedDate` to the row, so the row's identity has
+  changed under the caller, and a subsequent `Delete(item)` with the instance they are holding locates
+  nothing. **The ordering is the symptom; using a library-owned mutable column as identity is the defect.**
+- **It costs API surface to hide a shape that is wrong for an independent reason.** The base would have to
+  expose its locate and write halves separately, or take the stamp as a parameter the way `InsertRoot` does —
+  a new plumbing member bought for a case A40 already forbids.
+
+**It binds every member that locates through the hook**, not `UpdateCore` alone: `Delete`, `GetCore`,
+`UpdateCore`, and any custom write built on `TrackForWrite` ([A38](#revision-11-additions)). **`Insert` does
+not locate, and is inside the rule from the other end** — the soft `Insert` *forces* all three timestamps onto
+the caller's instance, so an instance that has been through it no longer carries whatever the caller put
+there. A consumer's own `Insert` override that pre-checks with `MatchRow`, the
+[`ICompanyResourceDao` rule 3 shape](#icompanyresourcedao--the-shape-this-exists-to-serve), runs **before**
+that forcing and is unaffected — which is a property of where the check sits, not a permission.
+
+**`CreatedDate` is inside the prohibition even though nothing overwrites it before a predicate is built**, and
+saying why keeps the rule from looking over-broad. A keyless natural key of `(SourceId, CreatedDate)` is a
+plausible shape and it would work today. It is forbidden because **`Insert` decides that value**: the consumer
+cannot set it, cannot reproduce it from anything they hold before the call, and is one `GetCurrentTimestamp`
+override away from an identity they do not control. A rule that admits one of the three and forbids two is a
+rule nobody remembers correctly.
+
+**A40 places no test obligation on this library.** It constrains a deriving Data Access Object, and there is
+no library behavior to assert — the same footing the original purity constraint stands on. What is assertable
+is the mechanism it protects against, and that is [A39](#revision-11-additions)'s obligation.
 
 ### `Delete(TEntity item)`
 
@@ -2446,6 +2718,15 @@ prevent: on a Data Access Object carrying a tenant-scoped `MatchRow` override, t
 tenants while `Get`, `Update` and `Delete` on the same DAO do not. **Every member that locates a row goes
 through `MatchRow`, custom members included** — that is what makes one override sufficient.
 
+**The pre-detach loop and the fetch under it are exactly `TrackForWrite(item)`, which is `protected` for this**
+([A38](#revision-11-additions)). `var stored = TrackForWrite(item);` replaces both statements and is the
+supported shorthand; the sample spells them out because its job is to teach the mechanism, and because
+[D19](purpose-and-scope.md#owner-decisions--2026-08-15) pins this text. **The two forms are not equivalent on
+the keyless half, and that is the point of A38.** A keyless custom write cannot spell the loop out: there is
+no resolved key, so the hand-written `e.Entity.Id == item.Id` has no analogue that does not compile
+`MatchRow` — and compiling it conformingly means implementing all of [A39](#revision-11-additions).
+**A keyless `Restore` calls `TrackForWrite(item)`, and nothing else will do.**
+
 **Read the `try`/`finally` too — it is the reason the guard was split in two.** `AsTracking()` means `stored`
 is tracked from the moment the query returns, so **every** exit after that owes a detach: the success path, a
 throwing `SaveChanges()`, and the early `return 0` that never writes anything. An earlier revision detached on
@@ -2687,12 +2968,36 @@ namespace ProphetsWay.EFTools
 		/// base, so the compile-time demand costs nobody anything.
 		/// </para>
 		/// <para>
-		/// <b>It must be evaluable in memory over the entity's own mapped scalars</b> — no navigation traversal,
-		/// no <c>EF.Functions.*</c>, no store-only construct. <see cref="Delete"/> and
-		/// <see cref="UpdateCore"/> compile it for the A34 pre-detach, which runs against objects already in the
-		/// change tracker; an override reaching a store construct compiles happily and then throws there, or
-		/// quietly matches the wrong set. A keyless <c>MatchRow</c> <i>is</i> the natural key on every shape
-		/// this design contemplates, so the constraint costs nothing it does not already have.
+		/// <b>It must be <i>total</i> in memory over the entity's own mapped scalars</b> — no navigation traversal,
+		/// no <c>EF.Functions.*</c>, no store-only construct, <b>and no evaluation that can throw</b> (A34, A39).
+		/// <see cref="Delete"/> and <see cref="UpdateCore"/> compile it for the A34 pre-detach, which runs against
+		/// objects already in the change tracker; an override reaching a store construct compiles happily and then
+		/// throws there, or quietly matches the wrong set. A keyless <c>MatchRow</c> <i>is</i> the natural key on
+		/// every shape this design contemplates, so the translatability half costs nothing it does not already
+		/// have. <b>The totality half is not free.</b>
+		/// </para>
+		/// <para>
+		/// <b>The compiled predicate is applied to every entry <c>ChangeTracker.Entries&lt;TEntity&gt;()</c>
+		/// returns</b> — not only to the row the fetch will match, because the scan is how the library finds out
+		/// which entry that is. That includes entries a sibling Data Access Object left behind, entries the
+		/// context's owner tracked under <c>ContextOwnership.Borrowed</c>, and <c>Added</c> entries whose scalars
+		/// are still their CLR defaults. So <b>a predicate that is null-safe in SQL is not null-safe here</b>:
+		/// <c>x =&gt; x.Code.Trim() == item.Code.Trim()</c> resolves to no match in the store and throws
+		/// <see cref="NullReferenceException"/> in memory, which would make a write fail because of an entry that
+		/// has nothing to do with it. Guard every dereference, or compare raw scalars. <b>Matching a superset of
+		/// what the fetch matches is accepted</b> — SQL and .NET disagree about <c>null == null</c> and are not
+		/// required to be reconciled. <b>An override that throws anyway surfaces as
+		/// <see cref="DataAccessConventionException"/></b>, wrapping the original and naming this Data Access
+		/// Object, this member, and the fact that the evaluation was against a tracked entry rather than against
+		/// <paramref name="item"/>; the library never silently skips it.
+		/// </para>
+		/// <para>
+		/// <b>It must read only values the caller owns and this library never writes</b> (A40). On the two soft
+		/// descendants that means <c>CreatedDate</c>, <c>UpdatedDate</c> and <c>DeletedDate</c> are <b>not
+		/// available to an override</b>: this family assigns all three, and
+		/// <see cref="RootSoftNonIdDao{TEntity}.UpdateCore"/> stamps <c>UpdatedDate</c> onto
+		/// <paramref name="item"/> <i>before</i> this member is called, so a predicate reading it is built from a
+		/// value that has just been overwritten and locates nothing.
 		/// </para>
 		/// <para>
 		/// <b>An override matching several rows is the keyless equivalent of a non-unique key.</b>
@@ -2705,7 +3010,10 @@ namespace ProphetsWay.EFTools
 		protected abstract Expression<Func<TEntity, bool>> MatchRow(TEntity item);
 
 		/// <summary>A total ordering over the set, applied by <see cref="GetAll"/> and <see cref="GetPaged"/> alike.</summary>
-		/// <param name="query">The filtered, included query.</param>
+		/// <param name="query">
+		/// The filtered query — with includes on the <see cref="GetAll"/>/<see cref="GetPaged"/> path, without them
+		/// on <see cref="GetCount"/>, which includes nothing (A23).
+		/// </param>
 		/// <returns>The ordered query.</returns>
 		/// <exception cref="NotSupportedException">
 		/// <b>Always, on this class.</b> The message names the Data Access Object type and the entity type:
@@ -2790,6 +3098,73 @@ namespace ProphetsWay.EFTools
 		/// </para>
 		/// </remarks>
 		protected virtual int UpdateCore(TEntity item);
+
+		// --- write plumbing, reachable by a custom write (A38) ---
+
+		/// <summary>
+		/// Locates the row <paramref name="item"/> names and tracks it, so a write can be made against it.
+		/// </summary>
+		/// <param name="item">The entity naming the row.</param>
+		/// <returns>The tracked stored row, or <c>null</c> when no row matches.</returns>
+		/// <exception cref="DataAccessConventionException">
+		/// The compiled <see cref="MatchRow"/> threw while the A34 pre-detach evaluated it against an entry
+		/// already tracked on the shared context (A39). The original is the <c>InnerException</c>.
+		/// </exception>
+		/// <remarks>
+		/// <para>
+		/// <b>The whole locating half of a write, in one place</b>: the A34 pre-detach by the compiled
+		/// <see cref="MatchRow"/>, then the <c>AsTracking()</c> fetch. The caller of this member owes only the
+		/// write itself and the <c>finally</c> that detaches what it tracked. <see cref="Delete"/>,
+		/// <see cref="UpdateCore"/>, the soft descendants' own writes <b>and a consumer's custom write</b> all go
+		/// through it, which is what makes one <see cref="MatchRow"/> override reach every one of them.
+		/// </para>
+		/// <para>
+		/// <b>It is <c>protected</c> for a reason specific to this half</b> (A38): there is no resolved key here,
+		/// so a consumer hand-rolling the pre-detach would have to compile <see cref="MatchRow"/> themselves and
+		/// reproduce all of A39 — totality, the accepted superset, and the wrap above.
+		/// </para>
+		/// <para>
+		/// It starts from the raw <see cref="Dataset"/> and adds <c>IgnoreQueryFilters()</c> (A28), so neither
+		/// <see cref="ApplyReadFilter"/> nor a consumer's global query filter can hide the row from a write.
+		/// </para>
+		/// </remarks>
+		protected TEntity? TrackForWrite(TEntity item);
+
+		/// <summary>
+		/// Writes <paramref name="item"/>'s values onto the tracked row <see cref="UpdateCore"/> located,
+		/// immediately before <c>SaveChanges</c>.
+		/// </summary>
+		/// <param name="entry">The tracked entry for the stored row.</param>
+		/// <param name="item">The entity supplying the values.</param>
+		/// <remarks>
+		/// Every mapped scalar less the entity's key properties — primary and alternate alike (A35). <b>The
+		/// override point for "this family owns a column and the caller does not"</b>: the soft descendants
+		/// restore their timestamps from <paramref name="entry"/> here (A30), so those cannot arrive from
+		/// <paramref name="item"/>, and a consumer's own <c>RowVersion</c>, tenant discriminator or audit column
+		/// is defended the same way. <b>Identical in signature, default body, contract and accessibility to
+		/// <c>BaseDao&lt;TEntity, TKey&gt;.ApplyUpdateValues</c></b> (A38) — no difference is claimed between the
+		/// two halves.
+		/// </remarks>
+		protected virtual void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item);
+
+		/// <summary>
+		/// The whole of <see cref="Insert"/>, with the soft descendants' timestamp steps folded in as the one
+		/// reading of the clock they are given.
+		/// </summary>
+		/// <param name="item">The caller's instance. Read, never tracked.</param>
+		/// <param name="stamp">
+		/// <c>null</c> on this class. On the soft descendants, the value stamped onto the copy before the write
+		/// and onto <paramref name="item"/> only after it has succeeded — which is what leaves a caller's instance
+		/// untouched when nothing was stored (F10).
+		/// </param>
+		/// <remarks>
+		/// <b><c>private protected</c>, and deliberately not part of the protected surface</b> (A38).
+		/// <paramref name="stamp"/> is meaningless to a deriver outside this assembly — the only conforming value
+		/// is the one the class already passes — and the member has <b>no keyed counterpart</b>, because
+		/// <c>BaseSoftDao.Insert</c> takes F10's other permitted remedy instead. Publishing it would freeze a
+		/// private division of labour between two classes in one assembly into public API.
+		/// </remarks>
+		private protected void InsertRoot(TEntity item, DateTime? stamp);
 	}
 
 	/// <summary>A keyless Data Access Object that does publish the <see cref="IBaseDao{T}"/> shape.</summary>
@@ -2974,8 +3349,26 @@ namespace ProphetsWay.EFTools
 		/// <b>Not sealed</b> (A21), and reached through a <see cref="RootNonIdDao{TEntity}"/>-typed reference by
 		/// virtual dispatch, so a base-typed caller cannot get the hard body (A2).
 		/// </para>
+		/// <para>
+		/// <b><c>UpdatedDate</c> is stamped onto <paramref name="item"/> before the base member builds the
+		/// locating predicate</b>, so that one reading of the clock reaches the stored row and the caller's
+		/// instance alike (A13). That ordering is why <c>UpdatedDate</c> — and, by A40, <c>CreatedDate</c> and
+		/// <c>DeletedDate</c> with it — <b>must not appear in a <see cref="RootNonIdDao{TEntity}.MatchRow"/>
+		/// override</b>: a predicate reading it would be built from the value this member has just overwritten,
+		/// and would locate nothing.
+		/// </para>
 		/// </remarks>
 		protected override int UpdateCore(TEntity item);
+
+		/// <inheritdoc />
+		/// <remarks>
+		/// The two timestamps <see cref="UpdateCore"/> does not own are read off the tracked entry and put back
+		/// immediately after the copy (A30), so neither can arrive from <paramref name="item"/>. Restoring
+		/// rather than excluding is safe here only because a timestamp is not a key property: the
+		/// key-is-read-only exception is raised <i>during</i> the copy, so a key has no "after" to be restored
+		/// in, while a timestamp does (A35, N8).
+		/// </remarks>
+		protected override void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item);
 	}
 
 	/// <summary>
@@ -3281,6 +3674,11 @@ worth stating:
 | `Get` / `Update` *(public, `BaseSoftNonIdDao`)* | The soft overrides of `GetCore` and `UpdateCore`, published |
 | `GetAll` / `GetPaged` / `GetCount` | As the keyed families — filtered by `ApplyReadFilter`, then `ApplyIncludes` (`GetAll` and `GetPaged` only), then ordered by `ApplyStableOrder`, which throws until overridden (A15). The composition order is fixed (A20) |
 | `MatchRow` returning a predicate that matches several rows | The same rule as a duplicate key: `GetCore` uses `SingleOrDefault` and throws `InvalidOperationException` from LINQ. An under-specified `MatchRow` is the keyless equivalent of a non-unique key |
+| `MatchRow` that is not **total in memory** | **`DataAccessConventionException`** out of the pre-detach, wrapping the original ([A39](#revision-11-additions)). The library neither swallows it nor lets a raw `NullReferenceException` reach the caller, because the offending object is a tracked entry rather than `item` |
+| `MatchRow` reading a soft timestamp | **Forbidden** ([A40](#revision-11-additions)). `CreatedDate`, `UpdatedDate` and `DeletedDate` are this family's columns; `RootSoftNonIdDao.UpdateCore` stamps `UpdatedDate` onto `item` before the predicate is built, so such an override locates nothing |
+| `TrackForWrite` *(protected, all four)* | The locating half of a write — the A34 pre-detach, then the `AsTracking().IgnoreQueryFilters()` fetch. **`protected` so a custom write can reach it** ([A38](#revision-11-additions)); on this half that is necessity rather than convenience |
+| `ApplyUpdateValues` *(protected virtual, all four)* | Writes `item`'s mapped scalars less the key properties onto the tracked entry (A35). **The override point for "this family owns a column and the caller does not"**, and identical in every respect to `BaseDao.ApplyUpdateValues` (A38). The soft root overrides it to restore `CreatedDate` and `DeletedDate` (A30) |
+| `InsertRoot` *(private protected, keyless only)* | `Insert` with the soft timestamp steps folded in. **Deliberately not on the protected surface** (A38) — its `stamp` parameter admits exactly one conforming value from outside, and it has no keyed counterpart |
 | Soft types | The same soft-delete deltas as [`BaseSoftDao`](#basesoftdaotentity-tkey--the-soft-delete-deltas) — including timestamp normalization on retrieval (A13) — with `MatchRow` doing the locating |
 
 ### `ICompanyResourceDao` — the shape this exists to serve
@@ -3706,8 +4104,57 @@ the ordering obligations are leg-independent unless told otherwise. Nothing in R
 - **A consumer who needs a provider-independent sequence overrides `ApplyStableOrder`**, or declares a
   collation on the column with `.UseCollation(...)`. Both are their code; this library neither requires nor
   obstructs either.
-- **Nothing above applies to `int`, `long`, `Guid` or their nullable forms**, which order identically on every
-  relational provider.
+- **Nothing above applies to `int`, `long` or their nullable forms**, which order identically on every
+  relational provider. **`Guid` is *not* in that list** — Revision 8 put it there and Revision 11 takes it
+  back out; see the subsection below.
+
+### A `Guid` key does not order the same way on two providers either — and .NET makes it three
+
+**This retracts a sentence this document has carried since Revision 8** (lap finding F15). That sentence read
+*"nothing above applies to `int`, `long`, `Guid` or their nullable forms, which order identically on every
+relational provider."* The first two are true. **`Guid` is false, and it is false in the same shape as the
+`string` case above** — which is why it belongs here, next to G9, rather than as a defect or a request.
+
+**Three orderings, not two.** The same set of `Guid` values sorts three different ways depending on who does
+the comparing:
+
+| Comparer | Order |
+|---|---|
+| **SQL Server**, `uniqueidentifier` | Compares the **last six bytes first**, then the preceding groups — the order `NEWSEQUENTIALID()` is designed to ascend in, and the reason a sequential `Guid` looks unordered to .NET |
+| **.NET**, `Guid.CompareTo` | The first four bytes as an `Int32`, then two `Int16`s, then the remaining eight bytes — **neither the store's order nor the textual one** |
+| **SQLite**, EF Core's mapping | **Not asserted here.** The provider has no `uniqueidentifier` type, so the value lands in a SQLite storage class and is ordered by that class's comparison. Which class, and therefore which order, is a mapping fact this document has **not verified on the box** — see [Implementer-Only Questions](#implementer-only-questions). The obligation below **measures it rather than predicting it** |
+
+**Two members of this design are affected, and the second is the one that will be missed.**
+
+1. **`CompanyResourceDao.ApplyStableOrder`** is `OrderBy(x => x.CompanyId).ThenBy(x => x.ResourceId)`, and
+   `ResourceId` is a `Guid`. The tie-breaker decides only rows sharing a `CompanyId`, so the divergence is
+   confined to those groups — but it is exactly where `GetPaged` boundaries fall.
+2. **`BaseDao<TEntity, Guid>`'s A16 default is `OrderBy(KeySelector)` over the `Guid` identifier itself**, so
+   the **whole** order diverges, on every keyed Data Access Object with a `Guid` key, with no override
+   anywhere and nothing for a reader to notice. `ProphetsWay.Example`'s `Resource` is precisely that shape.
+   **This is not a keyless-join curiosity**, and framing it as one is how it gets missed.
+
+**The ORDERING RULE survives, for the reason it survives G9.** It is *unspecified but stable*, and stability
+is a **within-leg** property: on either provider two calls with no writes between them return the same
+sequence, and successive `GetPaged` windows partition a full `GetAll` pass with no overlap and no omission.
+**`CompanyResourceDao` is correct today**; what is not portable is the sequence, and therefore the page
+boundaries.
+
+**It is a known limitation, not a defect and not a feature request.** Nothing is being asked for, which is why
+it is recorded here and **not** in [feature-requests.md](feature-requests.md) — the same disposition G9 got.
+Forcing a portable `Guid` order would mean ordering by a computed expression the provider cannot index, which
+is [OD-2](#owner-decisions-taken-during-revision-4)'s three objections to forcing a collation applied to
+`ORDER BY`. A consumer needing a portable sequence overrides `ApplyStableOrder`, exactly as a `string`-keyed
+consumer is told to above.
+
+**Consequences a `Test Designer` must not get wrong**, identical in shape to G9's:
+
+- **Never assert a literal expected sequence for a `Guid`-ordered Data Access Object on both legs.** Assert
+  stability and partitioning, which hold on each leg.
+- **Write it before the second provider leg exists, not after.** A suite authored against SQL Server alone
+  will encode that provider's order as *the* order without anybody deciding to, and the SQLite leg
+  [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container)
+  schedules is where it surfaces — as a red test with no obvious cause.
 
 ---
 
@@ -4686,9 +5133,10 @@ home in this document rather than only in a handoff file.
 > entirely. The lap findings **F1–F9** were keyed independently, in
 > `prophets-pipelines/docs/session-handoff.md`, and the two sets are unrelated: lap-F3 is a scope-tagging
 > defect, review-F3 is about the `Restore` sample. **Anything in this section is a lap finding and says so;
-> a bare `F`*n* elsewhere in this document is a Revision 7 review finding.** `F10` is unambiguous — the
-> review series stops at `F8` and the lap series stopped at `F9` — which is why it was safe to continue the
-> lap numbering here rather than open a third series.
+> a bare `F`*n* elsewhere in this document is a Revision 7 review finding.** `F10` and above are unambiguous
+> — the review series stops at `F8` and the lap series stopped at `F9` — which is why it was safe to continue
+> the lap numbering here rather than open a third series. **`F11`–`F15` are Revision 11's**, from the
+> `Code Reviewer` pass over lap 3.
 
 Lap findings **F1–F9** are listed in that handoff file; only the ones this document has acted on are restated
 here.
@@ -4700,6 +5148,11 @@ here.
 | **F7** — the relabel clause has a machine-dependent kill | **Open, and now named inside the obligation it affects** rather than only in the handoff. Not closed by F3's re-cut |
 | **F8** — R4-S2 is half-discharged | **Carried into lap 3.** The obligation is now stated on `RootSoftNonIdDao`'s own `<remarks>` as well as in the [Soft delete](#soft-delete) group, so a `Test Designer` reading the declaration site cannot miss it |
 | **F10** — a failed soft `Insert` leaves stamps on the caller's instance | **New, below** |
+| **F11** — three keyless plumbing members' accessibility contradicts their own documentation, and this document names none of them | **Closed by [A38](#revision-11-additions)** — [The write plumbing](#the-write-plumbing--trackforwrite-applyupdatevalues-insertroot--a38). `TrackForWrite` → `protected`, `ApplyUpdateValues` → `protected virtual`, `InsertRoot` **stays** `private protected`. **The whole surface is now stated on both halves**, which is the half of the fix that stops the recurrence |
+| **F12** — A34's purity constraint is too narrow, and the compiled predicate can throw | **Closed by [A39](#revision-11-additions)** — [The keyless constraint is in-memory totality](#the-keyless-constraint-is-in-memory-totality-not-merely-translatability--a39). The constraint gains **totality and null-safety over partially-populated entries**, and the library **wraps** rather than swallowing or leaking |
+| **F13** — `RootSoftNonIdDao.UpdateCore` mutates `item` before the predicate is built | **Closed by [A40](#revision-11-additions)** — [Timestamps are not identity](#timestamps-are-not-identity--a40). **Not by reordering**, and the rejection is reasoned rather than deferred. Binds the keyed soft family too |
+| **F14** — A23's summary and the `GetCount` row disagree | **Closed in one sentence** at [What each hook is handed](#what-each-hook-is-handed--a23), with A23's row and both `ApplyStableOrder` `<param>` texts brought in line. **Not lap 3 drift** — `BaseDao.GetCount` does the identical thing and both are correct |
+| **F15** — [Stable Ordering](#stable-ordering) claims `Guid` orders identically on every relational provider | **Retracted**, and recorded as [A `Guid` key does not order the same way on two providers](#a-guid-key-does-not-order-the-same-way-on-two-providers-either--and-net-makes-it-three). **Not a review finding** — found while closing F14, and it reaches `BaseDao<TEntity, Guid>`'s A16 default rather than only `CompanyResourceDao` |
 
 ### F10 — a failed `Insert` must not leave stamps on the caller's instance
 
@@ -4796,6 +5249,29 @@ reproduces on the keyless branch unless the term is in the specification first. 
 
 **The fix itself is `Implementer` work inside lap 3 and is not written here.** This section specifies what
 conformance requires.
+
+### F11–F15 — what the lap 3 pass says about this document
+
+**Three of the four review findings are omissions rather than errors, and that is the pattern worth carrying
+forward.** F11, F12 and F13 each name something the shipped code does that this document **never addressed** —
+a member's accessibility, a predicate's behavior against an entity nobody finished populating, an assignment's
+position relative to a call. In each, the implementation made a defensible local choice and had nothing to
+check it against. **F14 is the one ordinary defect**: two sentences that disagreed, both already written.
+
+**The lesson is narrower than "specify more."** It is that **a member existing only to be overridden, or only
+to be called by a deriver, needs its accessibility written down** — because accessibility is the one part of
+such a member's contract that is invisible from the member's own documentation.
+[`ApplyUpdateValues`](#applyupdatevalues-is-protected-virtual--the-code-contradicted-its-own-documentation) is
+the proof: its `<remarks>` were correct, complete, and identical between the two halves, and were nevertheless
+**false on one of them**, because a modifier two lines above them said so.
+
+**F15 is a different failure and is worth separating.** Nothing was omitted; a sentence was **wrong**, had been
+wrong since Revision 8, and survived four revisions and three review passes by being read rather than checked.
+`AGENTS.md` names it: *affirming an inherited claim is not verifying it.*
+
+**None of the five needed the owner, and none changes a behavior this document previously specified.** A38 and
+A39 write down a surface and a constraint that were unstated; A40 forbids a shape nothing had permitted in
+writing; F14 and F15 are corrections to text.
 
 ---
 
@@ -5075,10 +5551,14 @@ Characterization 5, Dispatcher 20 — over two legs, 328 executions. The two mus
 > |---|---|
 > | **Lap F3's re-cut** of the `NormalizeRetrievedTimestamp` obligation in [Soft delete](#soft-delete) — rewritten in place, one checkbox before and one after | **0** |
 > | **Lap [F10](#f10--a-failed-insert-must-not-leave-stamps-on-the-callers-instance)** — one new `[C]` in [Soft delete](#soft-delete), the failed-`Insert` guard | **+1 `Contract`** |
+> | **Revision 11, lap F11** — one new `[C]` in [Hooks and overrides](#hooks-and-overrides--a12-a18-a20), the A38 protected-surface guard | **+1 `Contract`** |
+> | **Revision 11, lap F12** — two new `[C]` in [CRUD](#crud), the A39 in-memory totality guard and the wrap guard | **+2 `Contract`** |
+> | **Revision 11, lap F15** — one new `[C]` and one new `[X]` in [Ordering and paging](#ordering-and-paging), the `Guid` per-leg pair | **+1 `Contract`, +1 `Characterization`** |
+> | **Revision 11, lap F13** — **none.** [A40](#revision-11-additions) constrains a deriving Data Access Object and asserts nothing about this library | **0** |
 >
-> So the arithmetic to settle is **published 150 + 1 = 151**, against **counted 151 + 1 = 152**. **The
-> one-obligation discrepancy is unchanged by either edit** and is still open — see the handoff's recount
-> section, and **resume that count rather than restarting it**.
+> So the arithmetic to settle is **published 150 + 5 = 155**, against **counted 151 + 5 = 156**. **The
+> one-obligation discrepancy is unchanged by any of these edits** and is still open — see the handoff's
+> recount section, and **resume that count rather than restarting it**.
 
 **150, not 149 — Revision 10 added exactly one, and re-cut six.** The addition is
 [A37](#revision-10-additions)'s inverse-navigation guard in
@@ -5999,6 +6479,13 @@ that guessing wrong is cheap to correct. Record the answers here when they are s
    the collation obligation is written against. Confirm on the box which of `Latin1_General_BIN2` and the
    default agree about `'acme' = 'acme '`, and record the answer here — the *rejection* of forced collations
    does not depend on it, but the test's expectation does.
+9. **What storage class EF Core's SQLite provider maps `Guid` to, and therefore what order that leg sorts a
+   `Guid` column in.** Needed by
+   [A `Guid` key does not order the same way on two providers](#a-guid-key-does-not-order-the-same-way-on-two-providers-either--and-net-makes-it-three),
+   which states SQL Server's order and .NET's and **deliberately does not state SQLite's**, because it has not
+   been verified. Answer it by reading the emitted command and the returned sequence on the leg, not by
+   reasoning from the provider's source. **The retraction does not depend on this** — SQL Server's order
+   differs from `Guid.CompareTo`'s whatever SQLite does — but the `[X]` obligation's expectation does.
 
 ### Questions removed in Revision 4, and why
 

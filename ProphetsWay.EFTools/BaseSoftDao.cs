@@ -123,11 +123,14 @@ namespace ProphetsWay.EFTools
 		/// provider-stripped kind off a caller's instance.
 		/// </para>
 		/// <para>
-		/// <b>The write-back onto <paramref name="item"/> is owed only where a row was stored.</b> An
-		/// <c>Insert</c> that throws leaves the caller's instance carrying exactly the values it arrived with — no
-		/// stamp, no nulled timestamp, no identifier — because a caller told nothing was stored must not be
-		/// holding an instance that says a row was. This is the same rule <see cref="Update"/> already applies to
-		/// <c>UpdatedDate</c>. See finding F10 in <c>docs/api-contract.md</c>.
+		/// <b>The write-back onto <paramref name="item"/> is owed only where a row was stored, and it is owed as
+		/// soon as one is.</b> The copy is stamped before the write and <paramref name="item"/> only after
+		/// <c>SaveChanges</c> has returned, so an <c>Insert</c> that stores nothing leaves the caller's instance
+		/// carrying exactly the values it arrived with — no stamp, no nulled timestamp, no identifier — and an
+		/// <c>Insert</c> that stores a row and then throws from a later step leaves the instance agreeing with
+		/// that row. A caller told nothing was stored must not hold an instance saying a row was, and a caller
+		/// holding a real identifier must not hold timestamps that identifier's row does not have. See finding
+		/// F10 in <c>docs/api-contract.md</c>.
 		/// </para>
 		/// </remarks>
 		public override void Insert(TEntity item)
@@ -135,35 +138,7 @@ namespace ProphetsWay.EFTools
 			if (item == null)
 				throw new ArgumentNullException(nameof(item));
 
-			// Assigned before the base member reads item, because the copy it inserts is taken from item's mapped
-			// scalars — so one reading of the clock reaches the stored row and the caller's instance alike.
-			var stamp = GetCurrentTimestamp();
-			var created = item.CreatedDate;
-			var updated = item.UpdatedDate;
-			var deleted = item.DeletedDate;
-			var stored = false;
-
-			item.CreatedDate = stamp;
-			item.UpdatedDate = null;
-			item.DeletedDate = null;
-
-			try
-			{
-				base.Insert(item);
-
-				stored = true;
-			}
-			finally
-			{
-				// Nothing was written, so the caller's instance is left exactly as it was found. Same shape as
-				// Update below, and the reason F10 exists.
-				if (!stored)
-				{
-					item.CreatedDate = created;
-					item.UpdatedDate = updated;
-					item.DeletedDate = deleted;
-				}
-			}
+			InsertRoot(item, GetCurrentTimestamp());
 		}
 
 		/// <inheritdoc />
@@ -172,34 +147,16 @@ namespace ProphetsWay.EFTools
 		/// <c>UpdatedDate</c> and <c>DeletedDate</c> are all ignored, and the stored <c>CreatedDate</c> and
 		/// <c>DeletedDate</c> are preserved — so an update can neither rewrite history nor soft-delete a row
 		/// behind <see cref="Delete"/>'s back, in either direction. <b>Updating a deleted row is allowed</b> and
-		/// leaves it deleted. Only <c>UpdatedDate</c> travels back onto <paramref name="item"/>, and only where a
-		/// row was written.
+		/// leaves it deleted. Only <c>UpdatedDate</c> travels back onto <paramref name="item"/>, and only once the
+		/// row carrying that same stamp has been written — the tracked row is stamped, never
+		/// <paramref name="item"/> ahead of the write.
 		/// </remarks>
 		public override int Update(TEntity item)
 		{
 			if (item == null)
 				throw new ArgumentNullException(nameof(item));
 
-			// The stamp is placed on item before the base member copies its values, so the stored row and the
-			// caller's instance carry one reading of the clock. Whatever the caller had in UpdatedDate is
-			// discarded by that assignment; the other two never leave the tracked entry — see ApplyUpdateValues.
-			var carried = item.UpdatedDate;
-			var written = 0;
-
-			item.UpdatedDate = GetCurrentTimestamp();
-
-			try
-			{
-				written = base.Update(item);
-			}
-			finally
-			{
-				// No row matched, or the write threw. Either way the caller's instance is left as it was found.
-				if (written == 0)
-					item.UpdatedDate = carried;
-			}
-
-			return written;
+			return UpdateRoot(item, GetCurrentTimestamp());
 		}
 
 		/// <inheritdoc />

@@ -35,6 +35,28 @@ namespace ProphetsWay.EFTools
 			return DateTime.SpecifyKind(value, DateTimeKind.Utc);
 		}
 
+		/// <summary>
+		/// Writes an <c>Insert</c>'s three timestamps onto one object — the stored copy or the caller's instance.
+		/// </summary>
+		/// <remarks>
+		/// Cast rather than constrained: the two callers are closed over <see cref="IBaseIdEntity{TKey}"/> and
+		/// <see cref="IBaseEntity"/> respectively, and only their soft descendants ever supply a stamp.
+		/// </remarks>
+		internal static void StampForInsert(object target, DateTime stamp)
+		{
+			var soft = (IBaseSoftEntity)target;
+
+			soft.CreatedDate = stamp;
+			soft.UpdatedDate = null;
+			soft.DeletedDate = null;
+		}
+
+		/// <summary>Writes an <c>Update</c>'s stamp onto one object — the tracked row or the caller's instance.</summary>
+		internal static void StampForUpdate(object target, DateTime stamp)
+		{
+			((IBaseSoftEntity)target).UpdatedDate = stamp;
+		}
+
 		/// <summary>Runs <paramref name="normalize"/> over the three timestamps of a materialized soft entity.</summary>
 		/// <returns><paramref name="entity"/> itself, normalized in place, or <c>null</c>.</returns>
 		/// <remarks>
