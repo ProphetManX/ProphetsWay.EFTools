@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace ProphetsWay.EFTools
 {
-	internal class RootDao <T, TIdType> : RootNonIdDao<T> where T : class, IBaseIdEntity<TIdType> where TIdType : struct
+	internal class RootDao <T, TIdType> : LegacyRootNonIdDao<T> where T : class, IBaseIdEntity<TIdType> where TIdType : struct
 	{
 		internal RootDao(DbContext context) : base(context) { }
 
