@@ -450,6 +450,7 @@ It cites both and duplicates neither.
 - [Snapshot and Tracking](#snapshot-and-tracking)
 - [Forced Behavior Changes](#forced-behavior-changes)
 - [Two 2.2.0 Defects This Design Retires](#two-220-defects-this-design-retires)
+- [Implementation-Lap Findings](#implementation-lap-findings) — lap F10, and where F2/F3/F7/F8 landed
 - [Migration](#migration)
 - [Test Obligations](#test-obligations)
 - [Reclassified, Deferred and Rejected](#reclassified-deferred-and-rejected)
@@ -679,6 +680,88 @@ type; but a reader comparing the two trees will see one name in both and must no
 merely made public. Its visibility, its role, its members and its `MatchRow` contract all changed.
 `README Author` and `Changelog Author` should describe it as **new public surface**, not as a promotion.
 
+#### Three name collisions, not one — and the ordered plan that clears them
+
+**Every previous statement of this in the document said `RootNonIdDao<T>` and stopped there.** That is
+**one third of the problem**, and the two it misses are the worse two because they are on the **public**
+surface. Established 2026-08-22 by grepping every type declaration in `ProphetsWay.EFTools/` and every
+reference to it across the solution, not by reading the earlier statement:
+
+| # | 2.2.x type | Visibility | 3.x type | Collides? |
+|---|---|---|---|---|
+| 1 | `RootNonIdDao<T>` — [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs) | **`internal`** | `RootNonIdDao<TEntity>` | **Yes** — same name, same arity, same namespace |
+| 2 | `BaseNonIdDao<T>` — [BaseNonIdDao.cs](../ProphetsWay.EFTools/BaseNonIdDao.cs) | **`public`** | `BaseNonIdDao<TEntity>` | **Yes**, and it is public on both sides |
+| 3 | `BaseSoftNonIdDao<T>` — [BaseSoftNonIdDao.cs](../ProphetsWay.EFTools/BaseSoftNonIdDao.cs) | **`public`** | `BaseSoftNonIdDao<TEntity>` | **Yes**, and it is public on both sides |
+| — | *(none)* | — | `RootSoftNonIdDao<TEntity>` | **No** — genuinely new (A14) |
+
+**Type-parameter names do not disambiguate; arity does, and every pair above has arity 1.** This is exactly
+why laps 1 and 2 were additive and lap 3 is not: the old `BaseDao<T>` lived in `.Int`/`.Guid`/`.Long` and the
+new one is arity **2**, so it collided on neither axis. The keyless types are arity 1 in the **root**
+namespace on both sides, so they collide on both.
+
+**What the internal engine actually is, and what still needs it.** `RootNonIdDao<T>` holds `Context`,
+`Dataset`, an `IDbContextTransaction` field, a naive `Insert`/`Delete`, and the three `Ensure*Transaction`
+members. It is **live, not dead** — three files name it:
+
+- `RootDao<T, TIdType> : RootNonIdDao<T>` — [RootDao.cs](../ProphetsWay.EFTools/RootDao.cs), which backs
+  `RootBaseDao<T, TIdType>`, which backs `RootBaseSoftDao` and all **18** `Guid`/`Int`/`Long` closures.
+- `BaseNonIdDao<T>` — holds it as an `internal RootNonIdDao<T> Dao` field and constructs it.
+- Itself.
+
+**Nothing outside the library names any of the three.** `ProphetsWay.Example.DataAccess.EF` derives from none
+of them — its six Data Access Objects are on the new keyed families — and `ProphetsWay.EFTools.Tests` names
+none of them. Verified by grep across the solution, so **the whole blast radius is four library files.**
+
+##### Options, and the recommendation
+
+| Option | What it is | Verdict |
+|---|---|---|
+| **(a) Rename all three 2.2.x types with a `Legacy` prefix, in one preparatory commit** | Pure rename, four files, no behavior change | ✅ **Recommended** |
+| **(b) Delete the internal engine** | Not available. `RootDao` derives from it and `RootBaseDao` needs `RootDao`, so deleting it means folding its members into code lap 4 deletes anyway — a behavior-bearing edit with nothing to gain | ❌ Rejected |
+| **(c) Delete the two public bases now, rename only the internal one** | Two-file delete, no in-solution dependents, same consumer break as (a), and it clears two collisions permanently | 🟡 **Credible runner-up.** Rejected only because it pulls a deletion out of lap 4 and discards the old soft stamping code while an `Implementer` is writing its replacement |
+| **(d) Put the new public types in a sub-namespace** | `ProphetsWay.EFTools.Keyless` | ❌ Rejected. The surface table says *"All in namespace `ProphetsWay.EFTools`. No sub-namespaces"*, [FR 15](feature-requests.md#15--prophetswayeftoolsguid-shadows-systemguid-inside-this-assembly) exists to delete the ones that remain, and lap 4 would then have to move them back — a **second** breaking change for one lap's convenience |
+| **(e) Merge the internal engine into the new public type** | ❌ Rejected, and it is not merely inelegant. The old type publishes `EnsureBeginTransaction`/`EnsureTransactionCommit`/`EnsureTransactionRollback`; the 3.x contract is that **Data Access Objects have no transaction members at all** — see [defect 2](#2--rootnoniddaoensurebegintransaction-silently-no-ops). Keeping them violates the contract, removing them breaks `BaseNonIdDao` and `RootBaseDao`, which forward them publicly. `RootDao<T, TIdType>` also derives from it and cannot supply the new `abstract MatchRow` |
+| **(f) Land only `RootNonIdDao` + `RootSoftNonIdDao` in lap 3, defer the two `Base*` types to lap 4** | Reduces lap 3 to the one **break-free** collision, and `CompanyResourceDao` needs only `RootNonIdDao` | 🟡 **Real, and worth the owner's attention if lap 3 must stay strictly additive.** Cost: it splits one family across two laps and defers the `BaseSoftNonIdDao.Update` obligation in [Soft delete](#soft-delete) with it |
+
+##### The recommended sequence — the tree compiles at every step
+
+**Commit 1, on its own, ahead of any new code. Pure rename; no behavior change; the existing suite passes
+unchanged because nothing names these types.**
+
+| # | File | Edit |
+|---|---|---|
+| 1 | [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs) → `LegacyRootNonIdDao.cs` | Rename the type and its `internal` constructor |
+| 2 | [RootDao.cs](../ProphetsWay.EFTools/RootDao.cs) | Base clause `: RootNonIdDao<T>` → `: LegacyRootNonIdDao<T>` |
+| 3 | [BaseNonIdDao.cs](../ProphetsWay.EFTools/BaseNonIdDao.cs) → `LegacyBaseNonIdDao.cs` | Rename the type and constructor; retype the `Dao` field and its `new` expression |
+| 4 | [BaseSoftNonIdDao.cs](../ProphetsWay.EFTools/BaseSoftNonIdDao.cs) → `LegacyBaseSoftNonIdDao.cs` | Rename the type and constructor; base clause → `LegacyBaseNonIdDao<T>` |
+
+**Commit 2 — lap 3's four new files**, now **purely additive**: `RootNonIdDao.cs`, `BaseNonIdDao.cs`,
+`RootSoftNonIdDao.cs`, `BaseSoftNonIdDao.cs`, to the specification in
+[The Keyless DAO Families](#the-keyless-dao-families).
+
+**Commit 3 — the consumer side:** `CompanyResourceDao`, its `ExampleContext` mapping, and the three
+`ExampleDataAccess` forwarders.
+
+**Lap 4 deletes the four `Legacy*` types** alongside the 18 closures and the two bridges, exactly as planned.
+The prefix is what makes that a folder-level delete rather than an archaeology exercise.
+
+##### What breaks, stated exactly
+
+- **Collision 1 breaks nothing at all**, in either sense. `RootNonIdDao<T>` is `internal`; no consumer can
+  name it and no consumer assembly binds to it.
+- **Collisions 2 and 3 are source-breaking *and* binary-breaking** for a 2.2.x consumer that derived from
+  `BaseNonIdDao<T>` or `BaseSoftNonIdDao<T>`. **That break is made by 3.0.0, not by this plan** — S3 forbids
+  compatibility wrappers, the twelve-class surface does not contain either type in its 2.2.x form, and lap 4
+  deletes them regardless. What the plan changes is **when within the release cycle** the break lands, which
+  is invisible from outside because nothing is published between laps. The
+  [Migration](#keyless-daos) section already routes such a consumer to `RootNonIdDao<TEntity>`.
+- **Nothing in this solution breaks at any step.** No library file outside the four, no
+  `ProphetsWay.Example.DataAccess.EF` Data Access Object and no test names a renamed type.
+
+**Commit 1 can and should land on its own, ahead of the rest of lap 3.** It is independently reviewable,
+independently revertible, and it is the only part of lap 3 that touches shipped 2.2.x code — keeping it
+separate is what lets a bisect distinguish "the rename broke it" from "the new families broke it."
+
 ### The `Base` / `Root` prefix convention
 
 `AGENTS.md` permits both. Within this library they are now **load-bearing and not interchangeable**:
@@ -700,7 +783,11 @@ is reused; the meaning is not. `README Author` and `Changelog Author` must not d
 internal, and the migration table below spells out that a 2.2.x `RootBaseDao` reference has **no** 3.x
 successor — the flat surface absorbed it. **The `RootNonIdDao<T>` name is reused across the visibility
 boundary as well** — see [Types that disappear](#the-public-surface) above; the 2.2.x type of that name is
-`internal`, the 3.x one is public, and they are not the same type.
+`internal`, the 3.x one is public, and they are not the same type. **It is not the only reused name, and the
+two others are public on both sides** — see
+[Three name collisions, not one](#three-name-collisions-not-one--and-the-ordered-plan-that-clears-them),
+which supersedes every earlier statement here and in the Revision 4 log row **M3** that named `RootNonIdDao`
+alone.
 
 ### Flat method surface — what S2 does and does not mean
 
@@ -1343,8 +1430,8 @@ namespace ProphetsWay.EFTools
 		/// Restores the DateTimeKind a relational store did not preserve. Defaults to
 		/// DateTime.SpecifyKind(value, DateTimeKind.Utc), and is applied to every timestamp on every soft
 		/// entity THIS Data Access Object's own reads materialize — not to one materialized as an include on
-		/// another DAO's query. Bound to GetCurrentTimestamp by the Timestamp Pair Rule (A13) — override both
-		/// or neither.
+		/// another DAO's query. Bound to GetCurrentTimestamp by the Timestamp Pair Rule (A13) — override both,
+		/// or neither, unless the clock override still yields UTC, which the default already agrees with.
 		/// </summary>
 		protected virtual DateTime NormalizeRetrievedTimestamp(DateTime value);
 
@@ -1839,7 +1926,7 @@ Two consequences worth stating:
 | **Nulls** | `item` null → `ArgumentNullException` |
 | **Returns** | `void` |
 | **Identity** | **The caller's `item` is never handed to the change tracker.** A copy of it is what gets inserted ([A32](#revision-9-additions)). `item` is read, and the values that travel back onto it are the two rows below — **and no others**. `Context.Entry(item)` may be used to build the copy: on an untracked instance it yields a **`Detached`** entry, which is not tracking |
-| **Side effects** | **`Insert` writes back the identifier the copy ended up carrying.** See the rule in full below. **On the soft families it also writes back the three timestamps** — `CreatedDate` stamped, `UpdatedDate` and `DeletedDate` `null` — which come from `GetCurrentTimestamp()` rather than from the store; see [`BaseSoftDao`](#basesoftdaotentity-tkey--the-soft-delete-deltas). **Nothing the library created is left in `item`'s navigation graph** ([A37](#revision-10-additions)) |
+| **Side effects** | **`Insert` writes back the identifier the copy ended up carrying.** See the rule in full below. **On the soft families it also writes back the three timestamps** — `CreatedDate` stamped, `UpdatedDate` and `DeletedDate` `null` — which come from `GetCurrentTimestamp()` rather than from the store; see [`BaseSoftDao`](#basesoftdaotentity-tkey--the-soft-delete-deltas). **Nothing the library created is left in `item`'s navigation graph** ([A37](#revision-10-additions)). **Every one of those write-backs is conditional on a row having been stored** — if `Insert` throws, `item` is left exactly as it arrived ([F10](#f10--a-failed-insert-must-not-leave-stamps-on-the-callers-instance)) |
 | **Mechanism** | **A copy of `item` is added; everything reachable through `item`'s navigation properties is set `Unchanged` explicitly** ([A32](#revision-9-additions), OD-4, A24). A **store-side** generated identifier is cleared off the copy first; an identifier **EF Core** generates client-side, and one it does not generate at all, are left as the caller set them — the three branches are in [Which identifiers step 6 clears](#which-identifiers-step-6-clears--three-branches-not-two). Related rows are read, never written. **`Dataset.Add(item)` is wrong, and so is `Attach`** — see [Writes and the Navigation Graph](#writes-and-the-navigation-graph) |
 | **Related entities** | Not inserted, not updated, and their keys are not reassigned. EF Core's relationship fix-up writes the foreign key onto the new row, so an association to a stored row is preserved |
 | **Detachment** | **In a `finally`, on success and on failure**, the inserted copy and everything reachable from `item` are detached from the context (A26, OD-7), after the copy has been removed from any inverse navigation fix-up wrote it into ([A37](#revision-10-additions)). `item` itself was never tracked, so there is nothing on it to detach — which is the strongest possible form of the "read rather than adopted" half of the SNAPSHOT RULE. **A failed `Insert` therefore leaves nothing pending**, and the caller may fix `item` and call again on the same instance |
@@ -2092,6 +2179,7 @@ statement of what soft delete means.
 | Member | Contract |
 |---|---|
 | **`Insert`** | Stamps `CreatedDate = GetCurrentTimestamp()` and forces `UpdatedDate = null` and `DeletedDate = null`, **whatever the caller assigned**, then inserts. **Both objects are stamped, and this is the row that says which** ([A24 steps 6b and 9b](#insert-writes-the-root-only--od-4-a24-a32)): the three values are set on the **copy**, so the stored row carries them, and the same three are assigned onto **`item`**, alongside the identifier. The clock is read **once** and one value serves both. All three, and the key, are visible on `item` when the call returns — which is `IDepartmentDao` **rule 1** in full. **`item` is never tracked** (A32), so the write-back is an assignment and not a read-back from the store |
+| **`Insert` that stores no row** | **`item` is left carrying exactly the values it arrived with** — no stamp, no nulled timestamp, no identifier ([F10](#f10--a-failed-insert-must-not-leave-stamps-on-the-callers-instance)). `Insert` returns `void`, so the only observable failure is an exception leaving the member; if it throws, `item` is unchanged. Two permitted remedies, the implementer's choice: stamp the copy and assign onto `item` only after `SaveChanges` returns, or stamp `item` and restore its three previous values in a `finally`. **This is the one soft write member that did not already carry the rule** — `Update` restores `UpdatedDate` in a `finally` and `Delete` writes back only after `SaveChanges` |
 | **`Update`** | Stamps `UpdatedDate = GetCurrentTimestamp()`. Writes the entity's own data only: **incoming `CreatedDate`, `UpdatedDate` and `DeletedDate` are ignored and the stored `CreatedDate` and `DeletedDate` are preserved.** Returns `1` when a row with that identifier is stored, `0` otherwise. **Only `UpdatedDate` travels back onto `item`** |
 | **`Update` — mechanism** (A30) | The tracked fetch plus `SetValues` of [A22](#revision-4-additions), with **the three timestamp properties excluded from the copy** — or restored from the tracked entry immediately after it. Which of the two, is the implementer's; that they do not arrive from `item`, is not. **The copy also excludes the entity's key properties** ([A35](#revision-9-additions)), and the two exclusion sets compose by **union** — see [When `SetValues` actually throws](#when-setvalues-actually-throws--and-when-it-cannot--a35), which also explains why A30 keeps a second remedy A35 cannot. **`SetValues` copies every mapped scalar by name**, timestamps included, so a soft `Update` written the plain way overwrites the stored `DeletedDate` with whatever the caller's instance holds — normally `null` — and **silently un-deletes the row**. `IDepartmentDao`'s own WHY paragraph names `DeletedDate` as *"the one that gets broken"*; this row is why it does not get broken here. `CreatedDate` fails the same way, less visibly |
 | **`Update` on a deleted row** | **Allowed**, and behaves exactly as above. The row stays deleted |
@@ -2137,7 +2225,7 @@ could not express a test clock at all.
 
 | Aspect | Contract |
 |---|---|
-| **`GetCurrentTimestamp` default** | `DateTime.UtcNow`, whose `Kind` is `DateTimeKind.Utc` |
+| **`GetCurrentTimestamp` default** | `DateTime.UtcNow`, whose `Kind` is `DateTimeKind.Utc`. **An override that still yields `Kind == DateTimeKind.Utc` needs no matching normalizer override** — the F2 Option C carve-out in [the Timestamp Pair Rule](#the-timestamp-pair-rule--a13-amended-2026-08-22-by-owner-decision-f2-option-c) |
 | **Called** | **Once per stamping operation.** The same value is used for every field that operation stamps |
 | **`NormalizeRetrievedTimestamp` default** | `DateTime.SpecifyKind(value, DateTimeKind.Utc)` — a **relabel, not a conversion.** It changes no instant and adds no offset |
 | **Where it is applied** | To `CreatedDate`, `UpdatedDate` and `DeletedDate` on every entity **this Data Access Object's** `Get`, `GetAll` and `GetPaged` materialize, after materialization and before the instance is handed back. Never inside a predicate, so it cannot affect translation. **A soft entity materialized as an *include* on some other Data Access Object's query is not reached** — that DAO owns the query and cannot see this hook (G12). **Rule 18 draws its retrieval clause at the same boundary**, so this is the specified reach and not a shortfall from it; see [Including a soft-delete entity bypasses its `ApplyReadFilter`](#including-a-soft-delete-entity-bypasses-its-applyreadfilter--and-that-is-correct) |
@@ -2163,14 +2251,45 @@ these three timestamps. The reasoning is recorded upstream as
 [Example FR 14](../../ProphetsWay.Example/docs/feature-requests.md); the binding wording is the
 `<remarks>` on `IDepartmentDao`, not this paragraph.
 
-##### The Timestamp Pair Rule — A13
+##### The Timestamp Pair Rule — A13, amended 2026-08-22 by owner decision F2 Option C
 
 > **`GetCurrentTimestamp()` and `NormalizeRetrievedTimestamp(DateTime)` are one policy stated from two
-> directions. Override both, or neither. Overriding one is a defect.**
+> directions, and the two must never state *disagreeing* policies. Override both, or neither — with one
+> carve-out, which is part of the rule and not an exception to it:**
+>
+> **Overriding `GetCurrentTimestamp()` alone is conforming *provided the replacement clock still yields
+> UTC* — a `DateTime` whose `Kind` is `DateTimeKind.Utc`.** The default normalizer labels a retrieved value
+> `Utc`, so a UTC-yielding clock already agrees with it and there is nothing to bring into line.
+>
+> **Every other single override is a defect.** Overriding `GetCurrentTimestamp()` to a clock that yields
+> anything other than UTC while leaving `NormalizeRetrievedTimestamp` at its default is a defect; so is
+> overriding `NormalizeRetrievedTimestamp` alone.
 
-That is the rule in full, and it is stated **once, here**, so the two places that declare the pair can cite
-it rather than restate it. The library cannot check that an override of one agrees with an override of the
-other, so this is an obligation on the deriving Data Access Object.
+That is the rule in full, and it is stated **once, here**, so the places that declare the pair can cite it
+rather than restate it.
+
+**What the amendment changed, and why.** The rule previously read *"Override both, or neither. Overriding one
+is a defect"* — and **its letter and its own stated rationale disagreed**. The rationale is that the two hooks
+must not express *disagreeing* policies: stamping in an arbitrary zone and then relabeling the retrieved value
+`Utc` produces an instant wrong by that zone's offset with nothing to indicate it. But a derived Data Access
+Object that overrides **only** `GetCurrentTimestamp()` with a clock that still yields UTC — **the ordinary way
+to inject a test clock, and the case a fixed-instant test needs** — is policy-*consistent* while violating the
+letter. The letter was the thing that was wrong. Raised as lap 2 finding **F2**; **closed by the owner on
+2026-08-22, Option C**: carve out that case and leave the rest of the rule intact. Nothing else about the rule
+moved — the four override sites, the shared `internal static` defaults, and the both-branches test obligation
+are all unchanged.
+
+**The carve-out is narrow, and the narrowness is the point.** It is keyed on *what the replacement clock
+yields*, not on which member was overridden. A clock returning `DateTime.Now`, or a value converted into a
+named zone, or `DateTime.SpecifyKind(x, DateTimeKind.Unspecified)`, is **outside** it and owes the matching
+normalizer override exactly as before. A frozen-instant test clock returning `new DateTime(…, DateTimeKind.Utc)`
+is **inside** it and owes nothing.
+
+**This remains an obligation on the deriving Data Access Object, and the library does not check it.** There is
+no compiler check spanning the four override sites, and none at runtime either: the library never inspects the
+`Kind` of what `GetCurrentTimestamp()` returns, never compares one override against the other, and would not
+know what agreement looked like for an arbitrary pair if it did. A conforming implementation is one whose
+author has read this rule, not one the library has verified.
 
 **The pair is declared on two unrelated branches, and there is no shared base to hang it on.** `BaseSoftDao`
 derives from `BaseDao`; `RootSoftNonIdDao` derives from `RootNonIdDao`; the two roots have nothing in common
@@ -2224,10 +2343,25 @@ protected override DateTime NormalizeRetrievedTimestamp(DateTime value)
 	=> value;                                                           // already Unspecified; leave it
 ```
 
-**Overriding one and not the other is a defect**, and it is a silent one: override the clock to `DateTime.Now`
-and leave normalization at the default, and a stamped value comes back relabeled `Utc` while holding a local
-wall-clock reading — an instant wrong by the machine's offset, with nothing to indicate it. `Test Designer`
-should pin an inconsistent pairing as a demonstrated hazard rather than assume nobody will write one.
+**Overriding the clock to a policy that does not yield UTC, and leaving normalization at its default, is a
+defect** — and it is a silent one: override the clock to `DateTime.Now` and leave normalization alone, and a
+stamped value comes back relabeled `Utc` while holding a local wall-clock reading, an instant wrong by the
+machine's offset with nothing to indicate it. **Overriding `NormalizeRetrievedTimestamp` alone is a defect on
+the mirror-image reasoning.** `Test Designer` should pin an inconsistent pairing as a demonstrated hazard
+rather than assume nobody will write one — **and should pin the carve-out alongside it**, because a suite that
+treats every single override as a hazard makes a fixed-instant test clock look non-conforming and pushes the
+next author into overriding a normalizer they have no reason to touch.
+
+**A third conforming pairing, added by the F2 Option C amendment — the one a test writes:**
+
+```csharp
+// A frozen clock for a deterministic test. It still yields UTC, so the default normalizer already agrees
+// with it and NormalizeRetrievedTimestamp is deliberately NOT overridden.
+private static readonly DateTime Frozen = new DateTime(2026, 8, 22, 13, 45, 0, DateTimeKind.Utc);
+
+protected override DateTime GetCurrentTimestamp()
+	=> Frozen;                                                          // Kind = Utc — inside the carve-out
+```
 
 **`DateTimeKind` and DST — read before overriding.** `DateTime` carries a `Kind` in memory that most
 relational providers **do not store**. A value written as `Local` or as an arbitrary zone comes back as
@@ -2376,114 +2510,563 @@ and the middle one is the one earlier drafts got wrong:
 3. **The DAO base supplies the reusable implementation** the forwarder ultimately calls, plus `protected`
 	cores (`GetCore`, `UpdateCore`) for the shapes a `Root` type deliberately does not publish.
 
+**The declarations below are the specification `Test Designer` derives obligations from.** They are written
+out at the same documentation standard as the keyed families rather than as a signature sketch, because on
+this half there is no interface file to carry the contract and no `<inheritdoc/>` to inherit it from: a
+`Root*` type implements no capability interface, so every word of its contract has to be here.
+
 ```csharp
 namespace ProphetsWay.EFTools
 {
 	/// <summary>
-	/// Plumbing for a Data Access Object over an entity with no single identifier. Implements no
-	/// <c>ProphetsWay.BaseDataAccess</c> capability interface, so deriving from it commits you to nothing:
-	/// your own Data Access Object interface declares the subset you support.
+	/// The Entity Framework Core base for a Data Access Object over an entity that has <b>no single stored
+	/// identifier property</b> — a join table keyed by a pair, a composite key, or an identity that is
+	/// computed rather than stored.
 	/// </summary>
+	/// <typeparam name="TEntity">The entity this Data Access Object reads and writes.</typeparam>
+	/// <remarks>
+	/// <para>
+	/// <b>It implements no <c>ProphetsWay.BaseDataAccess</c> capability interface, so deriving from it commits
+	/// you to nothing.</b> Your own Data Access Object interface declares the subset you support, and the
+	/// public members below satisfy those declarations implicitly because the signatures match. Deriving from
+	/// <see cref="BaseNonIdDao{TEntity}"/> instead is how you opt in to <see cref="IBaseDao{T}"/>.
+	/// </para>
+	/// <para>
+	/// <b><see cref="MatchRow"/> replaces the whole identifier apparatus, and it is the only abstract member
+	/// in the library.</b> There is no <c>{TypeName}Id</c>/<c>Id</c> resolution, no <c>TKey</c>, no
+	/// <c>GetKey</c>, no <c>KeyEquals</c> and no <c>KeySelector</c>: with no identifier there is nothing to
+	/// resolve and nothing to derive a predicate from. A constructor on this family therefore <b>never throws
+	/// <see cref="DataAccessConventionException"/></b> — A8, A17 step 2 and A33 are properties of the keyed
+	/// half and do not run here.
+	/// </para>
+	/// <para>
+	/// <b>Publishing a read member costs one more override.</b> <see cref="ApplyStableOrder"/>'s default
+	/// throws <see cref="NotSupportedException"/> (A15), so <see cref="GetAll"/>, <see cref="GetPaged"/> and
+	/// <see cref="GetCount"/> throw until it is supplied. <see cref="Insert"/>, <see cref="Delete"/>,
+	/// <see cref="GetCore"/> and <see cref="UpdateCore"/> order nothing and are unaffected — a write-only join
+	/// Data Access Object is fully functional with <see cref="MatchRow"/> alone.
+	/// </para>
+	/// <para>
+	/// <b>Not thread-safe.</b> Every Data Access Object on a layer shares one <see cref="DbContext"/>.
+	/// </para>
+	/// </remarks>
 	public abstract class RootNonIdDao<TEntity>
 		where TEntity : class, IBaseEntity
 	{
+		/// <summary>Captures the context every member reads and writes through.</summary>
+		/// <param name="context">The context this Data Access Object's layer owns.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="context"/> is <c>null</c>.</exception>
+		/// <remarks>
+		/// Nothing else happens here — no <c>Set&lt;TEntity&gt;()</c>, no <see cref="DbContext.Model"/> access,
+		/// no query and no connection (A17). <b>And no convention validation</b>: unlike the keyed families
+		/// there is no identifier to validate, so this constructor has exactly one failure mode.
+		/// </remarks>
 		protected RootNonIdDao(DbContext context);
 
+		/// <summary>The context shared by every Data Access Object on the layer.</summary>
 		protected DbContext Context { get; }
+
+		/// <summary>
+		/// The set this Data Access Object reads and writes. Resolved on first access rather than in the
+		/// constructor, because <see cref="DbContext.Set{TEntity}()"/> forces the whole model to be built.
+		/// </summary>
 		protected DbSet<TEntity> Dataset { get; }
 
+		/// <summary>Stores a new row carrying <paramref name="item"/>'s values.</summary>
+		/// <param name="item">The entity to store. Read, never adopted.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="item"/> is <c>null</c>.</exception>
+		/// <remarks>
+		/// <para>
+		/// The store receives a <b>copy</b> of <paramref name="item"/> (A32), so the
+		/// caller's instance is never handed to the change tracker. Everything reachable through
+		/// <paramref name="item"/>'s navigation properties is attached <c>Unchanged</c> — related rows are read,
+		/// never written (OD-4, A24). The copy is removed from any inverse navigation relationship fix-up wrote
+		/// it into (A37), and the copy and the whole reachable graph are detached in a
+		/// <c>finally</c>, on success and on failure (A26, OD-7).
+		/// </para>
+		/// <para>
+		/// <b>Nothing is written back onto <paramref name="item"/> on this class</b> — there is no identifier to
+		/// assign, which is <c>ICompanyResourceDao</c> rule 2 in terms, and A32's key-clearing step has no
+		/// subject here because there is no resolved identifier property to clear. Where a composite key has a
+		/// store-generated component, that value is <b>not</b> written back either; see
+		/// the <i>Composite keys</i> section of this document. The two soft descendants
+		/// write the three timestamps back and say so on their own <see cref="RootSoftNonIdDao{TEntity}.Insert"/>.
+		/// </para>
+		/// <para>
+		/// <b>Not idempotent, and not an upsert.</b> Two calls store two rows unless a store constraint
+		/// prevents it, and a row the store already holds is a duplicate: the provider's uniqueness or
+		/// primary-key violation propagates <b>unwrapped</b>. A Data Access Object whose own contract requires
+		/// a silent no-op — <c>ICompanyResourceDao</c> rule 3 — states that on its own interface and overrides
+		/// this member.
+		/// </para>
+		/// </remarks>
 		public virtual void Insert(TEntity item);
+
+		/// <summary>Removes the stored row <paramref name="item"/> names.</summary>
+		/// <param name="item">The entity naming the row. Only the values <see cref="MatchRow"/> reads matter.</param>
+		/// <returns><c>1</c> when the row existed, <c>0</c> when it did not. Never negative, never above <c>1</c>.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="item"/> is <c>null</c>.</exception>
+		/// <exception cref="DbUpdateConcurrencyException">
+		/// Another connection removed the located row between the locating fetch and <c>SaveChanges</c>. A lost
+		/// race is <b>not</b> converted to <c>0</c> — the two answer different questions.
+		/// </exception>
+		/// <remarks>
+		/// <b>A hard delete on this class</b> — the row is genuinely removed — and <b>idempotent</b>: a second
+		/// call returns <c>0</c> and throws nothing. The row is located through <see cref="MatchRow"/> with
+		/// <c>IgnoreQueryFilters()</c> (A28) and the <i>located</i> instance is removed, never
+		/// <paramref name="item"/>. Any entry already tracked for that row is detached first
+		/// (A34), by <c>MatchRow(item).Compile()</c> — there is no resolved key to
+		/// match on instead, which is what puts the purity constraint on <see cref="MatchRow"/>. The located
+		/// row, <paramref name="item"/>, and everything reachable from either are detached in a <c>finally</c>
+		/// (A26, OD-7).
+		/// </remarks>
 		public virtual int Delete(TEntity item);
+
+		/// <summary>Every row <see cref="ApplyReadFilter"/> admits, in <see cref="ApplyStableOrder"/>'s order.</summary>
+		/// <param name="item">
+		/// A type selector only. It is never read, and is <c>null</c> whenever the call arrives through the
+		/// dispatcher.
+		/// </param>
+		/// <returns>A fresh list of untracked snapshots, empty rather than <c>null</c> when nothing matches.</returns>
+		/// <exception cref="NotSupportedException">
+		/// <see cref="ApplyStableOrder"/> has not been overridden. <b>This is the ordinary state of the base
+		/// class</b>, not an edge case — see A15.
+		/// </exception>
 		public virtual IList<TEntity> GetAll(TEntity? item);
+
+		/// <summary>
+		/// The <paramref name="skip"/>/<paramref name="take"/> window over the same filtered, ordered sequence
+		/// <see cref="GetAll"/> returns, so successive windows partition a full pass with no overlap and no
+		/// omission.
+		/// </summary>
+		/// <param name="item">A type selector only; never read.</param>
+		/// <param name="skip">How many rows to pass over.</param>
+		/// <param name="take">How many rows to return. Zero returns an empty list.</param>
+		/// <returns>A fresh list, empty rather than <c>null</c> when the window falls beyond the data.</returns>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="skip"/> or <paramref name="take"/> is negative.</exception>
+		/// <exception cref="NotSupportedException">
+		/// <see cref="ApplyStableOrder"/> has not been overridden. <b>Thrown after the argument checks</b> —
+		/// a negative <paramref name="skip"/> on an un-overridden Data Access Object yields
+		/// <see cref="ArgumentOutOfRangeException"/>, not this.
+		/// </exception>
+		/// <remarks>
+		/// <b>This is the member that obliges <see cref="ApplyStableOrder"/> to be a genuine total order.</b> On
+		/// the keyless families there is no model-derived fallback to lean on — A16's tie-breaker is a keyed-half
+		/// mechanism — so totality is entirely the override's to deliver.
+		/// </remarks>
 		public virtual IList<TEntity> GetPaged(TEntity? item, int skip, int take);
+
+		/// <summary>
+		/// How many rows <see cref="ApplyReadFilter"/> admits — the same count <see cref="GetAll"/> returns,
+		/// which is what makes a pager's last page correct.
+		/// </summary>
+		/// <param name="item">A type selector only; never read.</param>
+		/// <returns>The number of admitted rows.</returns>
+		/// <exception cref="NotSupportedException">
+		/// <see cref="ApplyStableOrder"/> has not been overridden. <b>It throws even though counting needs no
+		/// order</b>: the trio is contractually bound to agree, and a <see cref="GetCount"/> that worked while
+		/// its two partners threw would invite a pager that cannot fetch a page.
+		/// </exception>
+		/// <remarks>
+		/// Materializes no entity, so it includes nothing and emits no <c>ORDER BY</c>.
+		/// <see cref="ApplyStableOrder"/> is nevertheless <b>invoked and its result discarded</b> (A27), which
+		/// is the mechanism by which the exception above is reached — and which means an override with a side
+		/// effect runs exactly once per call.
+		/// </remarks>
 		public virtual int GetCount(TEntity? item);
 
-		/// <summary>The predicate identifying the one stored row that corresponds to <c>item</c>.</summary>
+		/// <summary>The predicate identifying the one stored row that corresponds to <paramref name="item"/>.</summary>
+		/// <param name="item">The entity naming the row.</param>
+		/// <returns>A predicate matching <b>at most one</b> stored row.</returns>
+		/// <remarks>
+		/// <para>
+		/// <b>Abstract, and the only abstract member in the library.</b> With no identifier there is nothing to
+		/// derive a predicate from — only the deriving Data Access Object knows that a <c>CompanyResource</c> is
+		/// matched on <c>CompanyId &amp;&amp; ResourceId</c>. <see cref="Delete"/>, <see cref="GetCore"/> and
+		/// <see cref="UpdateCore"/> are all built on it, and <see cref="Delete"/> is published by every keyless
+		/// base, so the compile-time demand costs nobody anything.
+		/// </para>
+		/// <para>
+		/// <b>It must be evaluable in memory over the entity's own mapped scalars</b> — no navigation traversal,
+		/// no <c>EF.Functions.*</c>, no store-only construct. <see cref="Delete"/> and
+		/// <see cref="UpdateCore"/> compile it for the A34 pre-detach, which runs against objects already in the
+		/// change tracker; an override reaching a store construct compiles happily and then throws there, or
+		/// quietly matches the wrong set. A keyless <c>MatchRow</c> <i>is</i> the natural key on every shape
+		/// this design contemplates, so the constraint costs nothing it does not already have.
+		/// </para>
+		/// <para>
+		/// <b>An override matching several rows is the keyless equivalent of a non-unique key.</b>
+		/// <see cref="GetCore"/> uses <c>SingleOrDefault</c> and LINQ throws
+		/// <see cref="InvalidOperationException"/>; <see cref="Delete"/> and <see cref="UpdateCore"/> do the
+		/// same. The public members validate <c>null</c> before reaching this member, so an override need not
+		/// re-check <paramref name="item"/>.
+		/// </para>
+		/// </remarks>
 		protected abstract Expression<Func<TEntity, bool>> MatchRow(TEntity item);
 
-		/// <summary>
-		/// A total ordering over the set, applied by GetAll and GetPaged alike. <b>The default throws
-		/// NotSupportedException</b> — a Data Access Object publishing any read member must override it.
-		/// </summary>
+		/// <summary>A total ordering over the set, applied by <see cref="GetAll"/> and <see cref="GetPaged"/> alike.</summary>
+		/// <param name="query">The filtered, included query.</param>
+		/// <returns>The ordered query.</returns>
+		/// <exception cref="NotSupportedException">
+		/// <b>Always, on this class.</b> The message names the Data Access Object type and the entity type:
+		/// <i>"{DaoTypeName} publishes a retrieval member but does not override ApplyStableOrder. Override it to
+		/// return a total ordering over {EntityTypeName}."</i> The two placeholders are the contract term; the
+		/// surrounding words are not.
+		/// </exception>
+		/// <remarks>
+		/// <b>Virtual with a throwing default rather than abstract</b>, and A15 records the trade: an abstract
+		/// hook taxes the write-only join Data Access Object — the exact shape S5 was written for — with
+		/// inventing an ordering over a set it never enumerates, to buy a compile error for a member it does not
+		/// publish. <b>The keyed half's model-derived default has no counterpart here and is not coming</b>:
+		/// there is no <c>KeySelector</c> to lead with, so a model-derived ordering would be the whole order
+		/// rather than a tie-breaker on one, and these families exist to serve types the model may map with
+		/// <c>HasNoKey()</c>.
+		/// </remarks>
 		protected virtual IOrderedQueryable<TEntity> ApplyStableOrder(IQueryable<TEntity> query);
 
-		/// <summary>
-		/// Restricts which stored rows the retrieval members may see. <b>Defaults to identity</b> on this class
-		/// — no row is hidden. Receives the raw Dataset query and runs first (A20).
-		/// </summary>
+		/// <summary>Restricts which stored rows the retrieval members may see. Hides nothing on this class.</summary>
+		/// <param name="query">The raw <see cref="Dataset"/> query (A23).</param>
+		/// <returns>The restricted query, which <see cref="ApplyIncludes"/> is then handed.</returns>
+		/// <remarks>
+		/// Reaches <see cref="GetAll"/>, <see cref="GetPaged"/> and <see cref="GetCount"/> only.
+		/// <see cref="GetCore"/> and every locating fetch a write makes start from the raw
+		/// <see cref="Dataset"/> (A20, A28).
+		/// </remarks>
 		protected virtual IQueryable<TEntity> ApplyReadFilter(IQueryable<TEntity> query);
 
-		/// <summary>
-		/// Declares which navigation properties a read materializes. <b>Defaults to identity</b> — the base
-		/// members load none (A18). Receives the row-restricted query for its path (A23).
-		/// </summary>
+		/// <summary>Declares which navigation properties a read materializes. Loads none on this class.</summary>
+		/// <param name="query">
+		/// The row-restricted query for its path (A23) — <see cref="ApplyReadFilter"/>'s output on
+		/// <see cref="GetAll"/>/<see cref="GetPaged"/>, the <see cref="MatchRow"/>-matched query on
+		/// <see cref="GetCore"/>.
+		/// </param>
+		/// <returns>The query with whatever <c>Include</c>/<c>ThenInclude</c> this Data Access Object promises.</returns>
+		/// <remarks>Not applied by <see cref="GetCount"/>, which materializes no entity (A18).</remarks>
 		protected virtual IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> query);
 
 		// --- reusable cores, for a Data Access Object that chooses to publish these shapes ---
+
+		/// <summary>Retrieves the single row <see cref="MatchRow"/> names.</summary>
+		/// <param name="item">The entity naming the row. Only the values <see cref="MatchRow"/> reads matter.</param>
+		/// <returns>A fresh untracked snapshot, or <c>null</c> when no row matches.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="item"/> is <c>null</c>.</exception>
+		/// <exception cref="InvalidOperationException"><see cref="MatchRow"/> matched more than one row.</exception>
+		/// <remarks>
+		/// <b>Protected because a <c>Root</c> type publishes nothing</b> — <see cref="BaseNonIdDao{TEntity}"/>
+		/// publishes it as <c>Get</c>. Never returns <paramref name="item"/> and never the store's own tracked
+		/// object: it applies <c>IgnoreQueryFilters()</c> before the predicate (A28), then
+		/// <see cref="ApplyIncludes"/>, then <c>AsNoTracking()</c>. <b>It does not apply
+		/// <see cref="ApplyReadFilter"/></b>, which is what lets a soft descendant still find a row it has
+		/// already deleted.
+		/// </remarks>
 		protected virtual TEntity? GetCore(TEntity item);
+
+		/// <summary>Writes <paramref name="item"/>'s values onto the stored row <see cref="MatchRow"/> names.</summary>
+		/// <param name="item">The entity supplying the values.</param>
+		/// <returns><c>1</c> when a row matched, <c>0</c> when none did. Never negative, never above <c>1</c>.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="item"/> is <c>null</c>.</exception>
+		/// <exception cref="InvalidOperationException"><see cref="MatchRow"/> matched more than one row.</exception>
+		/// <exception cref="DbUpdateConcurrencyException">The located row was removed before <c>SaveChanges</c>.</exception>
+		/// <remarks>
+		/// <para>
+		/// Reports whether a row <i>matched</i>, not whether a value <i>changed</i> — the ROW COUNT RULE.
+		/// Pre-detaches by the compiled <see cref="MatchRow"/> (A34), locates with
+		/// <c>IgnoreQueryFilters()</c> (A28), then copies every mapped scalar <b>less the entity's key
+		/// properties</b>, read from <see cref="DbContext.Model"/> as <c>IProperty.IsKey()</c>
+		/// (A35).
+		/// </para>
+		/// <para>
+		/// <b>That exclusion is structural here, not a precaution.</b> On a keyless entity the natural key is
+		/// ordinarily the primary key, mapped as scalars — <c>CompanyResource.CompanyId</c> and
+		/// <c>ResourceId</c> are the worked case — so a plain <c>SetValues</c> writes a key property the moment
+		/// <paramref name="item"/> carries a different value for one, and EF Core throws
+		/// <see cref="InvalidOperationException"/>. The exclusion must be <b>from</b> the copy: the exception is
+		/// raised during the copy, so there is no "after" in which to restore.
+		/// </para>
+		/// <para>
+		/// A navigation property with no foreign-key scalar on the entity cannot be repointed by this member
+		/// (A25). The located row, <paramref name="item"/>, and everything reachable from either are detached in
+		/// a <c>finally</c> (A26, OD-7).
+		/// </para>
+		/// </remarks>
 		protected virtual int UpdateCore(TEntity item);
 	}
 
 	/// <summary>A keyless Data Access Object that does publish the <see cref="IBaseDao{T}"/> shape.</summary>
+	/// <typeparam name="TEntity">The entity this Data Access Object reads and writes.</typeparam>
+	/// <remarks>
+	/// <b>Adds no behavior.</b> It declares <see cref="IBaseDao{T}"/> and publishes the two cores
+	/// <see cref="RootNonIdDao{TEntity}"/> keeps <c>protected</c>. Take it when your keyless entity really does
+	/// support single-row retrieval and in-place update through <see cref="RootNonIdDao{TEntity}.MatchRow"/>;
+	/// take <see cref="RootNonIdDao{TEntity}"/> when it does not, and do not take this one merely to reach a
+	/// member — <c>Get</c> and <c>Update</c> published on an entity they are meaningless for is the coercion S5
+	/// exists to prevent.
+	/// </remarks>
 	public abstract class BaseNonIdDao<TEntity> : RootNonIdDao<TEntity>, IBaseDao<TEntity>
 		where TEntity : class, IBaseEntity
 	{
+		/// <inheritdoc />
 		protected BaseNonIdDao(DbContext context) : base(context) { }
 
+		/// <inheritdoc cref="RootNonIdDao{TEntity}.GetCore" />
+		/// <remarks><see cref="RootNonIdDao{TEntity}.GetCore"/>, published. Contract unchanged.</remarks>
 		public virtual TEntity? Get(TEntity item);   // GetCore(item)
+
+		/// <inheritdoc cref="RootNonIdDao{TEntity}.UpdateCore" />
+		/// <remarks><see cref="RootNonIdDao{TEntity}.UpdateCore"/>, published. Contract unchanged.</remarks>
 		public virtual int Update(TEntity item);     // UpdateCore(item)
 	}
 
 	/// <summary>
-	/// Keyless plumbing with soft-delete semantics and — like <see cref="RootNonIdDao{TEntity}"/> — no
-	/// capability interface. This is the base for a genuinely keyless soft-delete Data Access Object.
+	/// The keyless base for an entity that is <b>stamped as deleted</b> rather than removed, with — like
+	/// <see cref="RootNonIdDao{TEntity}"/> — <b>no capability interface</b>.
 	/// </summary>
+	/// <typeparam name="TEntity">The entity this Data Access Object reads and writes.</typeparam>
+	/// <remarks>
+	/// <para>
+	/// <b>Why it exists (A14).</b> Without it the only route to keyless soft delete ran through
+	/// <see cref="BaseNonIdDao{TEntity}"/>, i.e. through <see cref="IBaseDao{T}"/> — so a join table that keeps
+	/// its history rather than removing rows was forced to publish <c>Get</c> and <c>Update</c> it does not
+	/// support. That is the coercion S5 exists to prevent, reintroduced one level down.
+	/// </para>
+	/// <para>
+	/// <b>Every difference from <see cref="RootNonIdDao{TEntity}"/> is an <c>override</c> and never a
+	/// <c>new</c> member</b> (A2), so a soft Data Access Object reached through a
+	/// <see cref="RootNonIdDao{TEntity}"/>-typed reference still soft-deletes. A hidden <c>Delete</c> would
+	/// hard-delete a soft entity through an upcast — silent data loss no consumer would suspect.
+	/// </para>
+	/// <para>
+	/// <b>Soft deletion is the only exclusion rule.</b> <see cref="ApplyReadFilter"/> adds
+	/// <c>DeletedDate == null</c> and nothing else, so <see cref="RootNonIdDao{TEntity}.GetAll"/>,
+	/// <see cref="RootNonIdDao{TEntity}.GetPaged"/> and <see cref="RootNonIdDao{TEntity}.GetCount"/> agree with
+	/// one another, and <see cref="GetCore"/> — which is not filtered — still finds a deleted row.
+	/// </para>
+	/// <para>
+	/// <b>The Timestamp Pair Rule (A13) binds the two hooks below exactly as it does on
+	/// <see cref="BaseSoftDao{TEntity, TKey}"/>.</b> Same names, same defaults, same obligation, and the
+	/// defaults come from one <c>internal static</c> helper so the two declaration sites cannot drift. <b>This
+	/// is the second of the rule's two declaration sites and the second pair of its four override sites; no
+	/// compiler check spans them, and a test suite that exercises the rule on the keyed branch alone leaves
+	/// half of them unguarded</b> — that obligation is R4-S2, it is stated in
+	/// the <i>Soft delete</i> obligation group, and its keyless half is discharged <b>here or nowhere</b> (lap 2 finding
+	/// F8).
+	/// </para>
+	/// <para>
+	/// <b>Not thread-safe.</b> Every Data Access Object on a layer shares one <see cref="DbContext"/>.
+	/// </para>
+	/// </remarks>
 	public abstract class RootSoftNonIdDao<TEntity> : RootNonIdDao<TEntity>
 		where TEntity : class, IBaseSoftEntity
 	{
+		/// <inheritdoc />
 		protected RootSoftNonIdDao(DbContext context) : base(context) { }
 
-		// The Timestamp Pair Rule (A13) binds these two here exactly as it does on BaseSoftDao.
-		// Same names, same defaults, same must-be-overridden-together obligation; the defaults are
-		// supplied by one internal helper so the two declaration sites cannot drift.
-
-		/// <summary>The clock every stamping member reads. Defaults to DateTime.UtcNow.</summary>
+		/// <summary>Supplies the timestamp every stamping member writes.</summary>
+		/// <returns>The current time. The default is <see cref="DateTime.UtcNow"/>.</returns>
+		/// <remarks>
+		/// Read <b>once per stamping operation</b>, and the one reading serves every object that operation
+		/// writes it to — the stored row and the caller's instance alike. Bound to
+		/// <see cref="NormalizeRetrievedTimestamp"/> by the Timestamp Pair Rule (A13): override both, or
+		/// neither, <b>unless the replacement clock still yields <see cref="DateTimeKind.Utc"/></b>, which the
+		/// default normalizer already agrees with.
+		/// </remarks>
 		protected virtual DateTime GetCurrentTimestamp();
 
 		/// <summary>
-		/// Restores the DateTimeKind a relational store did not preserve. Defaults to
-		/// DateTime.SpecifyKind(value, DateTimeKind.Utc), and is applied to every timestamp on every soft
-		/// entity THIS Data Access Object's own reads materialize — not to one materialized as an include on
-		/// another DAO's query. Bound to GetCurrentTimestamp by the Timestamp Pair Rule (A13) — override both
-		/// or neither.
+		/// Restores the <see cref="DateTimeKind"/> a relational store did not preserve, on a timestamp read
+		/// back out of the store by <b>this</b> Data Access Object.
 		/// </summary>
+		/// <param name="value">A timestamp as the provider materialized it — typically <see cref="DateTimeKind.Unspecified"/>.</param>
+		/// <returns>The same instant, carrying the kind this Data Access Object's clock produces.</returns>
+		/// <remarks>
+		/// The default is <c>DateTime.SpecifyKind(value, DateTimeKind.Utc)</c>. It <b>relabels; it never
+		/// shifts</b> — the returned value's <c>Ticks</c> equal the input's. Applied to the three timestamps of
+		/// every entity <see cref="GetCore"/>, <see cref="GetAll"/> and <see cref="GetPaged"/> materialize,
+		/// after materialization and never inside a predicate, so it cannot affect translation. <b>A soft
+		/// entity arriving as an <c>Include</c> on another Data Access Object's query is not reached</b> — that
+		/// Data Access Object owns the query and cannot see this hook (G12). Values written back by a write are
+		/// not normalized either: they came from <see cref="GetCurrentTimestamp"/>, never went to the store,
+		/// and never lost their kind. Bound to <see cref="GetCurrentTimestamp"/> by the Timestamp Pair Rule
+		/// (A13) — override both, or neither, unless the clock override still yields UTC.
+		/// </remarks>
 		protected virtual DateTime NormalizeRetrievedTimestamp(DateTime value);
 
+		/// <inheritdoc />
+		/// <remarks>
+		/// <para>
+		/// Stamps <c>CreatedDate</c> and forces <c>UpdatedDate</c> and <c>DeletedDate</c> to <c>null</c>,
+		/// <b>whatever the caller assigned</b>. The copy carries all three, so the stored row does; the same
+		/// three are assigned onto <paramref name="item"/>, from <b>one</b> reading of the clock. They are never
+		/// read back off the store, which is what keeps a provider-stripped kind off a caller's instance.
+		/// </para>
+		/// <para>
+		/// <b>The write-back onto <paramref name="item"/> happens only where a row was written</b>
+		/// (lap finding F10). A <c>SaveChanges</c>
+		/// that throws leaves <paramref name="item"/> carrying the values it arrived with — no
+		/// <c>CreatedDate</c>, and no <c>UpdatedDate</c>/<c>DeletedDate</c> nulled — because a caller told
+		/// nothing was stored must not be holding an instance that says a row was. This is the same shape
+		/// <see cref="RootNonIdDao{TEntity}.UpdateCore"/> already carries for <c>UpdatedDate</c>.
+		/// </para>
+		/// <para>
+		/// <b>No identifier is written back</b>, on this class as on its base — there is none.
+		/// </para>
+		/// </remarks>
 		public override void Insert(TEntity item);
-		public override int Delete(TEntity item);
-		public override IList<TEntity> GetAll(TEntity? item);
-		public override IList<TEntity> GetPaged(TEntity? item, int skip, int take);
-		protected override IQueryable<TEntity> ApplyReadFilter(IQueryable<TEntity> query); // DeletedDate == null
-		protected override TEntity? GetCore(TEntity item); // normalizes timestamps after materialization
 
-		/// <summary>Soft Update: stamps UpdatedDate, preserves the stored CreatedDate and DeletedDate.</summary>
+		/// <inheritdoc />
+		/// <returns>
+		/// <c>1</c> when a <b>live</b> row matched, <c>0</c> when the matched row was already deleted or none
+		/// matched.
+		/// </returns>
+		/// <remarks>
+		/// <b>Does not remove the row.</b> Stamps <c>DeletedDate</c> and writes that stamp back onto
+		/// <paramref name="item"/>; <c>CreatedDate</c> and <c>UpdatedDate</c> are not touched, and the row stays
+		/// retrievable through <see cref="GetCore"/>. A row that is already deleted, or absent, returns <c>0</c>
+		/// and changes nothing — <b>an existing <c>DeletedDate</c> is never refreshed</b>, so the stamp always
+		/// reports when the row was actually deleted and a second call is idempotent rather than an error. No
+		/// write-back onto <paramref name="item"/> occurs when it returns <c>0</c>.
+		/// </remarks>
+		public override int Delete(TEntity item);
+
+		/// <inheritdoc />
+		/// <remarks>Omits soft-deleted rows, and normalizes the timestamps of the rows it returns.</remarks>
+		public override IList<TEntity> GetAll(TEntity? item);
+
+		/// <inheritdoc />
+		/// <remarks>Omits soft-deleted rows, and normalizes the timestamps of the rows it returns.</remarks>
+		public override IList<TEntity> GetPaged(TEntity? item, int skip, int take);
+
+		/// <inheritdoc />
+		/// <remarks>
+		/// Adds <c>DeletedDate == null</c> and nothing else. It reaches the retrieval trio only —
+		/// <see cref="GetCore"/> and every locating fetch a write makes start from the raw
+		/// <see cref="RootNonIdDao{TEntity}.Dataset"/>, or a soft Data Access Object could never reach the rows
+		/// it had already deleted.
+		/// </remarks>
+		protected override IQueryable<TEntity> ApplyReadFilter(IQueryable<TEntity> query);
+
+		/// <inheritdoc />
+		/// <remarks>
+		/// <b>Returns soft-deleted rows</b>, answering <c>null</c> only where no matching row was ever stored —
+		/// inherited rather than added, since the base member never applies <see cref="ApplyReadFilter"/> and
+		/// locates with <c>IgnoreQueryFilters()</c>. <b>This override exists to run
+		/// <see cref="NormalizeRetrievedTimestamp"/> over what the base member found</b>, and for nothing else.
+		/// </remarks>
+		protected override TEntity? GetCore(TEntity item);
+
+		/// <inheritdoc />
+		/// <remarks>
+		/// <para>
+		/// Stamps <c>UpdatedDate</c> and writes the entity's own data only: an incoming <c>CreatedDate</c>,
+		/// <c>UpdatedDate</c> and <c>DeletedDate</c> are all ignored, and the stored <c>CreatedDate</c> and
+		/// <c>DeletedDate</c> are preserved — so an update can neither rewrite history nor soft-delete a row
+		/// behind <see cref="Delete"/>'s back, in either direction. <b>Updating a deleted row is allowed</b> and
+		/// leaves it deleted.
+		/// </para>
+		/// <para>
+		/// The three timestamps are excluded from the <c>SetValues</c> copy, or restored from the tracked entry
+		/// immediately after it — the implementer's choice (A30) — and <b>the entity's key properties are
+		/// excluded with them, the two sets composing by union</b> (A35). Only <c>UpdatedDate</c> travels back
+		/// onto <paramref name="item"/>, and only where a row was written: a call returning <c>0</c>, or one
+		/// whose <c>SaveChanges</c> throws, leaves the caller's <c>UpdatedDate</c> as it was found.
+		/// </para>
+		/// <para>
+		/// <b>Not sealed</b> (A21), and reached through a <see cref="RootNonIdDao{TEntity}"/>-typed reference by
+		/// virtual dispatch, so a base-typed caller cannot get the hard body (A2).
+		/// </para>
+		/// </remarks>
 		protected override int UpdateCore(TEntity item);
 	}
 
 	/// <summary>
 	/// A keyless soft-delete Data Access Object that also publishes the <see cref="IBaseDao{T}"/> shape,
-	/// keyed by the <c>MatchRow</c> predicate rather than by an identifier.
+	/// identified by the <c>MatchRow</c> predicate rather than by an identifier.
 	/// </summary>
+	/// <typeparam name="TEntity">The entity this Data Access Object reads and writes.</typeparam>
+	/// <remarks>
+	/// <b>Adds no behavior.</b> It declares <see cref="IBaseDao{T}"/> and publishes the two soft cores
+	/// <see cref="RootSoftNonIdDao{TEntity}"/> keeps <c>protected</c>. Both timestamp hooks are inherited
+	/// unchanged, and the Timestamp Pair Rule binds a Data Access Object deriving from <b>this</b> type exactly
+	/// as it binds one deriving from <see cref="RootSoftNonIdDao{TEntity}"/> — the rule counts declaration
+	/// sites, not derivation depth.
+	/// </remarks>
 	public abstract class BaseSoftNonIdDao<TEntity> : RootSoftNonIdDao<TEntity>, IBaseDao<TEntity>
 		where TEntity : class, IBaseSoftEntity
 	{
+		/// <inheritdoc />
 		protected BaseSoftNonIdDao(DbContext context) : base(context) { }
 
-		public virtual TEntity? Get(TEntity item);   // GetCore(item) — returns soft-deleted rows
-		public virtual int Update(TEntity item);     // UpdateCore(item) — soft semantics from RootSoftNonIdDao
+		/// <inheritdoc cref="RootSoftNonIdDao{TEntity}.GetCore" />
+		/// <remarks>The soft <see cref="RootSoftNonIdDao{TEntity}.GetCore"/>, published — returns soft-deleted rows.</remarks>
+		public virtual TEntity? Get(TEntity item);
+
+		/// <inheritdoc cref="RootSoftNonIdDao{TEntity}.UpdateCore" />
+		/// <remarks>
+		/// The soft <see cref="RootSoftNonIdDao{TEntity}.UpdateCore"/>, published. <b>It cannot be made to
+		/// bypass timestamp preservation through a hard-update core</b> — the core is an <c>override</c>, so a
+		/// caller holding a <see cref="RootNonIdDao{TEntity}"/>-typed reference still reaches the soft body.
+		/// </remarks>
+		public virtual int Update(TEntity item);
 	}
 }
 ```
+
+### What the keyless families deliberately do **not** inherit from the keyed ones
+
+Stated as a list because four separate keyed-half mechanisms have no keyless counterpart, and each of them is
+something a reader arriving from [The Keyed DAO Families](#the-keyed-dao-families) will expect to find:
+
+| Keyed mechanism | Keyless counterpart |
+|---|---|
+| **A8 identifier resolution**, validated at construction, reported as `DataAccessConventionException` (A17, A33) | **None, and none is needed.** A keyless constructor's only failure mode is a `null` context. Nothing here reads `{TypeName}Id` or `Id`, and an entity carrying such a property gains nothing from it |
+| **A32's key-clearing step on `Insert`** — three branches keyed on `Context.Model` | **None.** There is no resolved identifier property to clear, so the copy is sent exactly as built. `IValueGeneratorSelector` is never consulted on this half |
+| **The identifier write-back** — OD-11, and the **IDENTIFIER RULE** on `IExampleDataAccess` | **None.** `ICompanyResourceDao` rule 2 states the same thing from the consumer's side, and the IDENTIFIER RULE is worded as binding only *"where an entity carries an identifier"*. **This is the absence of a subject, not a refusal of the rule** — the rule says so itself. The soft descendants' three timestamps are a *separate*, DAO-stated write-back and are unaffected |
+| **A16's ordering default**, total wherever the model declares a primary key | **None (A15).** `ApplyStableOrder` throws until overridden. Whether a keyless default could be built from a composite primary key alone is a question A16's amendment did not ask and did not answer; until it is asked, the deriving Data Access Object names its own order |
+
+**Two keyed mechanisms *are* inherited, in altered form, and both are stated on the members above:** A34's
+pre-detach runs on the compiled `MatchRow` rather than on `GetKey`, which is what puts the in-memory purity
+constraint on the hook; and A35's key-property exclusion is **structural rather than precautionary** here,
+because on a keyless entity the natural key is ordinarily the mapped primary key.
+
+### `CompanyResourceDao` on this family — the shape check, done rather than assumed
+
+[D17's amendment](../../prophets-pipelines/docs/session-handoff.md) plans `CompanyResourceDao` as a
+**conversion onto `RootNonIdDao<CompanyResource>`**, not as a permanent hand-written Data Access Object.
+**The family supports it.** Checked member by member against `ICompanyResourceDao` and
+`CompanyResource` as they stand in the submodule, rather than reasoned from the shape:
+
+| What the consumer needs | Where it comes from | Verdict |
+|---|---|---|
+| `CompanyResource : IBaseEntity` and nothing else | `RootNonIdDao<TEntity>`'s constraint is `class, IBaseEntity` | ✅ satisfied exactly |
+| `ICompanyResourceDao` inherits `IBaseDao<T>` **not at all** | `RootNonIdDao` implements no capability interface | ✅ this is the whole reason the type exists |
+| `void Insert(CompanyResource)` | `public virtual void Insert(TEntity)` — implicit implementation, signatures match | ✅ |
+| `int Delete(CompanyResource)` | `public virtual int Delete(TEntity)` | ✅ |
+| `IList<CompanyResource> GetAll(CompanyResource)` | `public virtual IList<TEntity> GetAll(TEntity?)` — the nullable annotation does not change the signature | ✅ |
+| **Rule 1** — a row is the `(CompanyId, ResourceId)` pair | `MatchRow` override | ✅ and it is the worked case A34's purity constraint is written around |
+| **Rule 2** — `Insert` assigns nothing back | The keyless `Insert` writes back no identifier | ✅ **by construction**, not by an override |
+| **Rule 3** — inserting a stored pair is a silent no-op | **An override of `Insert`.** The library does not offer it, deliberately | ⚠️ **consumer-authored**, and it owes `IgnoreQueryFilters()` and a stated check-then-act race — see [the worked override](#icompanyresourcedao--the-shape-this-exists-to-serve) |
+| **Rule 4** — hard delete, `1`/`0`, never above `1` | The keyless `Delete` | ✅ |
+| **Rule 5** — `GetAll` returns a list, never `null`, in no guaranteed order | `GetAll`, **once `ApplyStableOrder` is overridden** | ⚠️ the override is required; rule 5's *"no guaranteed order"* does not excuse it, because A15 throws regardless of what the consumer promises |
+| **Rule 6** — `item` is a type selector, `null` through the dispatcher | `TEntity? item`, never read | ✅ |
+| **Rule 7** — `ArgumentNullException` on `Insert`/`Delete` | Stated on both members | ✅ |
+| **Rule 8** — `Get<CompanyResource>(id)` always throws `DataAccessConventionException` | **Preserved.** `RootNonIdDao` publishes no `Get`, and the Data Access Layer declares no `Get(CompanyResource)` forwarder | ✅ **and it must stay that way** — deriving from `BaseNonIdDao` instead would publish a `Get` and put rule 8 at risk |
+| **Rule 9** — snapshots on read, arguments read not adopted | `AsNoTracking()` on the trio; `Insert` copies (A32); `Delete` removes the located row | ✅ |
+| **Rule 10** — the caller names rows that exist | The provider's referential-integrity exception, unwrapped | ✅ nothing to do |
+
+**Two things the conversion must carry, flagged now rather than found by a red test:**
+
+1. **`ApplyStableOrder` is not optional**, even though rule 5 guarantees no order. A15 throws from `GetAll`
+   whether or not the consumer's contract promises an order, so the conversion needs
+   `OrderBy(x => x.CompanyId).ThenBy(x => x.ResourceId)` or `GetAll` throws `NotSupportedException` on its
+   first call.
+2. **Rule 3 is the only member that must be hand-written**, and it is an override of `Insert` rather than a
+   member the base supplies. A conversion that derives cleanly and stops has met rules 1, 2 and 4–10 and
+   **failed rule 3 silently** — the pre-check is the whole of it.
+
+**The entity and its mapping do not exist yet on the EF side.** `ProphetsWay.Example.DataAccess.EF` carries no
+`CompanyResourceDao.cs`, `ExampleContext` declares no `DbSet<CompanyResource>` and no `ToTable` for it, and
+`ExampleDataAccess`'s three `ICompanyResourceDao` forwarders throw. All three are `Implementer` work inside lap
+3; none of them is a contract question, and none of them changes the table above.
 
 ### Why `RootSoftNonIdDao` had to exist — A14
 
@@ -4092,6 +4675,130 @@ silent join.
 
 ---
 
+## Implementation-Lap Findings
+
+**Findings raised against this document by an agent working on the shipped code**, as distinct from findings
+raised by a `Contract Reviewer` reading it. They are recorded here so a term this document is missing has a
+home in this document rather than only in a handoff file.
+
+> **⚠️ Key-space collision, stated so it is not mistaken for a cross-reference.** The **`F1`–`F8`** in
+> [the Revision 7 log](#revision-7) are that review's *Contract Reviewer* findings and mean something else
+> entirely. The lap findings **F1–F9** were keyed independently, in
+> `prophets-pipelines/docs/session-handoff.md`, and the two sets are unrelated: lap-F3 is a scope-tagging
+> defect, review-F3 is about the `Restore` sample. **Anything in this section is a lap finding and says so;
+> a bare `F`*n* elsewhere in this document is a Revision 7 review finding.** `F10` is unambiguous — the
+> review series stops at `F8` and the lap series stopped at `F9` — which is why it was safe to continue the
+> lap numbering here rather than open a third series.
+
+Lap findings **F1–F9** are listed in that handoff file; only the ones this document has acted on are restated
+here.
+
+| Lap finding | Disposition here |
+|---|---|
+| **F2** — A13's letter and its rationale disagree | **Closed by the owner, 2026-08-22, Option C.** [The Timestamp Pair Rule](#the-timestamp-pair-rule--a13-amended-2026-08-22-by-owner-decision-f2-option-c) is reworded so the letter matches the rationale, with a carve-out for a clock override that still yields UTC. The four override sites and the both-branches obligation are unchanged |
+| **F3** — a `[C]` obligation depended on a certified-provider fact | **Closed by the owner, 2026-08-22, Option C.** The obligation is re-cut to assert **directly against the hook** — see [Soft delete](#soft-delete). It stays `[C]`; the [Scope notation](#test-obligations) rule stays as written |
+| **F7** — the relabel clause has a machine-dependent kill | **Open, and now named inside the obligation it affects** rather than only in the handoff. Not closed by F3's re-cut |
+| **F8** — R4-S2 is half-discharged | **Carried into lap 3.** The obligation is now stated on `RootSoftNonIdDao`'s own `<remarks>` as well as in the [Soft delete](#soft-delete) group, so a `Test Designer` reading the declaration site cannot miss it |
+| **F10** — a failed soft `Insert` leaves stamps on the caller's instance | **New, below** |
+
+### F10 — a failed `Insert` must not leave stamps on the caller's instance
+
+**The defect, in the shipped lap 2 code.** `BaseSoftDao.Insert` assigns `CreatedDate`, `UpdatedDate` and
+`DeletedDate` onto the caller's `item` **before** calling `base.Insert(item)`. A `SaveChanges` that throws
+therefore returns control to the caller with their instance carrying a full set of stamps for a row that was
+never written — a `CreatedDate` naming an insert that did not happen, and a `DeletedDate`/`UpdatedDate` the
+caller may have set deliberately, destroyed. **Verified by opening
+[`BaseSoftDao.cs`](../ProphetsWay.EFTools/BaseSoftDao.cs) and
+[`BaseDao.cs`](../ProphetsWay.EFTools/BaseDao.cs)**, not inferred from the specification.
+
+**Three facts make it a defect rather than a judgment call:**
+
+1. **The same class already does it correctly one member down.** `BaseSoftDao.Update` captures
+   `item.UpdatedDate`, stamps, and **restores the captured value in a `finally` when `written == 0` or the
+   write threw**. `Insert` has no equivalent. A family that protects the caller's instance on `Update` and
+   not on `Insert` is inconsistent with itself, and nothing states why.
+2. **The hand-written Data Access Object it replaced did it correctly.** `DepartmentDao.Insert` built a
+   separate `new Department { … }`, saved, and only then wrote back onto `item` — so the conversion
+   [D16](purpose-and-scope.md#owner-decisions--2026-08-15) grades **lost a behavior**, which is precisely the
+   failure mode D16's stated clause exists to catch.
+3. **A24 already separates the two objects and the implementation collapsed them.** Step **6b** stamps *the
+   copy*; step **9b** assigns *the same three values* onto `item`. The shipped code stamps `item` first and
+   lets `CopyForStore` inherit the values, which is one assignment instead of two — and which is what moves
+   the write-back to before the write.
+
+**No test covers it.** It is inside the surface the handoff records as *"`Insert` is still entirely
+unasserted."*
+
+#### The obligation
+
+> **After an `Insert` that did not store a row, the caller's instance carries exactly the values it carried
+> when the call was made.** No timestamp stamped, no timestamp nulled, no identifier assigned. This binds
+> every `Insert` on every family in this library, hard and soft, keyed and keyless, and it binds on **both**
+> failure shapes — an exception out of `SaveChanges`, and an exception out of anything the member does after
+> reading `item`.
+
+**What "did not store a row" means, precisely:** `Insert` returns `void`, so the only observable failure is
+an exception leaving the member. The obligation is therefore: **if `Insert` throws, `item` is unchanged.** A
+successful `Insert` writes back exactly what the member's own contract says it writes back — the identifier
+on the keyed families (OD-11), the three timestamps on the soft ones — and nothing else.
+
+**Two permitted remedies, and the choice is the implementer's** — the same shape [A30](#revision-6-additions)
+takes for the soft `Update`'s timestamps:
+
+- **Stamp the copy, and assign onto `item` only after `SaveChanges` has returned.** This is A24 steps 6b and
+  9b implemented as written, and it is the one that matches `DepartmentDao.Insert`.
+- **Stamp `item` first, and restore its three previous values in a `finally` when the write did not happen.**
+  This is `BaseSoftDao.Update`'s existing shape applied to `Insert`.
+
+**The second remedy is legitimate here, unlike in [A35](#revision-9-additions).** A35 withdrew its
+restore-afterwards option because EF Core raises the key-is-read-only exception **during** the copy, leaving
+no "after". Here the throw comes from `SaveChanges`, which is strictly after the assignment, so the `finally`
+has something to restore. Both remedies deliver the obligation; neither is mandated.
+
+#### Where it traces, and why it is `[C]` rather than `[X]`
+
+**Stated honestly, because the [Scope notation](#test-obligations) rule makes traceability the half that does
+work.** Upstream states neither this case nor its opposite: `IExampleDataAccess`'s **SNAPSHOT RULE** permits
+a write-back only *"where a Data Access Object's own contract states"* one, and `IDepartmentDao` **rule 1**
+states the three timestamps as post-conditions of a call that **stored a row**; the **IDENTIFIER RULE** is
+worded the same way — *"`Insert` assigns the identifier of the row **it stored**"*. **Neither rule speaks to a
+call that stored nothing.** So the obligation does not trace to an upstream rule, and tagging it `[C]` on
+that basis would be the exact failure J1 was decided under.
+
+It is `[C]` because it traces to **a term of this document**, which the `[C]` definition admits alongside an
+upstream rule — the obligation above, plus the `Insert` member-contract rows and the
+[`RootSoftNonIdDao.Insert`](#the-keyless-dao-families) `<remarks>` that now carry it. That is the same footing
+[A37](#revision-10-additions)'s obligation stands on. **The upstream silence is the reason the term had to be
+written**, not a reason to weaken its tag: SNAPSHOT RULE's *"read rather than adopted"* is the closest
+upstream sentence and it argues **for** the term — an instance handed to `Insert` and returned bearing marks
+of a write that never happened has been adopted in the only sense a caller can observe.
+
+#### Does the defect shape extend to the keyed branch, or to A32's identifier write-back?
+
+**Checked member by member against the source, not reasoned from the shape.**
+
+| Member | Write-back placement | Verdict |
+|---|---|---|
+| `BaseDao.Insert` — keyed, hard | `_identifier.SetValue(item, …)` runs **after** `Context.SaveChanges()`, inside the `try` | ✅ **Clean.** A throw skips it and the `finally` only detaches |
+| `BaseSoftDao.Insert` — keyed, soft | All three stamps assigned onto `item` **before** `base.Insert(item)` | 🔴 **The defect.** This is the only site |
+| `BaseSoftDao.Update` | Restores `item.UpdatedDate` in a `finally` when `written == 0` or on throw | ✅ Correct, and the model for remedy two |
+| `BaseSoftDao.Delete` | `item.DeletedDate = stamp` runs **after** `Context.SaveChanges()` | ✅ Clean |
+| `BaseDao.Update` / `BaseDao.Delete` | Write nothing back onto `item` at all | ✅ Nothing to get wrong |
+| **A32's identifier write-back — the specification** | *"After `SaveChanges`, the identifier the copy ended up carrying is written onto `item`."* **The ordering is already right**, and the implementation follows it | ⚠️ **Correct but under-stated.** A32 says *when* the write-back happens and never says **that a failed `Insert` writes nothing back** — so an implementation that hoisted the assignment would satisfy every sentence A32 contains. The obligation above closes that, and A32 needs no amendment beyond citing it |
+
+**So: one live defect, on `BaseSoftDao.Insert`, and one latent gap in A32's wording.** The keyed hard branch
+and the two other soft write members are already conforming.
+
+**And the finding must reach lap 3 before an `Implementer` does.** `RootSoftNonIdDao.Insert` is being written
+in this lap, from the same A24 steps, by the same route — stamp `item`, let the copy inherit — so the defect
+reproduces on the keyless branch unless the term is in the specification first. It now is, on
+[`RootSoftNonIdDao.Insert`](#the-keyless-dao-families)'s own `<remarks>`.
+
+**The fix itself is `Implementer` work inside lap 3 and is not written here.** This section specifies what
+conformance requires.
+
+---
+
 ## Migration
 
 Every example is 2.2.x on the left, 3.0.0 on the right. There are **no compatibility wrappers** (S3), so each
@@ -4357,6 +5064,21 @@ told. This document's own tally is therefore published, so a translated suite ca
 A suite whose traits do not sum to 150 has dropped or doubled one. **These are this document's obligations,
 not `ProphetsWay.Example`'s suite**, whose own partition stands separately at 164 tests — Contract 139,
 Characterization 5, Dispatcher 20 — over two legs, 328 executions. The two must not be added together.
+
+> **⚠️ The figures above are stale by design as of 2026-08-22, and are left stale deliberately.** Two
+> obligation-level changes landed that day, and **the published table is not adjusted for them**, because an
+> **open recount already disputes the base by one** — `Contract` counted at **132**, not 131, giving **151**
+> rather than 150, mechanically confirmed twice — and silently adjusting a disputed base hides the dispute.
+> The two changes, so whoever finishes the recount can apply them rather than re-derive them:
+>
+> | Change | Net |
+> |---|---|
+> | **Lap F3's re-cut** of the `NormalizeRetrievedTimestamp` obligation in [Soft delete](#soft-delete) — rewritten in place, one checkbox before and one after | **0** |
+> | **Lap [F10](#f10--a-failed-insert-must-not-leave-stamps-on-the-callers-instance)** — one new `[C]` in [Soft delete](#soft-delete), the failed-`Insert` guard | **+1 `Contract`** |
+>
+> So the arithmetic to settle is **published 150 + 1 = 151**, against **counted 151 + 1 = 152**. **The
+> one-obligation discrepancy is unchanged by either edit** and is still open — see the handoff's recount
+> section, and **resume that count rather than restarting it**.
 
 **150, not 149 — Revision 10 added exactly one, and re-cut six.** The addition is
 [A37](#revision-10-additions)'s inverse-navigation guard in
@@ -5010,16 +5732,50 @@ company, job and department first, then hang them off the user.
 	`Get` half and fails `IDepartmentDao` rule 1**, while one that stamps only `item` passes rule 1 and stores
 	a default `CreatedDate`. Asserting one object cannot distinguish either failure. Same for `Update`'s
 	`UpdatedDate` and `Delete`'s `DeletedDate`.
+- [ ] **[C]** **An `Insert` that stores no row leaves the caller's instance exactly as it arrived**
+	([F10](#f10--a-failed-insert-must-not-leave-stamps-on-the-callers-instance)). Build a soft entity carrying
+	distinguishable non-default values in all three timestamps — `CreatedDate` at a sentinel instant,
+	`UpdatedDate` and `DeletedDate` non-`null` — arrange an `Insert` whose `SaveChanges` **throws** (a
+	referential-integrity violation against a related row that names nothing stored is the removable failure
+	this document already uses), and require **all three still carrying the caller's values** after the
+	exception. **The `DeletedDate`/`UpdatedDate` half is the half that discriminates**: `CreatedDate` gets
+	restamped on a retry and can look correct by accident, while a nulled `DeletedDate` is destroyed caller
+	data. **Run it on both branches** — a `BaseSoftDao` descendant and a `RootSoftNonIdDao` descendant — for
+	the R4-S2 reason, and **also on a keyed hard `BaseDao` descendant**, where the assertion is that no
+	identifier was assigned. This obligation fails against the lap 2 shipped `BaseSoftDao.Insert`.
 - [ ] **[C]** `GetCurrentTimestamp` default is UTC; an override is honored by all three stamping members; it is called
       **once** per operation.
-- [ ] **[C]** Timestamps retrieved through `Get`, `GetAll` and `GetPaged` pass through
-	`NormalizeRetrievedTimestamp`; the default restores `DateTimeKind.Utc` on SQLite and SQL Server.
+- [ ] **[C]** **Timestamps retrieved through `Get`, `GetAll` and `GetPaged` pass through
+	`NormalizeRetrievedTimestamp`, and the default is asserted *directly against the hook* — no round trip, no
+	provider** (F3, owner decision Option C, 2026-08-22). Two clauses, both about the library and neither about a
+	store. **One:** the hook runs — a Data Access Object overriding `NormalizeRetrievedTimestamp` to a
+	distinguishable sentinel sees that sentinel on all three retrieval members, and a Data Access Object that does
+	not override it is unaffected. **Two:** call the default with a `DateTime` carrying
+	`Kind == DateTimeKind.Unspecified` and a non-zero time-of-day, and require the returned value to carry
+	`Kind == DateTimeKind.Utc` **and `Ticks` equal to the input's** — the same instant, relabeled. It is a relabel
+	and not a conversion, so the ticks assertion is the half that discriminates.
+	**The superseded wording is named so it is not restored:** *"the default restores `DateTimeKind.Utc` on SQLite
+	and SQL Server"* asserted a round trip, which made a `[C]` obligation turn on a **certified-provider fact** —
+	against a provider that preserved `Kind`, an identity normalizer (`value => value`) passed it — and the
+	[Scope notation](#test-obligations) rule forbids exactly that. The rewrite kills the identity normalizer with
+	no provider involved at all.
+	**One residual limit, stated rather than left to be discovered.** A wrongly-applied `value.ToUniversalTime()`
+	is extensionally identical to `DateTime.SpecifyKind(value, DateTimeKind.Utc)` on a machine at UTC+00:00, which
+	is the normal CI agent — so the ticks clause discriminates it on any non-UTC machine and on no UTC one. That
+	is **lap 2 finding F7**, it is a property of the mechanism rather than of this wording, and it is not closed
+	here. What changed is that the old wording discriminated it on **no** machine.
 - [ ] **[X]** A custom timezone policy overriding both timestamp hooks round-trips its documented `DateTimeKind`;
-	overriding only one hook is covered as a characterization hazard rather than a conforming policy.
-- [ ] **[C]** **Both of the above run twice — once against a `BaseSoftDao` descendant and once against a
-	`RootSoftNonIdDao` descendant** (R4-S2). The Timestamp Pair Rule has four override sites on two unrelated
-	branches and no compiler check spanning them, so a suite that covers the keyed branch alone leaves half of
-	them unguarded.
+	overriding only one hook is covered as a characterization hazard rather than a conforming policy — **except the
+	F2 Option C carve-out**, a clock override that still yields `Kind == DateTimeKind.Utc`, which is conforming
+	with the default normalizer left in place and must not be pinned as a hazard.
+- [ ] **[C]** **The two timestamp-hook obligations immediately above — the `NormalizeRetrievedTimestamp`
+	obligation and the custom-timezone `[X]` — run twice: once against a `BaseSoftDao` descendant and once
+	against a `RootSoftNonIdDao` descendant** (R4-S2). The Timestamp Pair Rule has four override sites on two
+	unrelated branches and no compiler check spanning them, so a suite that covers the keyed branch alone
+	leaves half of them unguarded. **Only the keyed half exists as of lap 2** — this is lap finding **F8**, and
+	the keyless half is discharged in **lap 3 or nowhere**: `RootSoftNonIdDao` is the type being written in that
+	lap, and an obligation whose subject never gets built is an obligation silently dropped. The `[C]`/`[X]`
+	tags of the two obligations are unchanged by being run twice.
 - [ ] **[C]** `RootSoftNonIdDao` performs soft insert/delete/filtering without publishing `Get` or `Update`, and
 	`BaseSoftNonIdDao.Update` cannot bypass timestamp preservation through a hard-update core.
 - [ ] **[C]** **A soft DAO reached through a `BaseDao<TEntity, TKey>`-typed reference still soft-deletes** — the A2
