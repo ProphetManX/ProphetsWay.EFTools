@@ -25,6 +25,7 @@ namespace ProphetsWay.Example.DataAccess.EF
 		public DbSet<Transaction> Transactions { get; set; }
 		public DbSet<Job> Jobs { get; set; }
 		public DbSet<Department> Departments { get; set; }
+		public DbSet<CompanyResource> CompanyResources { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
@@ -36,7 +37,12 @@ namespace ProphetsWay.Example.DataAccess.EF
 			modelBuilder.Entity<Transaction>().HasOne(x => x.Company).WithMany().HasForeignKey("CompanyId");
 			modelBuilder.Entity<Transaction>().HasOne(x => x.User).WithMany().HasForeignKey("UserId");
 
+			//CompanyResource carries no identifier at all - the pair is the primary key, which is what a
+			//RootNonIdDao<CompanyResource> matches on and what its ApplyStableOrder orders by.
+			modelBuilder.Entity<CompanyResource>().HasKey(x => new { x.CompanyId, x.ResourceId });
+
 			modelBuilder.Entity<Company>().ToTable("Companies");
+			modelBuilder.Entity<CompanyResource>().ToTable("CompanyResources");
 			modelBuilder.Entity<Department>().ToTable("Departments");
 			modelBuilder.Entity<Job>().ToTable("Jobs");
 			modelBuilder.Entity<Resource>().ToTable("Resources");

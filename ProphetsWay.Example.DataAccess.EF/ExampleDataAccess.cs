@@ -17,6 +17,7 @@ namespace ProphetsWay.Example.DataAccess.EF
 		private readonly IResourceDao _resourceDao;
 		private readonly ITransactionDao _transactionDao;
 		private readonly IDepartmentDao _departmentDao;
+		private readonly ICompanyResourceDao _companyResourceDao;
 
 		/// <summary>
 		/// Builds a SQL Server-backed context from a connection string and owns it.
@@ -57,6 +58,7 @@ namespace ProphetsWay.Example.DataAccess.EF
 			_resourceDao = new ResourceDao(Context);
 			_transactionDao = new TransactionDao(Context);
 			_departmentDao = new DepartmentDao(Context);
+			_companyResourceDao = new CompanyResourceDao(Context);
 		}
 
 
@@ -275,32 +277,30 @@ namespace ProphetsWay.Example.DataAccess.EF
 
 #endregion
 
-#region CompanyResourceDao - NOT IMPLEMENTED
+#region CompanyResourceDao
 
 		public void Insert(CompanyResource item)
 		{
-			throw NotWrittenYet("ICompanyResourceDao.Insert(CompanyResource)");
+			ThrowIfDisposed();
+			_companyResourceDao.Insert(item);
 		}
 
 		public int Delete(CompanyResource item)
 		{
-			throw NotWrittenYet("ICompanyResourceDao.Delete(CompanyResource)");
+			ThrowIfDisposed();
+			return _companyResourceDao.Delete(item);
 		}
 
 		public IList<CompanyResource> GetAll(CompanyResource item)
 		{
-			throw NotWrittenYet("ICompanyResourceDao.GetAll(CompanyResource)");
+			ThrowIfDisposed();
+			return _companyResourceDao.GetAll(item);
 		}
+
+		//No Get(CompanyResource) is declared, and none can usefully be: rule 8 requires
+		//Get<CompanyResource>(id) to throw DataAccessConventionException, and a forwarder here is the one thing
+		//on this side that could change that.
 
 #endregion
-
-		private static NotImplementedException NotWrittenYet(string member)
-		{
-			return new NotImplementedException(
-				member + " has NOT been implemented. The ProphetsWay.EFTools 3.x lap 1 was scoped to making this " +
-				"repository compile against ProphetsWay.Example 3.1.0 and nothing else. Department (soft-delete) and " +
-				"CompanyResource (keyless) have no Entity Framework Data Access Object, and ExampleContext maps " +
-				"neither entity. See docs/api-contract.md for the specification this member must satisfy.");
-		}
 	}
 }
