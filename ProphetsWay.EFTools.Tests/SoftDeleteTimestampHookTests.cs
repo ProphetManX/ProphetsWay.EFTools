@@ -40,10 +40,21 @@ namespace ProphetsWay.EFTools.Tests
 	/// connection string are deliberately untouched — nothing here needs a local server.
 	/// </para>
 	/// <para>
-	/// <b>Every Data Access Object below that overrides one hook overrides both</b>, per A13, including the two
-	/// whose clock is already UTC and whose normalizer therefore restates the default verbatim. The one
-	/// exception is <see cref="ClockOnlyLabelDao"/>, which exists precisely to demonstrate the hazard of an
-	/// inconsistent pairing and is asserted as a characterization, not as a conforming policy.
+	/// <b>The Timestamp Pair Rule as amended, not as it read before.</b> Owner decision <b>F2, Option C</b>,
+	/// 2026-08-22: overriding <c>GetCurrentTimestamp()</c> alone is <b>conforming provided the replacement clock
+	/// still yields UTC</b>, because the default normalizer already agrees with such a clock. Every other single
+	/// override remains a defect. <see cref="CountingClockLabelDao"/>, <see cref="SettableClockLabelDao"/> and
+	/// <see cref="FrozenClockLabelDao"/> are all inside that carve-out and deliberately leave the normalizer
+	/// alone; <see cref="LocalTimeLabelDao"/> overrides both because its clock does not yield UTC, and
+	/// <see cref="ClockOnlyLabelDao"/> is outside the carve-out and is pinned as a hazard rather than as a
+	/// conforming policy. <b>A suite that treats every single override as a defect makes a fixed-instant test
+	/// clock look non-conforming</b>, which is the failure the amendment was made to prevent.
+	/// </para>
+	/// <para>
+	/// <b>The normalizer's default is asserted directly against the hook</b>, per owner decision <b>F3, Option
+	/// C</b> — no round trip and no provider. The superseded wording asserted a round trip, which made a
+	/// <c>Contract</c> obligation turn on a certified-provider fact: against a provider that preserved
+	/// <see cref="DateTimeKind"/> an identity normalizer passed it.
 	/// </para>
 	/// </remarks>
 	public class SoftDeleteTimestampHookTests
@@ -109,10 +120,21 @@ namespace ProphetsWay.EFTools.Tests
 		}
 
 		/// <summary>Overrides nothing. The subject of every default-behavior obligation.</summary>
+		/// <remarks>
+		/// <see cref="ReachNormalizeRetrievedTimestamp"/> is a test instrument and not an override: it calls the
+		/// hook rather than reimplementing it, so what answers is the default. There is no other way to reach a
+		/// <c>protected</c> member at the keyed declaration site, which is what owner decision F3 Option C requires
+		/// — no round trip, no provider.
+		/// </remarks>
 		public class LabelDao : BaseSoftPagedDao<Label, int>
 		{
 			public LabelDao(DbContext context) : base(context)
 			{
+			}
+
+			public DateTime ReachNormalizeRetrievedTimestamp(DateTime value)
+			{
+				return NormalizeRetrievedTimestamp(value);
 			}
 		}
 
@@ -125,21 +147,21 @@ namespace ProphetsWay.EFTools.Tests
 
 			public int ClockReads { get; private set; }
 
+			// The clock still yields UTC, so this override is inside the F2 Option C carve-out and owes no
+			// normalizer override. It is left alone deliberately.
 			protected override DateTime GetCurrentTimestamp()
 			{
 				ClockReads++;
 
 				return DateTime.UtcNow;
 			}
-
-			// A13: the pair travels together. This clock is UTC, so the normalizer restates the default policy.
-			protected override DateTime NormalizeRetrievedTimestamp(DateTime value)
-			{
-				return DateTime.SpecifyKind(value, DateTimeKind.Utc);
-			}
 		}
 
 		/// <summary>A clock the test drives, so each stamping member can be given a distinguishable instant.</summary>
+		/// <remarks>
+		/// Every instant the test sets carries <see cref="DateTimeKind.Utc"/>, so this is inside the F2 Option C
+		/// carve-out and owes no normalizer override.
+		/// </remarks>
 		public class SettableClockLabelDao : BaseSoftGetAllDao<Label, int>
 		{
 			public SettableClockLabelDao(DbContext context) : base(context)
@@ -151,11 +173,6 @@ namespace ProphetsWay.EFTools.Tests
 			protected override DateTime GetCurrentTimestamp()
 			{
 				return Now;
-			}
-
-			protected override DateTime NormalizeRetrievedTimestamp(DateTime value)
-			{
-				return DateTime.SpecifyKind(value, DateTimeKind.Utc);
 			}
 		}
 
@@ -182,8 +199,11 @@ namespace ProphetsWay.EFTools.Tests
 		}
 
 		/// <summary>
-		/// <b>Deliberately non-conforming.</b> Overrides the clock and leaves the normalizer at its default,
-		/// which A13 calls a defect. It exists to demonstrate the hazard, not to model a supported policy.
+		/// <b>Deliberately non-conforming.</b> A clock that does <b>not</b> yield UTC, with the normalizer left at
+		/// its default — outside the F2 Option C carve-out, and a defect the Timestamp Pair Rule names. It exists to
+		/// demonstrate the hazard, not to model a supported policy. The carve-out is keyed on what the replacement
+		/// clock yields, not on which member was overridden, which is the only thing separating this from
+		/// <see cref="FrozenClockLabelDao"/>.
 		/// </summary>
 		public class ClockOnlyLabelDao : BaseSoftDao<Label, int>
 		{
@@ -194,6 +214,24 @@ namespace ProphetsWay.EFTools.Tests
 			protected override DateTime GetCurrentTimestamp()
 			{
 				return DateTime.Now;
+			}
+		}
+
+		/// <summary>
+		/// The third conforming pairing the F2 Option C amendment added on the <b>keyed</b> branch — a frozen clock
+		/// that still yields UTC, with <c>NormalizeRetrievedTimestamp</c> deliberately <b>not</b> overridden.
+		/// </summary>
+		public class FrozenClockLabelDao : BaseSoftDao<Label, int>
+		{
+			public static readonly DateTime Frozen = new DateTime(2026, 8, 22, 13, 45, 0, DateTimeKind.Utc);
+
+			public FrozenClockLabelDao(DbContext context) : base(context)
+			{
+			}
+
+			protected override DateTime GetCurrentTimestamp()
+			{
+				return Frozen;
 			}
 		}
 
@@ -412,6 +450,58 @@ namespace ProphetsWay.EFTools.Tests
 		#region NormalizeRetrievedTimestamp
 
 		/// <summary>
+		/// The default normalizer <b>relabels; it never shifts</b>: a value arriving with
+		/// <see cref="DateTimeKind.Unspecified"/> comes back carrying <see cref="DateTimeKind.Utc"/> and the same
+		/// <see cref="DateTime.Ticks"/>.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// <c>Contract</c>: the Timestamp Policy table, <i>NormalizeRetrievedTimestamp default</i>, second clause.
+		/// Asserted <b>directly against the hook</b>, per owner decision F3 Option C, 2026-08-22 — no round trip,
+		/// no provider. This is the keyed half of that obligation; the keyless half is
+		/// <c>KeylessSoftDaoTests.ShouldRelabelWithoutShiftingWhenTheNormalizerDefaultIsCalledDirectly</c>, and
+		/// R4-S2 requires both because the pair is declared on two unrelated branches with no compiler check
+		/// spanning them.
+		/// </para>
+		/// <para>
+		/// <b>The superseded wording is named so it is not restored.</b> <i>"The default restores
+		/// <see cref="DateTimeKind.Utc"/> on SQLite and SQL Server"</i> asserted a round trip, which made a
+		/// <c>Contract</c> obligation turn on a certified-provider fact: against a provider that preserved
+		/// <c>Kind</c>, an identity normalizer (<c>value =&gt; value</c>) passed it. This kills the identity
+		/// normalizer with no store in the path at all.
+		/// </para>
+		/// <para>
+		/// <b>The ticks clause is the half that discriminates a wrongly-applied <c>ToUniversalTime()</c></b>, and
+		/// lap finding <b>F7</b> is that it does so on any non-UTC machine and on no UTC one. F7 is a property of
+		/// the mechanism rather than of this wording and is not closed here; what changed is that the old wording
+		/// discriminated it on <i>no</i> machine. A non-zero time-of-day is used so a shift is visible at all.
+		/// </para>
+		/// </remarks>
+		[Fact]
+		[Trait("Scope", "Contract")]
+		[Trait("Area", "SoftDelete")]
+		public void ShouldRelabelWithoutShiftingWhenTheNormalizerDefaultIsCalledDirectly()
+		{
+			WithStore(factory =>
+			{
+				//setup
+				var provided = new DateTime(2026, 8, 22, 13, 45, 30, DateTimeKind.Unspecified);
+
+				using (var context = factory())
+				{
+					var dao = new LabelDao(context);
+
+					//act
+					var normalized = dao.ReachNormalizeRetrievedTimestamp(provided);
+
+					//assert
+					normalized.Kind.ShouldBe(DateTimeKind.Utc);
+					normalized.Ticks.ShouldBe(provided.Ticks);
+				}
+			});
+		}
+
+		/// <summary>
 		/// Every timestamp this Data Access Object's own reads materialize passes through the normalizer, whose
 		/// default restores <see cref="DateTimeKind.Utc"/> — and a <c>null</c> stays <c>null</c> rather than
 		/// being normalized into one. The instant is unchanged, because the default relabels and never shifts.
@@ -570,6 +660,59 @@ namespace ProphetsWay.EFTools.Tests
 					retrieved.ShouldNotBeNull();
 					retrieved.CreatedDate.Kind.ShouldBe(DateTimeKind.Utc);
 					retrieved.CreatedDate.Ticks.ShouldBe(label.CreatedDate.Ticks);
+				}
+			});
+		}
+
+		/// <summary>
+		/// <b>The F2 Option C carve-out, on the keyed branch.</b> A frozen clock that still yields UTC, with
+		/// <c>NormalizeRetrievedTimestamp</c> left at its default, is <b>conforming</b>: the stamped instant and
+		/// the retrieved one agree, and both carry <see cref="DateTimeKind.Utc"/>.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// <c>Contract</c>: the Timestamp Pair Rule as amended by owner decision F2 Option C, 2026-08-22 —
+		/// <i>"overriding <c>GetCurrentTimestamp()</c> alone is conforming provided the replacement clock still
+		/// yields UTC"</i> — stated on <see cref="BaseSoftDao{TEntity, TKey}"/>'s own remarks. The obligation it
+		/// discharges is the library-side half: an implementation whose default normalizer disagreed with a UTC
+		/// clock would break the carve-out, and with it the ordinary way to inject a fixed test clock.
+		/// </para>
+		/// <para>
+		/// <b>It must not be pinned as a hazard.</b> A suite that treats every single override as a defect makes a
+		/// fixed-instant test clock look non-conforming and pushes the next author into overriding a normalizer
+		/// they have no reason to touch — which is the failure the amendment was made to prevent.
+		/// <see cref="ShouldRelabelALocalStampAsUtcWhenOnlyTheClockIsOverridden"/> is the hazard, and the two
+		/// differ only in what the replacement clock yields: the carve-out is keyed on that, not on which member
+		/// was overridden.
+		/// </para>
+		/// </remarks>
+		[Fact]
+		[Trait("Scope", "Contract")]
+		[Trait("Area", "SoftDelete")]
+		public void ShouldConformWhenOnlyTheClockIsOverriddenAndItStillYieldsUtc()
+		{
+			WithStore(factory =>
+			{
+				//setup
+				var label = new Label { Name = "frozen clock" };
+
+				using (var context = factory())
+					new FrozenClockLabelDao(context).Insert(label);
+
+				using (var context = factory())
+				{
+					var dao = new FrozenClockLabelDao(context);
+
+					//act
+					var retrieved = dao.Get(new Label { Id = label.Id });
+
+					//assert
+					label.CreatedDate.Kind.ShouldBe(DateTimeKind.Utc);
+					label.CreatedDate.Ticks.ShouldBe(FrozenClockLabelDao.Frozen.Ticks);
+
+					retrieved.ShouldNotBeNull();
+					retrieved.CreatedDate.Kind.ShouldBe(DateTimeKind.Utc);
+					retrieved.CreatedDate.Ticks.ShouldBe(FrozenClockLabelDao.Frozen.Ticks);
 				}
 			});
 		}

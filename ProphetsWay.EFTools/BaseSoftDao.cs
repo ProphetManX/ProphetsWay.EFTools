@@ -31,10 +31,15 @@ namespace ProphetsWay.EFTools
 	/// deleted row.
 	/// </para>
 	/// <para>
-	/// <b>The two timestamp hooks are one policy stated from two directions. Override both, or neither.</b>
-	/// Overriding <see cref="GetCurrentTimestamp"/> alone leaves a stamp relabeled <see cref="DateTimeKind.Utc"/>
-	/// on retrieval while holding a reading from some other clock — an instant wrong by that clock's offset, with
-	/// nothing to indicate it. The library cannot check that one override agrees with the other, so this is an
+	/// <b>The two timestamp hooks are one policy stated from two directions, and the two must never state
+	/// disagreeing policies. Override both, or neither</b> — with one carve-out, which is part of the rule and
+	/// not an exception to it: <b>overriding <see cref="GetCurrentTimestamp"/> alone is conforming provided the
+	/// replacement clock still yields <see cref="DateTimeKind.Utc"/></b>, which the default normalizer already
+	/// agrees with. Injecting a fixed-instant test clock is that case. Overriding the clock to a policy that
+	/// does <i>not</i> yield UTC, or overriding <see cref="NormalizeRetrievedTimestamp"/> alone, leaves a stamp
+	/// relabeled <see cref="DateTimeKind.Utc"/> on retrieval while holding a reading from some other clock — an
+	/// instant wrong by that clock's offset, with nothing to indicate it. The library checks none of this: it
+	/// never inspects what the clock returns and never compares one override against the other, so this is an
 	/// obligation on the deriving Data Access Object rather than something enforced here.
 	/// </para>
 	/// <para>
@@ -59,7 +64,9 @@ namespace ProphetsWay.EFTools
 		/// <remarks>
 		/// Read <b>once per stamping operation</b>, and the one reading serves every object that operation writes
 		/// it to — the stored row and the caller's instance alike. Bound to
-		/// <see cref="NormalizeRetrievedTimestamp"/> by the Timestamp Pair Rule: override both or neither.
+		/// <see cref="NormalizeRetrievedTimestamp"/> by the Timestamp Pair Rule: override both, or neither,
+		/// <b>unless the replacement clock still yields <see cref="DateTimeKind.Utc"/></b>, which the default
+		/// normalizer already agrees with.
 		/// </remarks>
 		protected virtual DateTime GetCurrentTimestamp()
 		{
@@ -75,6 +82,9 @@ namespace ProphetsWay.EFTools
 		/// <remarks>
 		/// <para>
 		/// The default is <c>DateTime.SpecifyKind(value, DateTimeKind.Utc)</c>. It <b>relabels; it never shifts.</b>
+		/// The returned value's <see cref="DateTime.Ticks"/> equal the input's — the same instant, differently
+		/// labeled. Bound to <see cref="GetCurrentTimestamp"/> by the Timestamp Pair Rule: override both, or
+		/// neither, unless the clock override still yields <see cref="DateTimeKind.Utc"/>.
 		/// </para>
 		/// <para>
 		/// Applied to the three timestamps of every entity <see cref="Get"/>, <see cref="GetAll"/> and
@@ -105,11 +115,20 @@ namespace ProphetsWay.EFTools
 
 		/// <inheritdoc />
 		/// <remarks>
+		/// <para>
 		/// Stamps <c>CreatedDate</c> and forces <c>UpdatedDate</c> and <c>DeletedDate</c> to <c>null</c>,
 		/// <b>whatever the caller assigned</b>. All three are visible on <paramref name="item"/> when the call
 		/// returns, alongside the identifier, and the stored row carries the same three — one reading of the clock
 		/// written to both objects. They are never read back off the store, which is what keeps a
 		/// provider-stripped kind off a caller's instance.
+		/// </para>
+		/// <para>
+		/// <b>The write-back onto <paramref name="item"/> is owed only where a row was stored.</b> An
+		/// <c>Insert</c> that throws leaves the caller's instance carrying exactly the values it arrived with — no
+		/// stamp, no nulled timestamp, no identifier — because a caller told nothing was stored must not be
+		/// holding an instance that says a row was. This is the same rule <see cref="Update"/> already applies to
+		/// <c>UpdatedDate</c>. See finding F10 in <c>docs/api-contract.md</c>.
+		/// </para>
 		/// </remarks>
 		public override void Insert(TEntity item)
 		{
@@ -119,12 +138,32 @@ namespace ProphetsWay.EFTools
 			// Assigned before the base member reads item, because the copy it inserts is taken from item's mapped
 			// scalars — so one reading of the clock reaches the stored row and the caller's instance alike.
 			var stamp = GetCurrentTimestamp();
+			var created = item.CreatedDate;
+			var updated = item.UpdatedDate;
+			var deleted = item.DeletedDate;
+			var stored = false;
 
 			item.CreatedDate = stamp;
 			item.UpdatedDate = null;
 			item.DeletedDate = null;
 
-			base.Insert(item);
+			try
+			{
+				base.Insert(item);
+
+				stored = true;
+			}
+			finally
+			{
+				// Nothing was written, so the caller's instance is left exactly as it was found. Same shape as
+				// Update below, and the reason F10 exists.
+				if (!stored)
+				{
+					item.CreatedDate = created;
+					item.UpdatedDate = updated;
+					item.DeletedDate = deleted;
+				}
+			}
 		}
 
 		/// <inheritdoc />
