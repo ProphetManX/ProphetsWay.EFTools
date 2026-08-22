@@ -1,54 +1,47 @@
-﻿#if NET8_0_OR_GREATER
-using Microsoft.EntityFrameworkCore;
-#endif
-#if NET461 || NET471 || NET48
-using System.Data.Entity;
-#endif
-using ProphetsWay.BaseDataAccess;
+#nullable enable
 
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
+
+using ProphetsWay.BaseDataAccess;
 
 namespace ProphetsWay.EFTools
 {
-    public abstract class BaseNonIdDao<T> : IBaseDao<T> where T: class, IBaseEntity
-    {
-        internal RootNonIdDao<T> Dao;
+	/// <summary>A keyless Data Access Object that does publish the <see cref="IBaseDao{T}"/> shape.</summary>
+	/// <typeparam name="TEntity">The entity this Data Access Object reads and writes.</typeparam>
+	/// <remarks>
+	/// <b>Adds no behavior.</b> It declares <see cref="IBaseDao{T}"/> and publishes the two cores
+	/// <see cref="RootNonIdDao{TEntity}"/> keeps <c>protected</c>. Take it when your keyless entity really does
+	/// support single-row retrieval and in-place update through <see cref="RootNonIdDao{TEntity}.MatchRow"/>;
+	/// take <see cref="RootNonIdDao{TEntity}"/> when it does not, and do not take this one merely to reach a
+	/// member — <c>Get</c> and <c>Update</c> published on an entity they are meaningless for is the coercion the
+	/// keyless families exist to prevent.
+	/// </remarks>
+	// CS8766: IBaseDao<T> is compiled null-oblivious, and T : IBaseEntity permits a struct, so the interface
+	// cannot annotate the return its own documentation describes. Tracked for ProphetsWay.BaseDataAccess 3.2.0.
+#pragma warning disable CS8766
+	public abstract class BaseNonIdDao<TEntity> : RootNonIdDao<TEntity>, IBaseDao<TEntity>
+		where TEntity : class, IBaseEntity
+	{
+#pragma warning restore CS8766
+		/// <inheritdoc />
+		protected BaseNonIdDao(DbContext context) : base(context)
+		{
+		}
 
-        protected BaseNonIdDao(DbContext context)
-        {
-            Dao = new RootNonIdDao<T>(context);
-        }
+		/// <inheritdoc cref="RootNonIdDao{TEntity}.GetCore" />
+		/// <remarks><see cref="RootNonIdDao{TEntity}.GetCore"/>, published. Contract unchanged.</remarks>
+#pragma warning disable CS8766
+		public virtual TEntity? Get(TEntity item)
+#pragma warning restore CS8766
+		{
+			return GetCore(item);
+		}
 
-        public DbContext Context => Dao.Context;
-        public DbSet<T> Dataset => Dao.Dataset;
-
-        public int Delete(T item)
-        {
-            return Dao.Delete(item);
-        }
-
-        public abstract T Get(T item);
-
-        public void Insert(T item)
-        {
-            Dao.Insert(item);
-        }
-
-        public abstract int Update(T item);
-
-        public void EnsureBeginTransaction()
-        {
-            Dao.EnsureBeginTransaction();
-        }
-
-        public void EnsureTransactionCommit()
-        {
-            Dao.EnsureTransactionCommit();
-        }
-
-        public void EnsureTransactionRollback()
-        {
-            Dao.EnsureTransactionRollback();
-        }
-    }
+		/// <inheritdoc cref="RootNonIdDao{TEntity}.UpdateCore" />
+		/// <remarks><see cref="RootNonIdDao{TEntity}.UpdateCore"/>, published. Contract unchanged.</remarks>
+		public virtual int Update(TEntity item)
+		{
+			return UpdateCore(item);
+		}
+	}
 }

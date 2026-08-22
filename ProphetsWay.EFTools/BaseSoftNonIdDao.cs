@@ -1,79 +1,53 @@
-﻿#if NET8_0_OR_GREATER
+#nullable enable
+
 using Microsoft.EntityFrameworkCore;
-#endif
-#if NET461 || NET471 || NET48
-using System.Data.Entity;
-using System.Data.Entity.Migrations;
-#endif
+
 using ProphetsWay.BaseDataAccess;
-using System;
 
 namespace ProphetsWay.EFTools
 {
-    public abstract class BaseSoftNonIdDao<T> : BaseNonIdDao<T>, IBaseDao<T> where T : class, IBaseSoftEntity
-    {
-        protected BaseSoftNonIdDao(DbContext context, bool UseUtcTime = true) : base(context)
-        {
-            this.UseUtcTime = UseUtcTime;
-        }
+	/// <summary>
+	/// A keyless soft-delete Data Access Object that also publishes the <see cref="IBaseDao{T}"/> shape,
+	/// identified by the <c>MatchRow</c> predicate rather than by an identifier.
+	/// </summary>
+	/// <typeparam name="TEntity">The entity this Data Access Object reads and writes.</typeparam>
+	/// <remarks>
+	/// <b>Adds no behavior.</b> It declares <see cref="IBaseDao{T}"/> and publishes the two soft cores
+	/// <see cref="RootSoftNonIdDao{TEntity}"/> keeps <c>protected</c>. Both timestamp hooks are inherited
+	/// unchanged, and the Timestamp Pair Rule binds a Data Access Object deriving from <b>this</b> type exactly
+	/// as it binds one deriving from <see cref="RootSoftNonIdDao{TEntity}"/> — the rule counts declaration
+	/// sites, not derivation depth.
+	/// </remarks>
+	// CS8766: IBaseDao<T> is compiled null-oblivious, and T : IBaseEntity permits a struct, so the interface
+	// cannot annotate the return its own documentation describes. Tracked for ProphetsWay.BaseDataAccess 3.2.0.
+#pragma warning disable CS8766
+	public abstract class BaseSoftNonIdDao<TEntity> : RootSoftNonIdDao<TEntity>, IBaseDao<TEntity>
+		where TEntity : class, IBaseSoftEntity
+	{
+#pragma warning restore CS8766
+		/// <inheritdoc />
+		protected BaseSoftNonIdDao(DbContext context) : base(context)
+		{
+		}
 
-        protected bool UseUtcTime { get; private set; }
+		/// <inheritdoc cref="RootSoftNonIdDao{TEntity}.GetCore" />
+		/// <remarks>The soft <see cref="RootSoftNonIdDao{TEntity}.GetCore"/>, published — returns soft-deleted rows.</remarks>
+#pragma warning disable CS8766
+		public virtual TEntity? Get(TEntity item)
+#pragma warning restore CS8766
+		{
+			return GetCore(item);
+		}
 
-#if NET461 || NET471 || NET48
-        public override int Update(T item)
-        {
-            item.UpdatedDate = UseUtcTime ? DateTime.UtcNow : DateTime.Now;
-            return UpdateEntity(item);
-        }
-#endif
-#if NET8_0_OR_GREATER
-        public override int Update(T item)
-        {
-            item.UpdatedDate = UseUtcTime ? DateTime.UtcNow : DateTime.Now;
-            return UpdateEntity(item);
-        }
-
-        public override T Get(T item)
-        {
-            return Get(item, false);
-        }
-
-        /// <summary>
-        /// Need to retrieve the entity by its ID(s) so we can update it.
-        /// when AsTracking is true, must use AsTracking() to get the entity
-        ///     return Dataset.AsTracking().Single(x=> x.Key1 == item.Key1 && x.Key2 == item.Key2);
-        /// else
-        ///     return Dataset.Single(x=> x.Key1 == item.Key1 && x.Key2 == item.Key2);
-        /// </summary>
-        public abstract T Get(T item, bool AsTracking);
-#endif
-
-        private int UpdateEntity(T item)
-        {
-#if NET461 || NET471 || NET48
-            Dao.Dataset.AddOrUpdate(item);
-#endif
-#if NET8_0_OR_GREATER
-            var entity = Get(item, true);
-            var entityEntry = Dao.Context.Entry(entity);
-            entityEntry.CurrentValues.SetValues(item);
-            entityEntry.State = EntityState.Modified;
-#endif
-            return Dao.Context.SaveChanges();
-        }
-
-        public new int Delete(T item)
-        {
-            item.DeletedDate = UseUtcTime ? DateTime.UtcNow : DateTime.Now;
-            return UpdateEntity(item);
-        }
-
-        public new void Insert(T item)
-        {
-            item.CreatedDate = UseUtcTime ? DateTime.UtcNow : DateTime.Now;
-            Dao.Insert(item);
-        }
-
-
-    }
+		/// <inheritdoc cref="RootSoftNonIdDao{TEntity}.UpdateCore" />
+		/// <remarks>
+		/// The soft <see cref="RootSoftNonIdDao{TEntity}.UpdateCore"/>, published. <b>It cannot be made to
+		/// bypass timestamp preservation through a hard-update core</b> — the core is an <c>override</c>, so a
+		/// caller holding a <see cref="RootNonIdDao{TEntity}"/>-typed reference still reaches the soft body.
+		/// </remarks>
+		public virtual int Update(TEntity item)
+		{
+			return UpdateCore(item);
+		}
+	}
 }
