@@ -4,27 +4,40 @@ _Generated 2026-08-15. Evidence-based; every claim cites a source file._
 
 ---
 
-## Reading Note — Rewritten 2026-08-22
+## Reading Note — Rewritten 2026-08-22, then corrected the same day for lap 4
 
 **This document was re-profiled against the working tree on 2026-08-22, after implementation laps 1, 2 and
-3.** Six passes of dated corrections had accreted on top of a 2026-08-15 original, and the result no longer
+3 — and then corrected again hours later, after lap 4 (`d00aad3`) landed and made a third of it false.** Six
+passes of dated corrections had accreted on top of a 2026-08-15 original, and the result no longer
 told a reader what was true. The correction history is compressed here; the sections below describe the
-**tree as it stands**, not the tree as any earlier pass found it.
+**tree as it stands at `d00aad3`**, not the tree as any earlier pass found it.
+
+**Lap 4 is a pure deletion — 24 files, 773 lines, and no modification to any surviving file.** It removed
+the 18 key-specific closures and with them the `ProphetsWay.EFTools.Guid` / `.Int` / `.Long` namespaces
+entirely, the `RootBaseDao<T,TIdType>` and `RootBaseSoftDao<T,TIdType>` bridges, the internal
+`RootDao<T,TIdType>`, and `LegacyRootNonIdDao<T>` / `LegacyBaseNonIdDao<T>` / `LegacyBaseSoftNonIdDao<T>`.
+The file-by-file stat came from the owner and **could not be re-run here — this agent has no terminal.**
+What *was* done here is stronger: the **effect** was verified directly against the tree by listing the
+library folder and grepping every type declaration and every preprocessor directive in it.
 
 **What earlier passes said that is now false, so it is not re-derived below:**
 
 | Superseded claim | Where it stood | What the tree says |
 | --- | --- | --- |
-| Library has **27 source files**; 24 public abstract classes | Projects in the Solution | **39 files** — 34 public abstract classes, 1 enum, 4 internal classes |
+| Library has **27 source files**, then **39** — 34 public abstract classes, 1 enum, 4 internal classes | Projects in the Solution, Public API Surface | **15 files, one flat folder, no subfolders** — 12 public abstract classes, 1 enum, 2 internal static classes. **Both 27 and 39 are superseded** |
+| **24 of the 39 files are the 2.2.x shape lap 4 deletes**, and every variant of that sentence | Throughout | **Lap 4 has landed.** Those 24 files do not exist |
+| The dead `#if NET461 \|\| NET471 \|\| NET48` blocks **survive in 24 files** | What It Actually Does, Planned 3.x Direction, Gaps 2 | **Zero preprocessor directives of any kind remain library-wide** — grepped all 15 files for `#if`, `#else`, `#elif`, `#endif`, `#region`, `#endregion`, `#define` |
 | `ProphetsWay.EFTools.Tests` has **19 source files / 151 cases** | Projects in the Solution, Tests and Build Facts | **25 files / 270 cases** |
-| **Nothing tests this library's own public surface** | Tests and Build Facts, Gaps 5 | **126 of the 270 cases do**, in 7 locally written classes |
+| **Nothing tests this library's own public surface** | Tests and Build Facts, Gaps 5 | **126 of the 270 cases do**, in **8** locally written classes. **The figure of 7 that three earlier sentences carried was wrong against their own table, which listed eight** |
+| `GetCore` / `UpdateCore` are among **`BaseDao`'s** protected seams | Public API Surface | They are declared on **`RootNonIdDao`** only — `RootNonIdDao.cs` lines 308 and 342 — and overridden in `RootSoftNonIdDao.cs` at 201 and 229. `BaseDao`'s seams are `TrackForWrite`, `ApplyUpdateValues`, `GetKey`, `MatchRow`, `KeyEquals`, `ApplyReadFilter`, `ApplyIncludes`, `ApplyStableOrder` |
 | `CompanyResourceDao` **does not exist** and dominates the failures | Tests and Build Facts, Gaps 5 | It exists, on `RootNonIdDao<CompanyResource>`; the 11 remaining failures are elsewhere |
 | `DepartmentDao` derives from **no EFTools base** | Public API Surface | `BaseSoftPagedDao<Department, int>` |
 | `BaseEFContext`'s string constructor **hardcodes `UseSqlServer`** | What It Actually Does, Public API Surface | That constructor is gone; the class names no provider |
 | `ObjectDisposedException` guarding **is not in place** | Gaps 1, Planned 3.x Direction | All 10 non-`Dispose` members call `ThrowIfDisposed()` |
-| Six generic DAO families are **"Not started"** | Planned 3.x Direction | Twelve classes landed across laps 1–3 |
+| Six generic DAO families are **"Not started"** | Planned 3.x Direction | Twelve classes landed across laps 1–3; lap 4 removed everything they replaced |
 | **7 warnings** on the last build; `Submod` Source Link warning present | Packaging Audit, Tests and Build Facts | **0 warnings** on 2026-08-22 |
 | `AlternateKeyGuardSpikeTests.cs` carries **zero `[Trait]`** | Tests and Build Facts | All 7 theories now carry `Scope` and `Area` traits |
+| `app-variables.yml` reads **`2` / `2` / `0`**, and the mismatch is **an open owner decision** | Reading Note, Gaps 10, Open Questions | **CLOSED.** It reads `Major: '3'` / `Minor: '0'` / `Patch: '0'` — opened 2026-08-22. The owner has taken the bump |
 
 **What this pass could and could not measure.** Every structural claim below was taken by opening the file
 named or by grepping the directory named on **2026-08-22**; the file is cited inline. **No build and no test
@@ -33,10 +46,12 @@ SQL Server. Build and test *results* are attributed to the owner's 2026-08-22 ru
 The case counts are the exception: they were derived by static count and **reconcile with the reported runner
 totals exactly**, which is stated where it matters.
 
-**Unchanged and re-verified rather than inherited:** the submodule pointer (`.git/modules/ProphetsWay.Example/HEAD`),
-the packaging metadata block (`ProphetsWay.EFTools.csproj`), and `app-variables.yml`, which still reads
-`2` / `2` / `0` while the tree implies 3.0.0. **That mismatch is an open owner decision. It is recorded, not
-resolved.**
+**Unchanged and re-verified rather than inherited:** the submodule pointer
+(`.git/modules/ProphetsWay.Example/HEAD`, still `61d9e7dfb209c4a92b0c16d058aad1af08031fb5`) and the packaging
+metadata block ([ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), which lap 4
+did not touch). **`app-variables.yml` is *not* in that list any more** — it changed, and the change closes
+the question this document had been recording. It now reads `3` / `0` / `0`. **What is still open is not a
+decision:** 3.0.0 is set and **not yet tagged or published**, and nuget.org still serves 2.2.0.
 
 ---
 
@@ -49,20 +64,25 @@ writes only the members their own contract adds.
 
 **Two versions of that sentence are true at once, and the difference matters.** The **published 2.2.0**
 package supplies EF6 *and* EF Core bases against `ProphetsWay.BaseDataAccess` 2.5.0. **The working tree is
-an EF Core-only library against 3.1.0**, targeting `net10.0` alone, carrying the full twelve-class 3.0.0
-surface *and* the 2.2.x surface it replaces — because lap 4, which deletes the latter, has not run
+an EF Core-only library against 3.1.0**, targeting `net10.0` alone, and since lap 4 it carries the
+twelve-class 3.0.0 surface **and nothing else** — the 2.2.x surface it replaces was deleted in `d00aad3`
 ([ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj),
 [CHANGELOG.md](../CHANGELOG.md), [docs/api-contract.md](api-contract.md)).
+
+**The two are not yet the same artifact on nuget.org.** `app-variables.yml` reads `3` / `0` / `0`, but
+3.0.0 is **not tagged and not published**, so a reader of the listing still meets the first sentence.
 
 ## What It Actually Does
 
 Everything below was read from the file cited, on 2026-08-22.
 
-- **EF Core only.** No project references `EntityFramework` 6.x. The 24 legacy source files still carry
-  `using System.Data.Entity;` inside `#if NET461 || NET471 || NET48` blocks, which are **dead** under a
-  `net10.0`-only build — a repository-wide grep for that `#if` matches those 24 files and **no lap-1–3
-  file** ([Int/BaseDao.cs](../ProphetsWay.EFTools/Int/BaseDao.cs),
-  [RootDao.cs](../ProphetsWay.EFTools/RootDao.cs)).
+- **EF Core only, and there is no longer any residue of the alternative.** No project references
+  `EntityFramework` 6.x. **There is also no conditionally compiled code left at all** — grepping all 15
+  library files for `#if`, `#else`, `#elif`, `#endif`, `#region`, `#endregion` and `#define` on 2026-08-22
+  returns **nothing**. The dead `#if NET461 || NET471 || NET48` blocks carrying `using System.Data.Entity;`
+  lived in exactly the 24 files lap 4 deleted, so they left with them — one removal, not two.
+  `CHANGELOG.md`'s v3.0.0 entry says the same thing independently: *"there is no longer any conditionally
+  compiled code in the library at all"* ([CHANGELOG.md](../CHANGELOG.md)).
 - **The library selects no database provider in code.** Grepping every `.cs` under `ProphetsWay.EFTools/`
   for `UseSqlServer` and `UseInMemoryDatabase` returns **nothing**. `BaseEFContext` is a bare abstract
   `DbContext` with one `protected BaseEFContext(DbContextOptions)` constructor and no members;
@@ -104,14 +124,15 @@ Everything below was read from the file cited, on 2026-08-22.
   structural and accepted while duplication of *logic* is not
   ([EntityGraph.cs](../ProphetsWay.EFTools/EntityGraph.cs),
   [SoftTimestamps.cs](../ProphetsWay.EFTools/SoftTimestamps.cs)).
-- **The 2.2.x surface is still shipped alongside all of that.** 18 key-specific closures in
-  `ProphetsWay.EFTools.Guid` / `.Int` / `.Long`, the `RootBaseDao<T, TIdType>` and
-  `RootBaseSoftDao<T, TIdType>` bridges (both `where TIdType : struct`), the internal `RootDao`, and three
-  `Legacy*` types renamed in lap 3 purely to free `BaseNonIdDao` / `BaseSoftNonIdDao` /
-  `RootNonIdDao` for the new ones. `CHANGELOG.md` states they are scheduled for deletion before 3.0.0 is
-  tagged and are **not a supported migration target**
-  ([CHANGELOG.md](../CHANGELOG.md), [RootBaseDao.cs](../ProphetsWay.EFTools/RootBaseDao.cs),
-  [LegacyBaseNonIdDao.cs](../ProphetsWay.EFTools/LegacyBaseNonIdDao.cs)).
+- **The 2.2.x surface is gone, deleted in `d00aad3`.** What left: 18 key-specific closures and with them the
+  `ProphetsWay.EFTools.Guid` / `.Int` / `.Long` namespaces **entirely**; the `RootBaseDao<T, TIdType>` and
+  `RootBaseSoftDao<T, TIdType>` bridges (both `where TIdType : struct` — the constraint the open-key
+  families exist to drop); the internal `RootDao<T, TIdType>`; and the three `Legacy*` types renamed in
+  lap 3 purely to free `BaseNonIdDao` / `BaseSoftNonIdDao` / `RootNonIdDao` for the new ones. Those three
+  existed for a handful of commits and **never shipped**: `CHANGELOG.md`'s v3.0.0 entry states that none of
+  them is part of 3.0.0 and that there is no `LegacyBaseNonIdDao<T>` to migrate onto. **Never write new
+  code against any of these names, and do not re-report them as present**
+  ([CHANGELOG.md](../CHANGELOG.md), [docs/api-contract.md](api-contract.md) § *The Public Surface*).
 
 
 ## Projects in the Solution
@@ -123,9 +144,9 @@ submodule` and `Solution Items`. Three projects are owned by this repository; fo
 
 | Project | Type | Role |
 | --- | --- | --- |
-| `ProphetsWay.EFTools` | Packable library | The published product. **39 source files** — 21 in the root, 6 each in `Guid/`, `Int/`, `Long/`. One top-level type per file: **34 public abstract classes, 1 public enum, 4 internal classes**. **15 files are the 3.x surface plus its two internal helpers; 24 are the 2.2.x shape lap 4 deletes** |
+| `ProphetsWay.EFTools` | Packable library | The published product. **15 source files, one flat folder, no subfolders** — `Guid/`, `Int/` and `Long/` left with `d00aad3`. One top-level type per file: **12 public abstract classes, 1 public enum, 2 internal static classes**. That is the 3.x surface and nothing else. **Zero preprocessor directives library-wide** |
 | `ProphetsWay.Example.DataAccess.EF` | Library / proving ground | EF implementation of the Example contracts. **9 source files — `ExampleContext.cs`, `ExampleDataAccess.cs` and 7 DAOs.** All seven derive from a 3.x family |
-| `ProphetsWay.EFTools.Tests` | xUnit project | **25 source files.** 13 one-line adapters, 7 classes written directly against this library's surface, 2 seam guards, `TestSeam.cs`, `Constants.cs` |
+| `ProphetsWay.EFTools.Tests` | xUnit project | **25 source files.** 13 one-line adapters, **8** classes written directly against this library's surface, 2 seam guards, `TestSeam.cs`, `Constants.cs`. **The figure of 7 carried by earlier passes was wrong against their own table** |
 | `ProphetsWay.Example.DataAccess` | Submodule library | Entities and DAL contracts, including `Department` and `CompanyResource` |
 | `ProphetsWay.Example.DataAccess.NoDB` | Submodule library | In-memory implementation; the upstream default |
 | `ProphetsWay.Example.Tests` | Submodule xUnit project | 15 test classes holding **164 cases**. **13 are adapted here and do run against Entity Framework**; the 2 `ConventionShowcase` classes (20 cases) are correctly excluded |
@@ -149,49 +170,65 @@ lasted, and what its removal did **not** buy.
 
 ## Public API Surface
 
-**35 public declarations: 34 abstract classes and one enum.** Four further types — `EntityGraph`,
-`SoftTimestamps`, `RootDao<T, TIdType>`, `LegacyRootNonIdDao<T>` — are `internal` and are not API. All in
-namespace `ProphetsWay.EFTools` except the 18 closures, which are in `.Guid` / `.Int` / `.Long`. Established
-2026-08-22 by grepping every type declaration in `ProphetsWay.EFTools/`.
+**13 public declarations: 12 abstract classes and one enum.** Two further types — `EntityGraph` and
+`SoftTimestamps` — are `internal static` and are not API. **Everything is in namespace
+`ProphetsWay.EFTools`; there are no sub-namespaces.** Established 2026-08-22, after lap 4, by grepping every
+type declaration in `ProphetsWay.EFTools/`: the grep returns **exactly 15 matches in 15 files**, one per
+file, and they are the 15 rows below.
 
-**Read the two tables as one surface with a deletion pending.** `docs/api-contract.md` revision 11 §
-*The Public Surface* specifies **twelve public classes plus one enum** as the 3.0.0 target. **All thirteen
-are in the tree.** Everything in the second table is what that document lists under *"Types that
-disappear"*, and all of it is still present.
+**There is one table now, not two, and the deletion is no longer pending.** `docs/api-contract.md`
+revision 11 § *The Public Surface* specifies **twelve public classes plus one enum** as the 3.0.0 target.
+All thirteen are in the tree, and after `d00aad3` **nothing else is** — that document's *"Types that
+disappear"* list has disappeared. **The sentence "all of it is still present" is dead.** What that list held
+is recorded below the table so a reader meeting the names in the published 2.2.0 package knows where they
+went.
 
-### The 3.x surface — the target, and it has landed
+### The public surface — the whole library
 
 | Type | Members that matter | Purpose | Tested? |
 | --- | --- | --- | --- |
 | `BaseEFContext` | one `protected BaseEFContext(DbContextOptions)` and **nothing else** | Optional provider-free context base. Deriving from it is not required — `BaseEFDataAccess<TContext>` constrains to `DbContext` | Indirectly, via `ExampleContext` |
 | `BaseEFDataAccess<TContext>` | `protected BaseEFDataAccess(TContext, ContextOwnership)`; `TransactionStart` / `TransactionCommit` / `TransactionRollBack`; the seven dispatcher overrides; `sealed override Dispose`; `protected virtual DisposeCore`; `protected ThrowIfDisposed`; `protected TContext Context`; `protected ContextOwnership Ownership`; `protected bool IsDisposed` | The DAL root — transactions, ownership, disposal. **One type parameter.** Both public constructors from 2.2.x are gone | **Yes** — `KeylessDaoTests` builds one directly, plus the whole adapted upstream suite |
 | `ContextOwnership` *(enum)* | `Borrowed`, `Owned` | No default value to fall into; the constructor rejects anything else with `ArgumentOutOfRangeException` | Yes |
-| `BaseDao<TEntity, TKey>` | `Get`, `Insert`, `Update`, `Delete`; `protected` seams `GetCore`, `UpdateCore`, `TrackForWrite`, `ApplyReadFilter`, `ApplyStableOrder`, `ApplyIncludes` | Keyed CRUD, **`TKey` unconstrained** | **Yes** — `KeyPredicateOpenKeyTests` (21), `IdentifierResolutionTests` (4) |
-| `BaseGetAllDao<TEntity, TKey>` | adds `GetAll` | `+ IBaseGetAllDao<TEntity>` | Transitively — `JobDao`, `ResourceDao` |
-| `BasePagedDao<TEntity, TKey>` | adds `GetPaged`, `GetCount` | `+ IBasePagedDao<TEntity>` | Transitively — `CompanyDao`, `TransactionDao` |
-| `BaseSoftDao<TEntity, TKey>` | overrides — never `new` — plus `GetCurrentTimestamp`, `NormalizeRetrievedTimestamp` | Keyed CRUD with soft-delete semantics | **Yes** — `SoftDeleteTimestampHookTests` (12) |
+| `BaseDao<TEntity, TKey>` | `Get`, `Insert`, `Update`, `Delete`, `GetAll`, `GetPaged`, `GetCount`; `protected DbSet<TEntity> Dataset`; `protected` seams `TrackForWrite`, `ApplyUpdateValues`, `GetKey`, `MatchRow`, `KeyEquals`, `ApplyReadFilter`, `ApplyIncludes`, `ApplyStableOrder`. **`GetCore` and `UpdateCore` are *not* here** — earlier passes of this document listed them among these seams and were wrong; see `RootNonIdDao` below | Keyed CRUD, **`TKey` unconstrained** | **Yes** — `KeyPredicateOpenKeyTests` (21), `IdentifierResolutionTests` (4) |
+| `BaseGetAllDao<TEntity, TKey>` | adds `IBaseGetAllDao<TEntity>` over `BaseDao` | `+ IBaseGetAllDao<TEntity>` | Transitively — `JobDao`, `ResourceDao` |
+| `BasePagedDao<TEntity, TKey>` | adds `IBasePagedDao<TEntity>` over `BaseDao` | `+ IBasePagedDao<TEntity>` | Transitively — `CompanyDao`, `TransactionDao` |
+| `BaseSoftDao<TEntity, TKey>` | overrides — never `new` — plus `GetCurrentTimestamp`, `NormalizeRetrievedTimestamp`, and an `ApplyReadFilter` override adding `DeletedDate == null` | Keyed CRUD with soft-delete semantics | **Yes** — `SoftDeleteTimestampHookTests` (12) |
 | `BaseSoftGetAllDao` / `BaseSoftPagedDao<TEntity, TKey>` | as above plus the capability member | Soft + `GetAll` / `GetPaged` + `GetCount` | **Yes** — plus `DepartmentDao` and its 40 upstream cases |
-| `RootNonIdDao<TEntity>` | abstract `MatchRow`; `Insert`, `Delete`, `GetAll`, `GetPaged`, `GetCount`, `GetCore`, `UpdateCore`, `ApplyStableOrder`, `ApplyReadFilter`, `ApplyIncludes` | Keyless plumbing that implements **no** capability interface. `MatchRow` is the library's only abstract member | **Yes** — `KeylessDaoTests` (31), `CompanyResourceConversionTests` (3) |
+| `RootNonIdDao<TEntity>` | **`protected abstract MatchRow`** — the library's only abstract member; `Insert`, `Delete`, `GetAll`, `GetPaged`, `GetCount`; **`protected virtual GetCore` (line 308) and `UpdateCore` (line 342), declared here and nowhere else**; `ApplyStableOrder`, `ApplyReadFilter`, `ApplyIncludes`, `Dataset` | Keyless plumbing that implements **no** capability interface | **Yes** — `KeylessDaoTests` (31), `CompanyResourceConversionTests` (3) |
 | `BaseNonIdDao<TEntity>` | adds nothing | `RootNonIdDao` + `IBaseDao<TEntity>` | Yes — `PublishedLinkDao`, `RegistrationDao` |
-| `RootSoftNonIdDao<TEntity>` | soft overrides + the two timestamp hooks | Keyless soft delete, committing to no interface | **Yes** — `KeylessSoftDaoTests` (29) |
+| `RootSoftNonIdDao<TEntity>` | soft overrides + the two timestamp hooks; **overrides `GetCore` (201) and `UpdateCore` (229)** | Keyless soft delete, committing to no interface | **Yes** — `KeylessSoftDaoTests` (29) |
 | `BaseSoftNonIdDao<TEntity>` | adds nothing | `RootSoftNonIdDao` + `IBaseDao<TEntity>` | Yes — `PublishedTagDao` |
+| `EntityGraph`, `SoftTimestamps` | *(internal, not API)* | The single copy of the navigation-graph mechanics and of the soft-timestamp policy. They exist because the keyed and keyless families are unrelated inheritance branches and cannot share a declaration | Exercised through the families |
 
-### The 2.2.x surface — present, and scheduled for deletion
+**Where the protected seams actually live — re-derived 2026-08-22 by grepping every `protected` / `public`
+member declaration in all 15 files, because this document had it wrong.** `MatchRow` exists on both
+branches with different modifiers: `protected virtual` on `BaseDao` (line 477) and `protected abstract` on
+`RootNonIdDao` (line 246). **`RootNonIdDao.MatchRow` is the only abstract member in the library.** `GetCore`
+and `UpdateCore` exist **only** on the keyless branch. `ApplyStableOrder` is total by default on `BaseDao`
+and throws `NotSupportedException` on `RootNonIdDao` until overridden
+([BaseDao.cs](../ProphetsWay.EFTools/BaseDao.cs), [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs),
+[RootSoftNonIdDao.cs](../ProphetsWay.EFTools/RootSoftNonIdDao.cs)).
 
-| Type | Count | Purpose | Tested? |
-| --- | --- | --- | --- |
-| `Guid.*`, `Int.*`, `Long.*` DAO bases | 18 public abstract classes | The key-specific closures — CRUD, get-all, paged, and the three soft variants per key type | **No.** Nothing in the tree derives from any of them any more |
-| `RootBaseDao<T, TIdType>` / `RootBaseSoftDao<T, TIdType>` | 2 public abstract bridges | `where TIdType : struct` — the constraint the open-key families exist to drop. Both carry the three `Ensure*Transaction` members | No |
-| `LegacyBaseNonIdDao<T>` / `LegacyBaseSoftNonIdDao<T>` | 2 public abstract classes | The 2.2.x keyless bases, renamed in lap 3 purely to free their names. **Not a supported migration target** | No |
-| `RootDao<T, TIdType>` / `LegacyRootNonIdDao<T>` | 2 internal classes | The 2.2.x engines | No |
+### Removed by lap 4 (`d00aad3`) — recorded, not silently dropped
 
-**`RootNonIdDao` is one name across two different types.** 2.2.x had an `internal RootNonIdDao<T>` engine;
-the tree now has a `public abstract RootNonIdDao<TEntity>` extension point with a different body, different
-visibility and a `MatchRow` contract. The 2.2.x engine survives as `LegacyRootNonIdDao<T>`. **A reader
+**Nothing in this table is in the tree.** It is kept because a reader comparing this repository to the
+published 2.2.0 package — or to an alpha/beta cut taken mid-flight — will meet these names.
+
+| Type | Was | Fate |
+| --- | --- | --- |
+| `Guid.*`, `Int.*`, `Long.*` DAO bases | 18 public abstract classes, 6 per namespace | **Deleted**, and the three namespaces with them. Replaced by the open-key families: `Int.BaseDao<T>` → `BaseDao<T, int>`, `Guid.BaseSoftPagedDao<T>` → `BaseSoftPagedDao<T, Guid>`, and so on through all eighteen |
+| `RootBaseDao<T, TIdType>` / `RootBaseSoftDao<T, TIdType>` | 2 public abstract bridges, `[EditorBrowsable(Never)]`, `where TIdType : struct`. Both carried the three `Ensure*Transaction` members | **Deleted.** That `struct` constraint is the one the open-key families exist to drop. **The `Ensure*Transaction` trio now matches nowhere in the library** — grepped 2026-08-22 |
+| `LegacyBaseNonIdDao<T>` / `LegacyBaseSoftNonIdDao<T>` | 2 public abstract classes | **Deleted.** They existed for three commits, renamed in lap 3 purely to free the new names. `CHANGELOG.md` says in terms that none of them is part of 3.0.0 |
+| `RootDao<T, TIdType>` / `LegacyRootNonIdDao<T>` | 2 internal classes — the 2.2.x engines | **Deleted.** `RootDao`'s body is absorbed by the bases it served |
+
+**`RootNonIdDao` is one name across two different types, and the older one did not survive.** 2.2.x had an
+`internal RootNonIdDao<T>` engine; the tree has a `public abstract RootNonIdDao<TEntity>` extension point
+with a different body, different visibility, different members and a `MatchRow` contract. The 2.2.x engine
+was carried through lap 3 under the name `LegacyRootNonIdDao<T>` and **deleted in lap 4**. **A reader
 comparing the two trees must not conclude the type was merely made public** — `docs/api-contract.md` says
 the same thing and asks that it be described as new public surface
-([api-contract.md](api-contract.md), [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs),
-[LegacyRootNonIdDao.cs](../ProphetsWay.EFTools/LegacyRootNonIdDao.cs)).
+([api-contract.md](api-contract.md), [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs)).
 
 
 ## Dependencies
@@ -369,8 +406,10 @@ the spike", or "nothing tests this library's own public surface" — all four ar
   has no adapter here, and separately pins that the two `ConventionShowcase` classes stay **excluded** —
   those build their own deliberately mis-wired DALs and are the subject of their tests rather than the
   implementation under test ([AdapterCoverageTests.cs](../ProphetsWay.EFTools.Tests/AdapterCoverageTests.cs)).
-- **7 classes written directly against this library's own public surface.** Each declares its own entities,
-  `DbContext` and DAOs, so it exercises `ProphetsWay.EFTools` rather than `IExampleDataAccess`:
+- **8 classes written directly against this library's own public surface.** **Earlier passes of this
+  document said "7" in three places while listing eight rows below and doing the arithmetic at eight; the
+  count was simply wrong and is corrected here.** Each declares its own entities, `DbContext` and DAOs, so
+  it exercises `ProphetsWay.EFTools` rather than `IExampleDataAccess`:
 
   | File | Cases | What it targets |
   | --- | --- | --- |
@@ -407,10 +446,12 @@ running it:
 `Keyless` + `Insert` = **68**, which is exactly the lap gate `--filter "Area=Keyless|Area=Insert"` the owner
 reported passing 68/68.
 
-**Last measured result: 2026-08-22, reported by the owner — 270 total, 259 passed, 11 failed.** The 11 are
-**10 × `EFSnapshotDeepCopyTests`** — that upstream class in its entirety, since `SnapshotDeepCopyTests`
-declares exactly 10 `[Fact]` — plus one SQL Server transaction-visibility timeout. **Not re-run by this
-pass.**
+**Last measured result: 2026-08-22, reported by the owner *after* lap 4 — 270 total, 259 passed, 11 failed.**
+The 11 are **10 × `EFSnapshotDeepCopyTests`** — that upstream class in its entirety, since
+`SnapshotDeepCopyTests` declares exactly 10 `[Fact]` — plus
+`EFDataAccessTransactionTests.ShouldExposeUncommittedWritesToAnotherInstance`, a SQL Server
+transaction-visibility timeout. **Not re-run by this pass.** **Lap 4 moved none of these figures**, which is
+the expected result of deleting 24 files that nothing referenced: it fixed nothing and broke nothing.
 
 **The `.trx` files in `ProphetsWay.EFTools.Tests/TestResults/` are stale and must not be read as current.**
 `baseline`, `efseam2` and `efseam3` all record 147/53/94; `efseam` records 147/15/132; `lap2` and `final`
@@ -433,9 +474,10 @@ by grepping every attribute in the file. It is inside `Scope=Characterization` a
   [CompanyResourceDao.cs](../ProphetsWay.Example.DataAccess.EF/Daos/CompanyResourceDao.cs) declares
   `RootNonIdDao<CompanyResource>` — both opened on 2026-08-22, not inherited. **What is genuinely still
   uncovered:**
-  - **The 24 legacy files.** The 18 closures, both `Root*` bridges, `RootDao` and the three `Legacy*` types
-    are derived from by nothing in the tree and exercised by nothing. That is harmless rather than a gap —
-    lap 4 deletes them, which is also why writing tests for them would be waste.
+  - ~~**The 24 legacy files.**~~ **CLOSED by lap 4.** This sub-item said the 18 closures, both `Root*`
+    bridges, `RootDao` and the three `Legacy*` types were derived from by nothing and exercised by nothing,
+    and that this was harmless because lap 4 would delete them. **It did.** There is nothing untested about
+    a file that does not exist; **do not re-report this as a coverage gap.**
   - **Provider portability of the *conformance* suite.** Which provider a case runs on splits cleanly along
     the same line the case counts do, and it is not the split this document previously implied. The **144
     adapted upstream cases** reach the store through `Constants.GetExampleDataAccess`, which is
@@ -481,17 +523,17 @@ by grepping every attribute in the file. It is inside `Scope=Characterization` a
   is gone
   ([Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs),
   [ExampleDataAccess.cs](../ProphetsWay.Example.DataAccess.EF/ExampleDataAccess.cs)).
-- **Three of the five things this list used to call untested are now tested, and the two that remain are
-  named above.** Soft-delete bases are covered by `SoftDeleteTimestampHookTests` (12) and
+- **Three of the five things this list used to call untested are now tested, and the last of the remainder
+  left with lap 4.** Soft-delete bases are covered by `SoftDeleteTimestampHookTests` (12) and
   `KeylessSoftDaoTests` (29); keyless bases by `KeylessDaoTests` (31) and `CompanyResourceConversionTests`
   (3); stable `GetAll` ordering is now a property of the families themselves rather than of a test —
   `GetAll`, `GetPaged` and `GetCount` all compose through `ApplyStableOrder`, which `BaseDao` makes total
-  and `RootNonIdDao` refuses to default. What is still untested is **the conformance suite on a second
-  provider** and the **transaction helpers on the 2.2.x DAO bridges** — and the latter is the
-  `Ensure*Transaction` trio, which exists only on `RootBaseDao`, `RootBaseSoftDao`, `LegacyRootNonIdDao`
-  and `LegacyBaseNonIdDao` and therefore leaves the tree with lap 4
-  ([BaseDao.cs](../ProphetsWay.EFTools/BaseDao.cs), [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs),
-  [RootBaseDao.cs](../ProphetsWay.EFTools/RootBaseDao.cs)).
+  and `RootNonIdDao` refuses to default. **The "transaction helpers on the 2.2.x DAO bridges" entry is
+  closed rather than outstanding**: the `Ensure*Transaction` trio existed only on `RootBaseDao`,
+  `RootBaseSoftDao`, `LegacyRootNonIdDao` and `LegacyBaseNonIdDao`, all four deleted in `d00aad3`, and a
+  grep of all 15 remaining files for those three names on 2026-08-22 returns **nothing**. What is still
+  untested is **the conformance suite on a second provider**, and that alone
+  ([BaseDao.cs](../ProphetsWay.EFTools/BaseDao.cs), [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs)).
 - `LocalTestsOnly: 'yes'` causes the shared pipeline to omit its `dotnet test` task entirely
   ([app-variables.yml](../app-variables.yml),
   [restore-build-test.yml](../../prophets-pipelines/steps/restore-build-test.yml)).
@@ -610,10 +652,10 @@ so the rewrite must say which line it describes.
 | --- | --- | --- |
 | The package reduces repetitive DAO CRUD under the BaseDataAccess paradigm | **Accurate**, and still the right lead | The product and the proving ground both implement exactly that |
 | “Please see the example projects included in the GitHub repository” | **Misleading** | They are not included together: four projects come from the `ProphetsWay.Example` **git submodule** and one, `ProphetsWay.Example.DataAccess.EF`, is owned by this repository. A fresh clone without `--recurse-submodules` has none of the four |
-| “Three value types you can use for a Primary Key: int, long, and Guid… three separate namespaces in EFTools… This is required so the default Get method can build a proper select by Id” | **Wrong for the tree, and the *reason* given is wrong too** | `BaseDao<TEntity, TKey>` places **no constraint on `TKey`**, so `string` and `int?` are legal, and the identifier is resolved by name — `{TypeName}Id`, then `Id`. The three namespaces still exist but nothing in the tree derives from them and lap 4 deletes them ([BaseDao.cs](../ProphetsWay.EFTools/BaseDao.cs), [CHANGELOG.md](../CHANGELOG.md)) |
+| “Three value types you can use for a Primary Key: int, long, and Guid… three separate namespaces in EFTools… This is required so the default Get method can build a proper select by Id” | **Wrong for the tree, and the *reason* given is wrong too** | `BaseDao<TEntity, TKey>` places **no constraint on `TKey`**, so `string` and `int?` are legal, and the identifier is resolved by name — `{TypeName}Id`, then `Id`. **The three namespaces no longer exist at all** — deleted in `d00aad3` ([BaseDao.cs](../ProphetsWay.EFTools/BaseDao.cs), [CHANGELOG.md](../CHANGELOG.md)) |
 | `BaseDao` publishes `T Get(T item)`, `void Insert(T item)`, `int Update(T item)`, `int Delete(T item)` | **Accurate** | All four are on `BaseDao<TEntity, TKey>` |
 | Prose says “In the case of `T Get(T item);` and `T Delete(T item);`” | **Wrong** | `Delete` returns `int`. The README's own code block two paragraphs earlier says `int Delete(T item);`, so it contradicts itself |
-| `BaseDao` publishes `EnsureBeginTransaction` / `EnsureTransactionCommit` / `EnsureTransactionRollback` | **Does not exist on the 3.x families** | Grepped every `.cs` in the library on 2026-08-22: the trio appears only in `RootBaseDao`, `RootBaseSoftDao`, `LegacyRootNonIdDao` and `LegacyBaseNonIdDao` — all four in the 24 files lap 4 deletes. Transactions are the DAL root's, not the DAO's. Also carries the [FR 12](feature-requests.md) defect |
+| `BaseDao` publishes `EnsureBeginTransaction` / `EnsureTransactionCommit` / `EnsureTransactionRollback` | **Does not exist anywhere in the library** | Grepped all 15 `.cs` files on 2026-08-22, after lap 4: the trio matches **nothing**. It lived only on `RootBaseDao`, `RootBaseSoftDao`, `LegacyRootNonIdDao` and `LegacyBaseNonIdDao`, all deleted in `d00aad3`. Transactions are the DAL root's, not the DAO's. Also carries the [FR 12](feature-requests.md) defect |
 | `using ProphetsWay.EFTools.Int;` then `UserDao : BaseDao<User>`, `JobDao : BaseGetAllDao<Job>`, `CompanyDao : BasePagedDao<Company>` | **All three samples are wrong** | The tree writes `BaseDao<User, int>`, `BaseGetAllDao<Job, int>`, `BasePagedDao<Company, int>` from the **root** namespace, with no key-specific `using`. See *Real Usage Examples Found* |
 | `CompanyDao.GetCustomCompanyFunction` composing over `Dataset` | **Accurate**, and worth keeping | `protected DbSet<TEntity> Dataset` survives on both `BaseDao` and `RootNonIdDao`, and the proving ground's method is byte-identical to the README's |
 | **`BaseEFContext` “is defined so that you always pass the connection string via its constructor”**, sampled as `ExampleContext(string nameOrConnectionString) : base(nameOrConnectionString)` | **Does not exist — the sample cannot compile** | [BaseEFContext.cs](../ProphetsWay.EFTools/BaseEFContext.cs) is 24 lines with **one** member: `protected BaseEFContext(DbContextOptions builderOptions)`. The string constructor was removed, and with it the `UseSqlServer` call it made on the consumer's behalf ([CHANGELOG.md](../CHANGELOG.md) § *BaseEFContext no longer takes a connection string*) |
@@ -638,15 +680,16 @@ argument type select the DAO. That paragraph is the clearest statement of the pa
 ## Planned 3.x Direction — Approved, and Where Each Item Now Stands
 
 **This section's heading used to end "Approved, Not Implemented", and that is no longer true — rewritten
-2026-08-22.** Most of the approved direction has landed across implementation laps 1, 2 and 3. What is left
-is **lap 4** — a deletion — plus provider *packaging* and the certification legs. Each row's state was taken
-from the file named, on 2026-08-22.
+2026-08-22, then corrected the same day for lap 4.** The approved direction has now landed across
+implementation laps 1–4. What is left is **provider *packaging*, the certification legs, a green suite, and
+the tag** — lap 4 is no longer on that list. Each row's state was taken from the file named, on 2026-08-22,
+after `d00aad3`.
 
 | Approved item | State | Evidence |
 | --- | --- | --- |
-| **D1 — EF Core only**; 2.2.x remains the EF6 / .NET Framework answer, and no EF6 companion package is built | **Done, with residue.** No `PackageReference` to `EntityFramework` exists anywhere. The `#if NET461 \|\| NET471 \|\| NET48` blocks are dead but not deleted — `using System.Data.Entity;` still appears in **24** library files and no others | Grepped the library 2026-08-22; [CHANGELOG.md](../CHANGELOG.md) |
+| **D1 — EF Core only**; 2.2.x remains the EF6 / .NET Framework answer, and no EF6 companion package is built | **Done, and the residue is gone too.** No `PackageReference` to `EntityFramework` exists anywhere, and **there is no conditionally compiled code left in the library at all** — the dead `#if NET461 \|\| NET471 \|\| NET48` blocks carrying `using System.Data.Entity;` lived only in the 24 files `d00aad3` deleted. **Do not restate "dead but not deleted" or "still appears in 24 library files"** | Grepped all 15 files for every preprocessor directive 2026-08-22 — zero hits; [CHANGELOG.md](../CHANGELOG.md) |
 | **D2 / [FR 7](feature-requests.md) — relational-provider-neutral** | **Half done, and the halves are worth separating.** **Code: done.** `UseSqlServer` and `UseInMemoryDatabase` match nothing under `ProphetsWay.EFTools/`; `BaseEFContext` names no provider and `BaseEFDataAccess<TContext>` takes a built context. **Packaging: not done.** `Microsoft.EntityFrameworkCore.SqlServer` and `.InMemory` 10.0.11 are still `PackageReference`s of the library, so a PostgreSQL consumer restores two providers they will never use | [BaseEFContext.cs](../ProphetsWay.EFTools/BaseEFContext.cs), [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) |
-| **D3 / [FR 10](feature-requests.md) — six generic root-namespace DAO families replacing the 18 closures, no compatibility wrappers** | **The six exist; the 18 have not been deleted.** **Do not restate this as "Not started."** `BaseDao` / `BaseGetAllDao` / `BasePagedDao` and the three `BaseSoft*` counterparts are all in the tree with an **unconstrained `TKey`**, and four keyless types were added beyond the approved six. The 18 closures, both `Root*` bridges, `RootDao` and the three `Legacy*` types are still present — **that removal is lap 4** | [api-contract.md](api-contract.md) § *The Public Surface*; the *Public API Surface* tables above |
+| **D3 / [FR 10](feature-requests.md) — six generic root-namespace DAO families replacing the 18 closures, no compatibility wrappers** | **Done, both halves.** **Do not restate this as "Not started", and do not restate "the 18 have not been deleted."** `BaseDao` / `BaseGetAllDao` / `BasePagedDao` and the three `BaseSoft*` counterparts are all in the tree with an **unconstrained `TKey`**, and four keyless types were added beyond the approved six. Lap 4 (`d00aad3`) then removed the 18 closures, both `Root*` bridges, `RootDao` and the three `Legacy*` types. **S3 held — nothing transitional shipped** | [api-contract.md](api-contract.md) § *The Public Surface*; the *Public API Surface* tables above |
 | **D4 / [FR 11](feature-requests.md) — SQLite in-memory as the fast CI leg, SQL Server container for provider fidelity** | **Started, and further along than "not started" — corrected 2026-08-22.** Seven of the eight locally written test classes already stand up **SQLite in-memory** contexts, so the library's own surface is exercised on a second relational provider today. **The conformance suite is not**: all 144 adapted upstream cases run against a local SQL Server through `Constants.GetExampleDataAccess`, and `LocalTestsOnly: 'yes'` keeps every leg out of CI. What is owed is the *contract* suite on both providers and a container to host the SQL Server one | Grepped every `UseSqlite` / `UseInMemoryDatabase` / `UseSqlServer` in the test project 2026-08-22; [Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs), [app-variables.yml](../app-variables.yml) |
 | **D7 — `net10.0` only** for the library, the tests and the EF proving ground | **Done 2026-08-16.** A **ratified exception** to the house `netstandard2.0;net10.0` standard, not drift | All three `.csproj` files; [purpose-and-scope.md](purpose-and-scope.md#owner-decisions--2026-08-15) |
 | **[FR 2](feature-requests.md) — move to `ProphetsWay.BaseDataAccess` 3.1.0** | **Done 2026-08-16** in both consuming projects | [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) |
@@ -655,16 +698,26 @@ from the file named, on 2026-08-22.
 | **[FR 6](feature-requests.md) — rebuild the test project on the 3.x seam** | **Done, in a shape the original request did not anticipate.** The six old adapters were deleted 2026-08-16 and **superseded the same night**: thirteen new adapters plus `TestSeam.cs` replaced them once `TestDataAccessFactory.Use` landed upstream, per owner decision **D10** shape B. The Entity Framework conformance run they stood in for **now happens** | [TestSeam.cs](../ProphetsWay.EFTools.Tests/TestSeam.cs) |
 | **[FR 8](feature-requests.md) — remove FluentAssertions**, **[FR 9](feature-requests.md) — delete the stray `[submodule "Submod"]` block** | **Both are done in the tree as of 2026-08-16** — the reference is gone from the EF proving ground's `.csproj`, and `.gitmodules` holds one well-formed block. **Their entries still read `Scheduled`; only `Purpose Refiner` may close a status**, so this row states the tree, not the triage | [ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj), [.gitmodules](../.gitmodules) |
 
-**What remains before 3.0.0 can be tagged**, stated as a list rather than left implicit:
+**What remains before 3.0.0 can be tagged**, stated as a list rather than left implicit. **Lap 4 was item 1
+and is struck; the version decision was item 5 and is struck. Neither is outstanding.**
 
-1. **Lap 4 — delete the 24 legacy files** and the dead `#if` blocks that live in them. `CHANGELOG.md`
-   commits to this explicitly: the three `Legacy*` types "are scheduled for deletion before 3.0.0 is tagged
-   and are not a supported migration target."
-2. **Remove the two provider `PackageReference`s** — the packaging half of D2 / FR 7.
-3. **Build the two certification legs** — D4 / FR 11.
-4. **Get the suite green** — 11 failures remain at the last reported run.
-5. **The version decision.** `app-variables.yml` reads `2` / `2` / `0` against a tree that implies 3.0.0.
-   **That is the owner's, and this document neither resolves it nor hides it.**
+1. ~~**Lap 4 — delete the 24 legacy files** and the dead `#if` blocks that live in them.~~ **DONE —
+   `d00aad3`.** 24 files, 773 lines, no modification to any surviving file. The `#if` blocks left with the
+   files that held them.
+2. **Remove the two provider `PackageReference`s** — the packaging half of D2 / FR 7. Still open; lap 4 did
+   not touch [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), re-opened
+   2026-08-22 to confirm.
+3. **Build the two certification legs** — D4 / FR 11. What is owed is the *contract* suite on both
+   providers; SQLite is already in real use by the local classes.
+4. **Get the suite green** — 11 failures remain at the last reported run, unchanged by lap 4.
+5. ~~**The version decision.**~~ **CLOSED by the owner.** `app-variables.yml` reads `3` / `0` / `0` — opened
+   2026-08-22. What remains is mechanical rather than a decision: **the tag and the publish have not
+   happened, and nuget.org still serves 2.2.0.**
+
+**FR 15 is closed as a side effect of lap 4.** `ProphetsWay.EFTools.Guid` shadowed `System.Guid` in any file
+importing it; the namespace no longer exists, so the collision cannot occur.
+[docs/feature-requests.md](feature-requests.md) is **not** amended to say so — only `Purpose Refiner` may
+change an entry's status. Recorded here so it is not re-derived.
 
 The direction was supplied by the owner on 2026-08-15 as D1–D6 and extended by D7–D19; see
 [purpose-and-scope.md](purpose-and-scope.md#owner-decisions--2026-08-15). Current-state contrasts are
@@ -689,33 +742,37 @@ findings are marked closed with their evidence rather than deleted.**
    this repository.
 2. **Historical, and about the published package only.** The shipped 2.2.0 EF6 and EF Core assets differ
    semantically on missing-row update and structurally on available constructors, so one package does not
-   expose one uniform contract. **No build in the tree produces an EF6 asset**, and the branches survive
-   only inside the 24 files lap 4 deletes. It matters to a consumer reading nuget.org today and to nobody
-   reading this tree.
+   expose one uniform contract. **No build in the tree produces an EF6 asset**, and since `d00aad3` the
+   branches do not survive anywhere — the files that carried them are deleted and **zero preprocessor
+   directives remain library-wide**. It matters to a consumer reading nuget.org today, which still serves
+   2.2.0, and to nobody reading this tree.
 3. **Narrowed to packaging — the code half closed.** `UseSqlServer` and `UseInMemoryDatabase` match nothing
    under `ProphetsWay.EFTools/`. What leaks is two `PackageReference` entries. **Read this together with
    the *Dependencies* section, or you will conclude the library still picks your provider** — it does not;
    it merely makes you restore two you did not ask for. [FR 7](feature-requests.md), **D2**.
-4. **CLOSED for the 3.x families; true only of the code lap 4 deletes.** This item read "`GetPaged` orders
-   by ID, but `GetAll` does not; soft paging has no explicit ordering either." That describes
-   [RootDao.cs](../ProphetsWay.EFTools/RootDao.cs), where `GetAll` is `Dataset.ToList()` and `GetPaged` is
-   `Dataset.OrderBy(x => x.Id).Skip(skip).Take(take)`. In the new families **all three reads compose through
-   the same `ApplyStableOrder`**: `BaseDao` defaults it to the key followed by a `ThenBy` over every
-   primary-key property in the model, and `RootNonIdDao` throws `NotSupportedException` until a keyless DAO
-   supplies one — which is why `CompanyResourceDao` writes it even though its own rule 5 promises no order
+4. **CLOSED.** This item read "`GetPaged` orders by ID, but `GetAll` does not; soft paging has no explicit
+   ordering either." That described the internal `RootDao<T, TIdType>`, where `GetAll` was
+   `Dataset.ToList()` and `GetPaged` was `Dataset.OrderBy(x => x.Id).Skip(skip).Take(take)`. **That file was
+   deleted in `d00aad3`, so the item now describes nothing in the tree.** In the surviving families **all
+   three reads compose through the same `ApplyStableOrder`**: `BaseDao` defaults it to the key followed by a
+   `ThenBy` over every primary-key property in the model, and `RootNonIdDao` throws `NotSupportedException`
+   until a keyless DAO supplies one — which is why `CompanyResourceDao` writes it even though its own rule 5
+   promises no order
    ([BaseDao.cs](../ProphetsWay.EFTools/BaseDao.cs), [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs)).
 5. **NARROWED — there is a suite, it targets this library directly, and the specific gaps are named.** This
    item has now been wrong twice in opposite directions: it first said there was no test suite at all, then
    that 151 cases existed but "nothing tests this library's own public surface" and `CompanyResourceDao`
    "does not exist and accounts for most of the red." **All of that is superseded.** 270 cases; **126 of
    them are declared in this repository against `BaseDao`, `BaseSoftDao`, `RootNonIdDao`,
-   `RootSoftNonIdDao` and `BaseEFDataAccess` directly**; `CompanyResourceDao` exists on
+   `RootSoftNonIdDao` and `BaseEFDataAccess` directly**, in **8** locally written classes — not 7, as three
+   earlier sentences said against their own eight-row table; `CompanyResourceDao` exists on
    `RootNonIdDao<CompanyResource>`. What is genuinely uncovered: **the conformance suite on a second
-   provider** — the 144 adapted cases run against a local SQL Server alone, even though the 119 local ones
-   already run on SQLite in-memory ([FR 11](feature-requests.md)) — **CI** (`LocalTestsOnly: 'yes'` skips
-   all 270), and the 24 legacy files, which is deliberate because they are being deleted. **11 failures
-   remain** at the last reported run — 10 × `EFSnapshotDeepCopyTests` plus one transaction-visibility
-   timeout.
+   provider** — the 144 adapted cases run against a local SQL Server alone, even though the local classes
+   already run on SQLite in-memory ([FR 11](feature-requests.md)) — and **CI** (`LocalTestsOnly: 'yes'`
+   skips all 270). **The third item this list used to name — the 24 legacy files — is gone with `d00aad3`
+   and is not a gap.** **11 failures remain** at the last reported run, unchanged by lap 4 — 10 ×
+   `EFSnapshotDeepCopyTests` plus
+   `EFDataAccessTransactionTests.ShouldExposeUncommittedWritesToAnotherInstance`.
 6. **Packaging lacks homepage, tags, SourceLink, symbols and CI build metadata.** **Unchanged, and the
    Source Link half needs both of its facts or it reads wrong.** The malformed `[submodule "Submod"]` block
    is gone and its warning with it — the owner's 2026-08-22 build reports 0 warnings where the 2026-08-16
@@ -723,16 +780,17 @@ findings are marked closed with their evidence rather than deleted.**
    SourceLink package reference exists and none of `PublishRepositoryUrl`, `EmbedUntrackedSources`,
    `IncludeSymbols`, `SymbolPackageFormat` or `ContinuousIntegrationBuild` is present. See the Packaging
    Audit for the exact snippets. `RepositoryType` is also `GitHub` where the house standard is `git`.
-7. **NARROWED — the documentation gap has inverted, and there is a build-level one behind it.** This item
-   said XML documentation exists on the 18 key-specific leaves "but not on the principal context, DAL, root
-   bridge, or keyless public API." **Three of those four are now among the best-documented files in the
-   workspace** — `BaseEFContext`, `BaseEFDataAccess<TContext>` and `RootNonIdDao` all carry `<summary>`,
-   `<typeparam>`, `<exception>` and multi-paragraph `<remarks>` that state contract rather than restating
-   signatures. What is undocumented is the 2.2.x residue: `RootBaseDao` and `RootBaseSoftDao` carry only
-   `[EditorBrowsable(EditorBrowsableState.Never)]`, and they leave with lap 4. **The live gap is that none
-   of it is shipped** — `GenerateDocumentationFile` is set nowhere in
-   [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), so no `.xml` file is
-   produced or packed and a consumer gets no IntelliSense from any of it.
+7. **NARROWED further by lap 4 — the documentation gap has inverted, and only the build-level one is left.**
+   This item said XML documentation exists on the 18 key-specific leaves "but not on the principal context,
+   DAL, root bridge, or keyless public API." **Three of those four are now among the best-documented files
+   in the workspace** — `BaseEFContext`, `BaseEFDataAccess<TContext>` and `RootNonIdDao` all carry
+   `<summary>`, `<typeparam>`, `<exception>` and multi-paragraph `<remarks>` that state contract rather than
+   restating signatures. **The fourth — the undocumented 2.2.x residue, `RootBaseDao` and `RootBaseSoftDao`
+   carrying only `[EditorBrowsable(EditorBrowsableState.Never)]` — was deleted in `d00aad3`, so it is not a
+   gap either.** **The one live gap is that none of the documentation is shipped** —
+   `GenerateDocumentationFile` is set nowhere in
+   [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), re-opened 2026-08-22, so
+   no `.xml` file is produced or packed and a consumer gets no IntelliSense from any of it.
 8. `docs/architecture.md`, per-project `docs/requirements.md`, and `docs/nuget-extraction-proposal.md` are
    **n/a by owner decision** (**D5**). They are not documentation gaps.
 9. **NEW 2026-08-22 — the proving ground guards only its two newest forwarder groups.** In
@@ -745,11 +803,24 @@ findings are marked closed with their evidence rather than deleted.**
    disposed context throws of its own accord and the omission is invisible. Under `Borrowed` those five
    groups would silently succeed after disposal. **This is not currently causing a failure** — it is an
    inconsistency inside one file, in the artifact whose job is to be copied.
-10. **NEW 2026-08-22 — recorded, not resolved.** `app-variables.yml` reads `Major` `2` / `Minor` `2` /
-    `Patch` `0` against a tree carrying the 3.0.0 surface, a `CHANGELOG.md` whose top entry is
-    `v3.0.0 — not yet released`, and an `api-contract.md` specifying 3.0.0. **The version bump is the
-    owner's decision and no agent may make it.** It is listed here so a reader does not mistake the
-    mismatch for an oversight.
+10. ~~**NEW 2026-08-22 — recorded, not resolved.** `app-variables.yml` reads `Major` `2` / `Minor` `2` /
+    `Patch` `0` against a tree carrying the 3.0.0 surface.~~ **CLOSED THE SAME DAY — the owner took the
+    bump.** [app-variables.yml](../app-variables.yml) was re-opened on 2026-08-22 and reads `Major: '3'` /
+    `Minor: '0'` / `Patch: '0'`. It now agrees with a `CHANGELOG.md` whose top entry is `v3.0.0` and with an
+    `api-contract.md` specifying 3.0.0. **The item is kept rather than deleted so the record of the
+    mismatch survives; do not restate `2` / `2` / `0`, and do not re-file this as an open decision.** What
+    is still true and is **not** a decision: **3.0.0 is set but not yet tagged or published, so nuget.org
+    still serves 2.2.0** and a consumer reading the listing meets the EF6-and-`net4x` package. **No agent
+    may change `Major`/`Minor`/`Patch` under any circumstances.**
+11. **NEW 2026-08-22, after lap 4 — a vestigial condition on the EF Core `ItemGroup`.** The three EF Core
+    `PackageReference`s in
+    [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) sit inside
+    `Condition="!$(TargetFramework.StartsWith('net4')) and $(TargetFramework.StartsWith('net'))"`, which is
+    unconditionally true given the single `net10.0` target. It is a leftover of the EF6/EF Core split and
+    now gates nothing. **Harmless, and not urgent** — but it is the last structural trace of the EF6 branch
+    outside the `<Description>`, and whoever removes the two provider references for D2 / FR 7 will be
+    editing that exact `ItemGroup` anyway. Recorded so it is done once rather than twice. `Modernizer`'s
+    territory, not this document's.
 
 ## Open Questions for the Owner
 
@@ -764,14 +835,20 @@ deleted, so they are not re-asked.**
 
 **What is actually open:**
 
-1. **The version line.** See Gaps 10. `2` / `2` / `0` against a 3.0.0 tree.
-2. **Lap 4's trigger.** `CHANGELOG.md` commits to deleting the 24 legacy files before 3.0.0 is tagged.
-   Nothing in the tree derives from them, so the deletion is unblocked — is it gated on anything, or simply
-   next?
+1. ~~**The version line.**~~ **CLOSED — the owner set `app-variables.yml` to `3` / `0` / `0`**, opened
+   2026-08-22. See Gaps 10. **What replaces it is not a question but a pending action: 3.0.0 is not yet
+   tagged and not yet published**, so nuget.org still serves 2.2.0.
+2. ~~**Lap 4's trigger.**~~ **CLOSED — lap 4 has landed** as `d00aad3`, "Delete the 2.2.x DAO surface
+   superseded by the open-key families," which is HEAD. It was simply next; nothing gated it.
 3. **Does `AlternateKeyGuardSpikeTests.cs` stay?** It is correctly traited now and sits inside
    `Scope=Characterization`, but its own `<remarks>` call it "an empirical spike, not a specification," and
    it asserts about EF Core rather than about this library. Keeping it is defensible; it is a judgement
    this document should not make.
 4. **The 11 remaining failures.** 10 are `EFSnapshotDeepCopyTests` in its entirety, which points at
-   [FR 14](feature-requests.md) — the SNAPSHOT-rule finding — rather than at ten separate defects. Is
-   closing it a 3.0.0 blocker, or does 3.0.0 ship with the deviation documented?
+   [FR 14](feature-requests.md) — the SNAPSHOT-rule finding — rather than at ten separate defects. The
+   eleventh is `EFDataAccessTransactionTests.ShouldExposeUncommittedWritesToAnotherInstance`. Is closing
+   FR 14 a 3.0.0 blocker, or does 3.0.0 ship with the deviation documented?
+5. **When is 3.0.0 tagged and published?** Everything the tag was waiting on except the suite is done: the
+   surface is complete, the deletion has landed, the version is set. Outstanding before or alongside it are
+   the provider `PackageReference` removal (D2 / FR 7), the certification legs (D4 / FR 11), and the 11
+   failures. Which of those are release blockers is the owner's call, not this document's.

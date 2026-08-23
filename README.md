@@ -17,8 +17,8 @@ Access Layer — so the only code you write is the code your own contract adds.
 > Nothing below applies to it. If you are on 2.2.x, read [CHANGELOG.md](CHANGELOG.md) before you plan an
 > upgrade; the migration is real work and there are no compatibility shims.
 >
-> While 3.0.0 is open, the source tree also carries the 2.2.x classes it replaces. See
-> [Transitional types you will see in the source](#transitional-types-you-will-see-in-the-source).
+> The 2.2.x classes are **gone from the source**, not deprecated in place. See
+> [Names removed in 3.0.0](#names-removed-in-300) for what they were and what took over.
 
 ---
 
@@ -576,22 +576,35 @@ PostgreSQL still transitively restores two providers they will never use. Removi
 itself a breaking change, so it is scheduled to land inside 3.0.0 rather than after it. Tracked as FR 7 in
 [docs/feature-requests.md](docs/feature-requests.md).
 
-### Transitional types you will see in the source
+### Names removed in 3.0.0
 
-While the 3.0.0 line is open, the tree still contains the 2.2.x surface it replaces:
+The 2.2.x class surface was deleted outright rather than deprecated in place, so nothing below is in the
+source, and nothing below has a shim:
 
-- the eighteen key-specific closures in `ProphetsWay.EFTools.Guid`, `.Int` and `.Long`
-- the `RootBaseDao<T, TIdType>` and `RootBaseSoftDao<T, TIdType>` bridges beneath them
-- `LegacyBaseNonIdDao<T>`, `LegacyBaseSoftNonIdDao<T>` and `LegacyRootNonIdDao<T>`
+- the eighteen key-specific closures in `ProphetsWay.EFTools.Guid`, `.Int` and `.Long` — **those three
+  namespaces no longer exist**, so a `using` on one stops resolving and the file fails at the top rather
+  than at the class
+- the `RootBaseDao<T, TIdType>` and `RootBaseSoftDao<T, TIdType>` bridges beneath them, whose
+  `where TIdType : struct` constraint is the one the open key exists to drop
+- `LegacyBaseNonIdDao<T>`, `LegacyBaseSoftNonIdDao<T>` and `LegacyRootNonIdDao<T>` — development-branch
+  scaffolding that lived for a handful of commits so the original names could be taken by the types that
+  replace them. If an alpha or beta cut showed you one, it is not part of 3.0.0 and there is nothing to
+  migrate onto
 
-The `Legacy` prefix exists purely so the original names could be reused by the types that replace them.
-**All of these are scheduled for deletion before 3.0.0 is tagged, and none is a supported migration target.**
-Plan on the generic families; do not write new code against anything in that list. Nothing in this
-repository's own proving ground derives from any of them.
+Each of the eighteen closures has a direct replacement, formed by moving the key type out of the namespace
+and into a second type argument — `Int.BaseDao<T>` becomes `BaseDao<T, int>`, and so on through all of them.
+The full mapping is in [CHANGELOG.md](CHANGELOG.md); it is not repeated here. The two bridges have no
+equivalent — derive instead from whichever open-key family matches what your Data Access Object interface
+publishes.
 
-One name is reused rather than promoted: 2.2.x had an **`internal`** `RootNonIdDao<T>` engine, and 3.0.0
-introduces a **`public`** `RootNonIdDao<TEntity>` extension point. They are different types that happen to
-share a name — different visibility, different members, and a `MatchRow` contract the old one never had.
+One name survives the deletion with a different meaning: 2.2.x had an **`internal`** `RootNonIdDao<T>`
+engine, and 3.0.0 has a **`public`** `RootNonIdDao<TEntity>` extension point. They are different types that
+happen to share a name — different visibility, different members, and a `MatchRow` contract the old one
+never had. The internal one was not promoted; it was deleted and its body absorbed into the bases it served.
+
+Nothing transitional ships. The library is the thirteen public declarations listed in the
+[API Reference](#api-reference) plus two `internal static` helpers, in one flat namespace, and it contains
+no conditionally compiled code at all.
 
 ### Further reading
 
@@ -661,9 +674,9 @@ Issues and pull requests are welcome at
 
 Two things to know before you open one:
 
-- **The 3.0.0 line is open and breaking.** Deletions of the transitional types listed above are expected;
-  additions to the twelve-class surface are weighed against [docs/api-contract.md](docs/api-contract.md)
-  first.
+- **The 3.0.0 line is open and breaking.** The 2.2.x surface is already deleted; additions to the
+  twelve-class surface that replaced it are weighed against
+  [docs/api-contract.md](docs/api-contract.md) first.
 - **Versions are set by hand in `app-variables.yml`, by the owner alone.** Do not bump them in a pull
   request.
 

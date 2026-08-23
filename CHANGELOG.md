@@ -1,7 +1,6 @@
-# v3.0.0 — not yet released
-This line is open.  The owner has not tagged it, and further work will land under this same number, so the entry
-below describes the state of the line rather than the contents of a release.  Everything here is a change against
-the published 2.2.0 package.
+# v3.0.0
+Not yet published — nuget.org still serves 2.2.0 as the latest version of this package.  Everything below is a
+change against that published 2.2.0 package.
 
 This is a rewrite of the library on top of Entity Framework Core alone, and it breaks nearly every consumer.
 Read the whole entry before upgrading.  There are no compatibility wrappers and none are planned; if the
@@ -29,8 +28,8 @@ the dispatcher — if you were catching that wrapper and unwrapping ```InnerExce
 type instead.
 
 ### BaseNonIdDao and BaseSoftNonIdDao keep their names but are different types
-This is the change most likely to be missed, because nothing disappears.  The names still resolve, so the
-upgrade reads like a small refactor rather than a replacement.  In 2.2.0 these were:
+This is the change most likely to be missed, because these two names do not disappear.  They still resolve, so
+the upgrade reads like a small refactor rather than a replacement.  In 2.2.0 these were:
 
 ```c#
 	BaseNonIdDao<T> : IBaseDao<T> where T: class, IBaseEntity
@@ -53,8 +52,8 @@ identifying a single row — so your derived class will at least fail to compile
 one piece of this the compiler will catch for you.
 
 The migration is to rewrite the class onto the new keyless family described below, supplying ```MatchRow``` and
-dropping any overrides that no longer correspond to anything.  You will see three ```Legacy```-prefixed types in
-this build holding the old shapes; **do not migrate onto them** — see the closing note.
+dropping any overrides that no longer correspond to anything.  No wrapper preserving the old shape ships in this
+release, so there is nothing to fall back to and no reason to delay the rewrite.
 
 ### BaseEFDataAccess takes one type parameter and is constructed differently
 The published line documented ```BaseEFDataAccess<TContextType, TIdType>```.  That type no longer exists.  The
@@ -85,6 +84,41 @@ library chose your database provider.  It no longer does — whoever builds the 
 also removes the v2.0.0 behavior where omitting a connection string produced an in-memory context; build the
 options with the provider you want, in-memory included.  Deriving from ```BaseEFContext``` is now optional, since
 ```BaseEFDataAccess<TContext>``` accepts any ```DbContext```.
+
+### The Guid, Int and Long namespaces have been removed
+```ProphetsWay.EFTools.Guid```, ```ProphetsWay.EFTools.Int``` and ```ProphetsWay.EFTools.Long``` are gone, and
+with them the 18 key-specific base classes they held — six in each namespace, being ```BaseDao```,
+```BaseGetAllDao```, ```BasePagedDao``` and their three soft-delete counterparts.  This is likely to be the first
+error you see, and it is a blunter one than the rest of this release: ```using ProphetsWay.EFTools.Int;``` no
+longer resolves, so the file stops compiling at the top rather than at the class.
+
+Every one of the eighteen has a direct replacement in the open-key families described below, formed by moving the
+key type out of the namespace and into a second type argument:
+
+```c#
+	// 2.2.x
+	using ProphetsWay.EFTools.Int;
+	public class UserDao : BasePagedDao<User>, IUserDao { /* … */ }
+
+	// 3.0.0
+	using ProphetsWay.EFTools;
+	public class UserDao : BasePagedDao<User, int>, IUserDao { /* … */ }
+```
+```Int.BaseDao<T>``` becomes ```BaseDao<T, int>```, ```Guid.BaseSoftPagedDao<T>``` becomes
+```BaseSoftPagedDao<T, Guid>```, ```Long.BaseGetAllDao<T>``` becomes ```BaseGetAllDao<T, long>```, and so on
+through all eighteen.  Constructor signatures are unchanged, so for most Data Access Objects the edit is the
+```using``` line and one type argument.  The library now lives entirely in the single ```ProphetsWay.EFTools```
+namespace.
+
+One collision disappears with them.  ```ProphetsWay.EFTools.Guid``` shadowed ```System.Guid``` in any file that
+imported it, which is why a ```Guid``` key sometimes had to be written out as ```System.Guid``` to compile at
+all.  That no longer happens.
+
+The two bridge classes underneath the closures, ```RootBaseDao<T, TIdType>``` and
+```RootBaseSoftDao<T, TIdType>```, have been removed alongside them.  Both were marked
+```[EditorBrowsable(Never)]``` and were not meant to be named directly; if you did name one, there is no 3.0.0
+equivalent, and the replacement is to derive from whichever open-key family matches the capabilities your Data
+Access Object interface publishes.
 
 ### New: keyed Data Access Object families with an open key type
 The key-specific bases required a value-type key, through a ```where TIdType : struct``` constraint on the
@@ -145,14 +179,19 @@ the collection object itself, raising ```TargetException``` one statement after 
 committed.  The call appeared to fail while the write had in fact succeeded.  Collection and reference
 navigations are now handled distinctly.
 
-### A note on the Legacy types, so they are not mistaken for API
-```LegacyBaseNonIdDao<T>```, ```LegacyBaseSoftNonIdDao<T>``` and ```LegacyRootNonIdDao<T>``` are the 2.2.x
-keyless classes carried under new names purely so the original names could be reused by the types that replace
-them.  They are scheduled for deletion before 3.0.0 is tagged and are not a supported migration target.  The
-same removal is planned for the 18 key-specific closures in the ```ProphetsWay.EFTools.Guid```,
-```ProphetsWay.EFTools.Int``` and ```ProphetsWay.EFTools.Long``` namespaces and the two ```RootBase``` bridges
-beneath them, all of which are still present in this build and all of which are superseded by the open-key
-families above.  Plan on the generic families; do not write new code against anything named in this paragraph.
+### The whole surface, and a note on prerelease builds
+Nothing transitional ships.  The library is twelve public classes and one enum: ```BaseEFContext``` and
+```BaseEFDataAccess<TContext>```; the keyed ```BaseDao```, ```BaseGetAllDao``` and ```BasePagedDao```; their
+soft-delete counterparts ```BaseSoftDao```, ```BaseSoftGetAllDao``` and ```BaseSoftPagedDao```; the keyless
+```RootNonIdDao```, ```BaseNonIdDao```, ```RootSoftNonIdDao``` and ```BaseSoftNonIdDao```; and
+```ContextOwnership```.  All of them are in the ```ProphetsWay.EFTools``` namespace, and there is no longer any
+conditionally compiled code in the library at all.
+
+If you tried an alpha or beta package cut while this line was still in development, you may have seen three
+```Legacy```-prefixed keyless classes, or the key-typed namespaces described above, sitting alongside the new
+families.  Those were scaffolding internal to the development branch — the older classes were renamed for a
+handful of commits so the new ones could take their names — and **none of them is part of 3.0.0**.  There is no
+```LegacyBaseNonIdDao<T>``` to migrate onto.  Plan on the generic families.
 
 
 # v2.2.0
