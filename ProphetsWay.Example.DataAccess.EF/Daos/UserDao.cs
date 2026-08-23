@@ -8,6 +8,8 @@ using ProphetsWay.EFTools;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.IDaos;
 
+using System.Linq;
+
 namespace ProphetsWay.Example.DataAccess.EF.Daos
 {
 	internal class UserDao : BaseDao<User, int>, IUserDao
@@ -18,6 +20,14 @@ namespace ProphetsWay.Example.DataAccess.EF.Daos
 		{
 			user.Whatever = "custom functionality triggered";
 			Update(user);
+		}
+
+		protected override IQueryable<User> ApplyIncludes(IQueryable<User> query)
+		{
+			return query
+				.Include(x => x.Company)
+				.Include(x => x.Job)
+				.Include(x => x.Department);
 		}
 	}
 }
