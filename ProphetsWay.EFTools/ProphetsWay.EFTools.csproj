@@ -43,10 +43,9 @@ For more information on this project, please go to https://github.com/ProphetMan
 	</PropertyGroup>
 
 
+	<!-- Provider-neutral by design: a consumer chooses their own EF provider. Never add one here. -->
 	<ItemGroup Condition="!$(TargetFramework.StartsWith('net4')) and $(TargetFramework.StartsWith('net'))">
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.11" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.11" />
 	</ItemGroup>
 	
 	<ItemGroup>

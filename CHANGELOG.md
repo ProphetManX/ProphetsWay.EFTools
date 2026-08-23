@@ -109,8 +109,48 @@ from its caller — and say whether it is responsible for disposing it.
 only one left.  On the EF Core side that removed constructor called ```UseSqlServer``` for you, which meant the
 library chose your database provider.  It no longer does — whoever builds the options names the provider.  This
 also removes the v2.0.0 behavior where omitting a connection string produced an in-memory context; build the
-options with the provider you want, in-memory included.  Deriving from ```BaseEFContext``` is now optional, since
+options with the provider you want, in-memory included — though as the next section describes, the in-memory
+provider is no longer one this package hands you.  Deriving from ```BaseEFContext``` is now optional, since
 ```BaseEFDataAccess<TContext>``` accepts any ```DbContext```.
+
+### The package no longer brings a database provider with it
+Installing 2.2.0 also installed ```Microsoft.EntityFrameworkCore.SqlServer``` and
+```Microsoft.EntityFrameworkCore.InMemory```, because both were ```PackageReference```s of the library itself.
+A consumer on PostgreSQL, MySQL or SQLite restored two providers they were never going to call, and carried them
+into every build and every deployment.  Both are gone from this package.
+```Microsoft.EntityFrameworkCore``` 10.0.11 stays, because that is the dependency the library genuinely has.
+
+Measured across the change, the dependency closure of a project taking this package goes from
+```EntityFrameworkCore```, ```EntityFrameworkCore.SqlServer``` and ```EntityFrameworkCore.InMemory``` at the top
+level — with ```EntityFrameworkCore.Relational``` and ```Microsoft.SqlServer.Server``` behind them — to
+```EntityFrameworkCore``` alone, behind which sit only ```EntityFrameworkCore.Abstractions``` and
+```EntityFrameworkCore.Analyzers```.  No provider of any kind, and no relational assembly, remains anywhere in
+the closure.
+
+**This is a breaking change if you were calling a provider you never referenced yourself.**  A line such as
+```options.UseSqlServer(connectionString)``` compiled under 2.2.0 without
+```Microsoft.EntityFrameworkCore.SqlServer``` ever appearing in your project file, because this package supplied
+it for you.  That line will now fail to compile.  The remedy is one line in your own project file:
+
+```xml
+	<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.11" />
+```
+Name whichever provider you actually use — ```Npgsql.EntityFrameworkCore.PostgreSQL```,
+```Pomelo.EntityFrameworkCore.MySql```, ```Microsoft.EntityFrameworkCore.Sqlite```, or
+```Microsoft.EntityFrameworkCore.InMemory``` if what you wanted it for was tests.  Nothing else about the call
+changes: no signature moved, no type was removed, and the code you already wrote keeps working the moment the
+package it depends on is declared where it belongs.
+
+This is the packaging catching up to the code rather than a change of behavior, and it is worth being precise
+about which.  The library has named no provider in code since the ```BaseEFContext``` change described above —
+there is no ```UseSqlServer``` or ```UseInMemoryDatabase``` call anywhere in it, and ```BaseEFContext``` exposes
+a single ```protected BaseEFContext(DbContextOptions)``` constructor that names nothing.  What lagged behind was
+the package manifest, which went on shipping two providers the code had already stopped using.
+
+It lands in 3.0.0 because it cannot land anywhere later.  Removing a dependency changes what restores for
+everyone who has already taken the package, so doing this after 3.0.0 shipped would have cost a 4.0.0 on its own.
+Provider neutrality is the shape this library was meant to have, and this release is the last opportunity to
+reach it without spending another major version to get there.
 
 ### The Guid, Int and Long namespaces have been removed
 ```ProphetsWay.EFTools.Guid```, ```ProphetsWay.EFTools.Int``` and ```ProphetsWay.EFTools.Long``` are gone, and

@@ -20,9 +20,10 @@
 	</PackageReference>
   </ItemGroup>
 
-  <!-- Relational provider for the SQLite in-memory certification leg; must not move into the library. -->
+  <!-- Test-only EF providers: Sqlite for the relational in-memory certification leg, InMemory for the guard spike theories. Neither must move into the library. -->
   <ItemGroup>
 	<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.11" />
   </ItemGroup>
 
   <ItemGroup>
