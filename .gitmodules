@@ -2,5 +2,3 @@
 	path = ProphetsWay.Example
 	url = https://github.com/ProphetManX/ProphetsWay.Example.git
 	branch = main
-[submodule "Submod"]
-	branch = main

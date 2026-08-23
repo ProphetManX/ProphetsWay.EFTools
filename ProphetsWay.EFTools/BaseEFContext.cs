@@ -1,21 +1,24 @@
-﻿#if NET8_0_OR_GREATER
-using Microsoft.EntityFrameworkCore;
-#endif
-#if NET461 || NET471 || NET48
-using System.Data.Entity;
-#endif
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace ProphetsWay.EFTools
 {
-	public abstract class BaseEFContext  : DbContext
+	/// <summary>
+	/// An optional base for a consumer's <see cref="DbContext"/>. It selects no provider and adds no
+	/// behavior — it exists so a consumer's context has a family-shaped base and a single constructor
+	/// convention.
+	/// </summary>
+	/// <remarks>
+	/// Deriving from this type is <b>not</b> required. <see cref="BaseEFDataAccess{TContext}"/> constrains
+	/// its context to <see cref="DbContext"/>, so any context works.
+	/// </remarks>
+	public abstract class BaseEFContext : DbContext
 	{
-#if NET461 || NET471 || NET48
-		protected BaseEFContext(string connectionString) : base(connectionString) { }
-#endif
-
-#if NET8_0_OR_GREATER
-        protected BaseEFContext(string connectionString) : this(new DbContextOptionsBuilder().UseSqlServer(connectionString).Options) { }
+		/// <summary>
+		/// Initializes the context from options the consumer has already configured.
+		/// </summary>
+		/// <param name="builderOptions">
+		/// The configured options. Whoever builds them names the database provider; this library never does.
+		/// </param>
 		protected BaseEFContext(DbContextOptions builderOptions) : base(builderOptions) { }
-#endif
 	}
 }

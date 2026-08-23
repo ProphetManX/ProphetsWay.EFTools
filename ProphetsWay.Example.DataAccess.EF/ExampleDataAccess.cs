@@ -1,45 +1,64 @@
-﻿#if NET8_0_OR_GREATER
-using Microsoft.EntityFrameworkCore;
-#endif
+﻿using Microsoft.EntityFrameworkCore;
 
 using ProphetsWay.EFTools;
 using ProphetsWay.Example.DataAccess.EF.Daos;
 using ProphetsWay.Example.DataAccess.Entities;
 using ProphetsWay.Example.DataAccess.IDaos;
+using System;
 using System.Collections.Generic;
 
 namespace ProphetsWay.Example.DataAccess.EF
 {
-	public class ExampleDataAccess : BaseEFDataAccess<ExampleContext, int>, IExampleDataAccess
+	public class ExampleDataAccess : BaseEFDataAccess<ExampleContext>, IExampleDataAccess
 	{
 		private readonly ICompanyDao _companyDao;
 		private readonly IJobDao _jobDao;
 		private readonly IUserDao _userDao;
 		private readonly IResourceDao _resourceDao;
 		private readonly ITransactionDao _transactionDao;
+		private readonly IDepartmentDao _departmentDao;
+		private readonly ICompanyResourceDao _companyResourceDao;
 
+		/// <summary>
+		/// Builds a SQL Server-backed context from a connection string and owns it.
+		/// </summary>
+		/// <remarks>
+		/// The provider is named here, in the consumer's own file — the library names none. A PostgreSQL
+		/// consumer writes <c>UseNpgsql</c>, a SQLite one <c>UseSqlite</c>, and neither needs anything from
+		/// <c>ProphetsWay.EFTools</c> to do it.
+		/// </remarks>
+		public ExampleDataAccess(string connectionString)
+			: this(new ExampleContext(new DbContextOptionsBuilder<ExampleContext>()
+				.UseSqlServer(connectionString)
+				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+				.Options), ContextOwnership.Owned)
+		{ }
 
+		/// <summary>
+		/// Builds a context from options the caller has already configured — provider included — and owns it.
+		/// </summary>
+		public ExampleDataAccess(DbContextOptions<ExampleContext> options)
+			: this(new ExampleContext(options), ContextOwnership.Owned)
+		{ }
 
-#if NET8_0_OR_GREATER
-		public ExampleDataAccess() : this(new DbContextOptionsBuilder<ExampleContext>().UseInMemoryDatabase(typeof(ExampleContext).Name).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
-#endif
+		/// <summary>
+		/// Takes a context someone else created and will dispose — a dependency-injection container, or a test
+		/// that configured its own in-memory database.
+		/// </summary>
+		public ExampleDataAccess(ExampleContext context)
+			: this(context, ContextOwnership.Borrowed)
+		{ }
 
-#if NET471 || NET48
-public ExampleDataAccess(string connectionString) : base(connectionString) {
-#endif
-
-#if NET8_0_OR_GREATER
-		
-		public ExampleDataAccess(string connectionString) : this(new DbContextOptionsBuilder<ExampleContext>().UseSqlServer(connectionString).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options) { }
-
-		public ExampleDataAccess(DbContextOptions options) : base(options)
+		private ExampleDataAccess(ExampleContext context, ContextOwnership ownership)
+			: base(context, ownership)
 		{
-#endif
-            _companyDao = new CompanyDao(Context);
+			_companyDao = new CompanyDao(Context);
 			_jobDao = new JobDao(Context);
 			_userDao = new UserDao(Context);
 			_resourceDao = new ResourceDao(Context);
 			_transactionDao = new TransactionDao(Context);
+			_departmentDao = new DepartmentDao(Context);
+			_companyResourceDao = new CompanyResourceDao(Context);
 		}
 
 
@@ -203,6 +222,85 @@ public ExampleDataAccess(string connectionString) : base(connectionString) {
 
 #endregion
 
+#region DepartmentDao
 
-    }
+		//BaseEFDataAccess asks every member a derived Data Access Layer declares to open with this. The Borrowed
+		//constructor is why it is not redundant: the context outlives this instance there, so without the guard a
+		//disposed Data Access Layer would keep answering against a live context.
+		public Department Get(Department item)
+		{
+			ThrowIfDisposed();
+			return _departmentDao.Get(item);
+		}
+
+		public void Insert(Department item)
+		{
+			ThrowIfDisposed();
+			_departmentDao.Insert(item);
+		}
+
+		public int Update(Department item)
+		{
+			ThrowIfDisposed();
+			return _departmentDao.Update(item);
+		}
+
+		public int Delete(Department item)
+		{
+			ThrowIfDisposed();
+			return _departmentDao.Delete(item);
+		}
+
+		public IList<Department> GetAll(Department item)
+		{
+			ThrowIfDisposed();
+			return _departmentDao.GetAll(item);
+		}
+
+		public IList<Department> GetPaged(Department item, int skip, int take)
+		{
+			ThrowIfDisposed();
+			return _departmentDao.GetPaged(item, skip, take);
+		}
+
+		public int GetCount(Department item)
+		{
+			ThrowIfDisposed();
+			return _departmentDao.GetCount(item);
+		}
+
+		public int Restore(Department item)
+		{
+			ThrowIfDisposed();
+			return _departmentDao.Restore(item);
+		}
+
+#endregion
+
+#region CompanyResourceDao
+
+		public void Insert(CompanyResource item)
+		{
+			ThrowIfDisposed();
+			_companyResourceDao.Insert(item);
+		}
+
+		public int Delete(CompanyResource item)
+		{
+			ThrowIfDisposed();
+			return _companyResourceDao.Delete(item);
+		}
+
+		public IList<CompanyResource> GetAll(CompanyResource item)
+		{
+			ThrowIfDisposed();
+			return _companyResourceDao.GetAll(item);
+		}
+
+		//No Get(CompanyResource) is declared, and none can usefully be: rule 8 requires
+		//Get<CompanyResource>(id) to throw DataAccessConventionException, and a forwarder here is the one thing
+		//on this side that could change that.
+
+#endregion
+	}
 }

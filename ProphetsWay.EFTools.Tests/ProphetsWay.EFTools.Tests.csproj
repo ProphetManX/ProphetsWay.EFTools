@@ -1,10 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFrameworks>
-		  net472;net48;
-		  net80;net90;
-	  </TargetFrameworks>
+	  <TargetFrameworks>net10.0</TargetFrameworks>
 	  
 	<IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -21,6 +18,11 @@
 	  <PrivateAssets>all</PrivateAssets>
 	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
+  </ItemGroup>
+
+  <!-- Relational provider for the SQLite in-memory certification leg; must not move into the library. -->
+  <ItemGroup>
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
   </ItemGroup>
 
   <ItemGroup>
