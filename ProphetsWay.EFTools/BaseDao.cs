@@ -136,9 +136,6 @@ namespace ProphetsWay.EFTools
 		/// </summary>
 		protected DbSet<TEntity> Dataset => _dataset ??= Context.Set<TEntity>();
 
-		// CS8766: IBaseDao<T> is compiled null-oblivious, and T : IBaseEntity permits a struct, so the interface
-		// cannot annotate the return its own documentation describes. Tracked for ProphetsWay.BaseDataAccess 3.2.0.
-#pragma warning disable CS8766
 		/// <inheritdoc />
 		/// <exception cref="ArgumentNullException"><paramref name="item"/> is <c>null</c>.</exception>
 		/// <remarks>
@@ -158,7 +155,6 @@ namespace ProphetsWay.EFTools
 				.AsNoTracking()
 				.SingleOrDefault();
 		}
-#pragma warning restore CS8766
 
 		/// <inheritdoc />
 		/// <exception cref="ArgumentNullException"><paramref name="item"/> is <c>null</c>.</exception>

@@ -86,7 +86,7 @@ Install-Package ProphetsWay.EFTools -Version 2.2.0
 |---|---|
 | **Target framework** | `net10.0` — and only `net10.0` |
 | **Entity Framework** | Core **10.0.11**. Entity Framework 6 is not supported |
-| **Contracts** | `ProphetsWay.BaseDataAccess` **3.1.0** |
+| **Contracts** | `ProphetsWay.BaseDataAccess` **3.2.0** |
 
 The single target is deliberate rather than an oversight — see
 [Architecture & Design Decisions](#architecture--design-decisions). If you are on .NET Framework, .NET 8 or
@@ -336,12 +336,19 @@ Each takes `protected BaseXxxDao(DbContext context)`. `BaseDao<TEntity, TKey>` c
 
 | Kind | Members |
 |---|---|
-| Public | `TEntity Get(TEntity item)`, `void Insert(TEntity item)`, `int Update(TEntity item)`, `int Delete(TEntity item)`, `IList<TEntity> GetAll(TEntity item)`, `IList<TEntity> GetPaged(TEntity item, int skip, int take)`, `int GetCount(TEntity item)` |
+| Public | `TEntity? Get(TEntity item)`, `void Insert(TEntity item)`, `int Update(TEntity item)`, `int Delete(TEntity item)`, `IList<TEntity> GetAll(TEntity? item)`, `IList<TEntity> GetPaged(TEntity? item, int skip, int take)`, `int GetCount(TEntity? item)` |
 | Protected state | `DbContext Context`, `DbSet<TEntity> Dataset` |
 | Protected seams | `TrackForWrite`, `ApplyUpdateValues`, `GetKey`, `MatchRow`, `KeyEquals`, `KeySelector`, `ApplyReadFilter`, `ApplyIncludes`, `ApplyStableOrder` |
 
 > The `item` argument on `GetAll`, `GetPaged` and `GetCount` is a **type selector only**, and it is `null`
 > when the call arrives through the dispatcher. Never read it.
+
+> **`Get` is annotated `TEntity?`, and "not found" is what that expresses.** The whole library is compiled
+> under `#nullable enable`, and `ProphetsWay.BaseDataAccess` 3.2.0 annotates `IBaseDao<T>` to match — so a
+> call through the interface now binds `Company?` where it used to bind an unannotated `Company`. If you
+> compile with nullable warnings on, expect a `CS8602` at any site that dereferences a `Get` result without
+> checking it. It is a **new warning, not a break**: the change is source- and binary-compatible, and the
+> warning is pointing at a null you could always have received.
 
 ### The keyed soft-delete families — `where TEntity : class, IBaseSoftIdEntity<TKey>`
 
@@ -641,9 +648,9 @@ dotnet test
 ```
 
 **Most of the suite needs a local SQL Server.** `ProphetsWay.EFTools.Tests/Constants.cs` holds a
-`Data Source=localhost;Initial Catalog=ProphetsWay.Example;Integrated Security=True` connection string, and
-the schema is the submodule's `ProphetsWay.Example.Database` project. That is why `app-variables.yml` sets
-`LocalTestsOnly: 'yes'` and the pipeline skips the suite entirely.
+`Data Source=localhost;Initial Catalog=ProphetsWay.Example;Integrated Security=True;TrustServerCertificate=True`
+connection string, and the schema is the submodule's `ProphetsWay.Example.Database` project. That is why
+`app-variables.yml` sets `LocalTestsOnly: 'yes'` and the pipeline skips the suite entirely.
 
 The tests written directly against this library's own surface stand up **SQLite in-memory** contexts instead
 and need no database at all. Select them with the traits the suite carries:

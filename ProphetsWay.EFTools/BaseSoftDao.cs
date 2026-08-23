@@ -46,14 +46,9 @@ namespace ProphetsWay.EFTools
 	/// <b>Not thread-safe.</b> Every Data Access Object on a layer shares one <see cref="DbContext"/>.
 	/// </para>
 	/// </remarks>
-	// CS8766: overriding Get re-runs the implicit-implementation check against IBaseDao<T>, which is compiled
-	// null-oblivious and whose T : IBaseEntity permits a struct, so the interface cannot annotate the return its
-	// own documentation describes. Tracked for ProphetsWay.BaseDataAccess 3.2.0.
-#pragma warning disable CS8766
 	public abstract class BaseSoftDao<TEntity, TKey> : BaseDao<TEntity, TKey>
 		where TEntity : class, IBaseSoftIdEntity<TKey>
 	{
-#pragma warning restore CS8766
 		/// <inheritdoc />
 		protected BaseSoftDao(DbContext context) : base(context)
 		{

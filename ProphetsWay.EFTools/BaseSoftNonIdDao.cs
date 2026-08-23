@@ -18,13 +18,9 @@ namespace ProphetsWay.EFTools
 	/// as it binds one deriving from <see cref="RootSoftNonIdDao{TEntity}"/> — the rule counts declaration
 	/// sites, not derivation depth.
 	/// </remarks>
-	// CS8766: IBaseDao<T> is compiled null-oblivious, and T : IBaseEntity permits a struct, so the interface
-	// cannot annotate the return its own documentation describes. Tracked for ProphetsWay.BaseDataAccess 3.2.0.
-#pragma warning disable CS8766
 	public abstract class BaseSoftNonIdDao<TEntity> : RootSoftNonIdDao<TEntity>, IBaseDao<TEntity>
 		where TEntity : class, IBaseSoftEntity
 	{
-#pragma warning restore CS8766
 		/// <inheritdoc />
 		protected BaseSoftNonIdDao(DbContext context) : base(context)
 		{
@@ -32,9 +28,7 @@ namespace ProphetsWay.EFTools
 
 		/// <inheritdoc cref="RootSoftNonIdDao{TEntity}.GetCore" />
 		/// <remarks>The soft <see cref="RootSoftNonIdDao{TEntity}.GetCore"/>, published — returns soft-deleted rows.</remarks>
-#pragma warning disable CS8766
 		public virtual TEntity? Get(TEntity item)
-#pragma warning restore CS8766
 		{
 			return GetCore(item);
 		}

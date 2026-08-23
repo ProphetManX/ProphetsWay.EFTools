@@ -15,13 +15,9 @@ namespace ProphetsWay.EFTools
 	/// Adds no member of its own. It declares <see cref="IBaseGetAllDao{T}"/>, which the flat surface on
 	/// <see cref="BaseDao{TEntity, TKey}"/> already satisfies.
 	/// </remarks>
-	// CS8766: declaring a second interface re-runs the implicit-implementation check against the inherited Get,
-	// which IBaseDao<T>, compiled null-oblivious, cannot annotate. Tracked for ProphetsWay.BaseDataAccess 3.2.0.
-#pragma warning disable CS8766
 	public abstract class BaseGetAllDao<TEntity, TKey> : BaseDao<TEntity, TKey>, IBaseGetAllDao<TEntity>
 		where TEntity : class, IBaseIdEntity<TKey>
 	{
-#pragma warning restore CS8766
 		/// <inheritdoc />
 		protected BaseGetAllDao(DbContext context) : base(context)
 		{

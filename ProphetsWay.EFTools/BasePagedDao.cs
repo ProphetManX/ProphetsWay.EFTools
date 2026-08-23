@@ -24,13 +24,9 @@ namespace ProphetsWay.EFTools
 	/// from a total order can overlap or omit rows.
 	/// </para>
 	/// </remarks>
-	// CS8766: declaring a second interface re-runs the implicit-implementation check against the inherited Get,
-	// which IBaseDao<T>, compiled null-oblivious, cannot annotate. Tracked for ProphetsWay.BaseDataAccess 3.2.0.
-#pragma warning disable CS8766
 	public abstract class BasePagedDao<TEntity, TKey> : BaseDao<TEntity, TKey>, IBasePagedDao<TEntity>
 		where TEntity : class, IBaseIdEntity<TKey>
 	{
-#pragma warning restore CS8766
 		/// <inheritdoc />
 		protected BasePagedDao(DbContext context) : base(context)
 		{

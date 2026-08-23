@@ -16,13 +16,9 @@ namespace ProphetsWay.EFTools
 	/// <see cref="BaseDao{TEntity, TKey}"/> already satisfies, and inherits both timestamp hooks from
 	/// <see cref="BaseSoftDao{TEntity, TKey}"/> unchanged.
 	/// </remarks>
-	// CS8766: declaring a second interface re-runs the implicit-implementation check against the inherited Get,
-	// which IBaseDao<T>, compiled null-oblivious, cannot annotate. Tracked for ProphetsWay.BaseDataAccess 3.2.0.
-#pragma warning disable CS8766
 	public abstract class BaseSoftGetAllDao<TEntity, TKey> : BaseSoftDao<TEntity, TKey>, IBaseGetAllDao<TEntity>
 		where TEntity : class, IBaseSoftIdEntity<TKey>
 	{
-#pragma warning restore CS8766
 		/// <inheritdoc />
 		protected BaseSoftGetAllDao(DbContext context) : base(context)
 		{

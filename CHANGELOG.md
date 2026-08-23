@@ -20,12 +20,39 @@ runtimes EF Core itself no longer serves was costing more than it returned.  If 
 or .NET 9 you cannot restore this version and should remain on the 2.2.x line.  Entity Framework Core moves from
 9.0.4 to 10.0.11 alongside it.
 
-### ProphetsWay.BaseDataAccess moves from 2.5.0 to 3.1.0
-Two changes in that dependency reach you through this one.  ```IBaseDataAccess``` now extends ```IDisposable```,
-so every Data Access Layer has a ```Dispose``` and callers are expected to use one.  And exceptions thrown by
-your own Data Access Layer methods are no longer wrapped in ```TargetInvocationException``` on their way out of
-the dispatcher — if you were catching that wrapper and unwrapping ```InnerException```, catch the real exception
-type instead.
+### ProphetsWay.BaseDataAccess moves from 2.5.0 to 3.2.0
+Three changes in that dependency reach you through this one.  ```IBaseDataAccess``` now extends ```IDisposable```,
+so every Data Access Layer has a ```Dispose``` and callers are expected to use one.  Exceptions thrown by your
+own Data Access Layer methods are no longer wrapped in ```TargetInvocationException``` on their way out of the
+dispatcher — if you were catching that wrapper and unwrapping ```InnerException```, catch the real exception type
+instead.  And 3.2.0 annotates that package's contracts for nullable reference types, which changes what the
+compiler can tell you rather than what runs.
+
+The annotation that reaches an ordinary caller is on ```IBaseDao<T>```, whose ```Get``` every earlier version of
+that package left null-oblivious:
+
+```c#
+	// 2.5.0 and 3.1.0 — null-oblivious
+	T Get(T item);
+
+	// 3.2.0
+	T? Get(T item);
+```
+Nothing about the behavior is new — a ```Get``` for a row that is not there has always come back ```null``` — but
+a call through your own ```ICompanyDao : IBaseDao<Company>``` now binds ```Company?``` instead of an oblivious
+```Company```, so a project with nullable enabled may see a ```CS8602``` where it previously saw nothing.  That is
+a new warning and not a break: no signature changed, nothing you have compiled needs rebuilding, and a project
+without nullable enabled sees none of it.  If you implement ```IBaseDao<T>``` yourself rather than deriving from a
+base in this library, read that package's own 3.2.0 entry as well — ```GetAll```, ```GetPaged``` and
+```GetCount``` gained an annotated parameter, and an implementation declaring a plain ```T``` there is now
+stricter than the interface allows and will report ```CS8767```.
+
+Taking 3.2.0 is also what let the last of this library's warning suppressions go.  Ten
+```#pragma warning disable CS8766``` pairs across eight files were holding down a diagnostic raised because the
+bases here declared the nullable ```Get``` return their documentation described while the interface they
+implemented could not say the same thing.  Both sides agree now, so the suppressions are deleted rather than
+replaced and no ```#pragma``` of any kind is left in the library — the compiler verifies what it was previously
+being asked to ignore.
 
 ### BaseNonIdDao and BaseSoftNonIdDao keep their names but are different types
 This is the change most likely to be missed, because these two names do not disappear.  They still resolve, so

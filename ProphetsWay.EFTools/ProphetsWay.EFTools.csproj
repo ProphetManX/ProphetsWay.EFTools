@@ -50,7 +50,7 @@ For more information on this project, please go to https://github.com/ProphetMan
 	</ItemGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="3.1.0" />
+		<PackageReference Include="ProphetsWay.BaseDataAccess" Version="3.2.0" />
 	</ItemGroup>
 
 	<ItemGroup>

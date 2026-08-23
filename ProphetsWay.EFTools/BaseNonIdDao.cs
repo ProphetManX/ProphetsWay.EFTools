@@ -16,13 +16,9 @@ namespace ProphetsWay.EFTools
 	/// member — <c>Get</c> and <c>Update</c> published on an entity they are meaningless for is the coercion the
 	/// keyless families exist to prevent.
 	/// </remarks>
-	// CS8766: IBaseDao<T> is compiled null-oblivious, and T : IBaseEntity permits a struct, so the interface
-	// cannot annotate the return its own documentation describes. Tracked for ProphetsWay.BaseDataAccess 3.2.0.
-#pragma warning disable CS8766
 	public abstract class BaseNonIdDao<TEntity> : RootNonIdDao<TEntity>, IBaseDao<TEntity>
 		where TEntity : class, IBaseEntity
 	{
-#pragma warning restore CS8766
 		/// <inheritdoc />
 		protected BaseNonIdDao(DbContext context) : base(context)
 		{
@@ -30,9 +26,7 @@ namespace ProphetsWay.EFTools
 
 		/// <inheritdoc cref="RootNonIdDao{TEntity}.GetCore" />
 		/// <remarks><see cref="RootNonIdDao{TEntity}.GetCore"/>, published. Contract unchanged.</remarks>
-#pragma warning disable CS8766
 		public virtual TEntity? Get(TEntity item)
-#pragma warning restore CS8766
 		{
 			return GetCore(item);
 		}
