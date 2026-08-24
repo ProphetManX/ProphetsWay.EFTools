@@ -4,7 +4,39 @@ change against that published 2.2.0 package.
 
 This is a rewrite of the library on top of Entity Framework Core alone, and it breaks nearly every consumer.
 Read the whole entry before upgrading.  There are no compatibility wrappers and none are planned; if the
-migration is not worth your afternoon, stay on 2.2.x, which continues to work exactly as it did.
+migration is not worth your afternoon, 2.2.x remains installable and is unchanged — but read the next section
+before you decide, because *unchanged* includes four defects this release fixes.
+
+### If you are on 2.2.0: four defects you are exposed to, and three of them are silent
+The published 2.2.0 package carries four defects.  **Three of the four fail silently** — no exception, no
+failed build, no log line, just wrong data — so never having noticed one is not evidence you are unaffected.
+Each has its own ```Fixed:``` section further down; this is the short list, so that a reader who is not
+upgrading does not have to read the rest of the entry to find them.
+
+- **A leaked context and a leaked connection per Data Access Layer instance.**  ```BaseEFDataAccess```
+  constructed its own ```DbContext``` and never disposed it, and there was no ```Dispose``` for you to call
+  either.  This is the one that is not silent forever: it surfaces as connection-pool exhaustion under load,
+  and it is attributable once you go looking.
+- **Commit and rollback that silently do nothing.**  The keyless Data Access Object base began a transaction
+  only when none was already open, then reached the transaction it never stored through ```?.``` when
+  committing and rolling back.  Both calls returned normally having done nothing at all.
+- **```Update``` that un-deletes a soft-deleted row.**  Whole-object replacement wiped the stored
+  ```DeletedDate```, so updating a soft-deleted row brought it back into every read.  A second ```Delete```
+  also moved the original timestamp forward and returned ```1``` rather than ```0```.
+- **Reads and writes that hand back the store's own tracked object.**  An edit you made and never submitted
+  was written to the database on the next ```SaveChanges``` anywhere on that layer.
+
+**No 2.2.1 will be cut.**  These are documented rather than patched — a deliberate decision taken because the
+2.2.x consumer base is judged to be effectively empty, not an oversight — and the upgrade to 3.0.0 is the
+remedy on offer.  **That remedy is not available to everyone.**  This release targets ```net10.0``` and
+nothing else, so if you are on ```net48```, ```net8.0``` or ```net9.0``` you cannot take it at all, and what
+follows is a description of what you are running rather than an upgrade path.  For that case the mitigations
+live in your own code: there is no ```Dispose``` in 2.2.0 to call, so create as few Data Access Layer
+instances as you can and keep them short-lived; drive transactions through ```Context.Database``` yourself
+rather than through a Data Access Object's ```EnsureBeginTransaction```/```EnsureTransactionCommit```/
+```EnsureTransactionRollback``` members; never pass a soft-deleted entity to ```Update```; and configure
+```QueryTrackingBehavior.NoTracking``` on the context you hand in, which closes the ```Get``` half of the
+fourth defect though not the ```Insert``` half.
 
 ### Entity Framework 6 support is gone
 The 2.2.0 package shipped two implementations chosen by target framework — EntityFramework 6.5.1 on the .NET
@@ -230,6 +262,106 @@ with itself; one told ```Borrowed``` never touches it, because someone else will
 ```Dispose``` is sealed, idempotent and does not throw; it rolls back a transaction still open at the time; and
 it disposes the context only when it owns it.  Every other member throws ```ObjectDisposedException``` once the
 layer has been disposed.  Override ```DisposeCore``` to release anything your own layer created.
+
+### Fixed: a Data Access Layer no longer leaks its context and its connection
+In 2.2.0 both of ```BaseEFDataAccess```' constructors built the context themselves —
+```Context = (DbContext)Activator.CreateInstance(typeof(TContextType), new object[] { connectionString });```
+— and **nothing ever disposed it.**  There was nowhere to: ```IBaseDataAccess``` did not extend
+```IDisposable``` in that release, the class declared no ```Dispose```, no ```IDisposable``` and no finalizer,
+and so a conscientious caller writing ```using``` around a Data Access Layer instance could not compile it.
+Every instance you constructed left a ```DbContext```, and the database connection behind it, to be collected
+whenever the garbage collector got to it.
+
+This is the one of the four that eventually announces itself.  A long-running or high-throughput application
+reaches connection-pool exhaustion and starts timing out on acquisition, and the cause is findable once you
+suspect it — but a low-traffic application can run for a very long time without arriving there, which is why
+it shipped.
+
+In 3.0.0 the layer is disposable and the disposal is specified rather than incidental: ```Dispose``` is
+```sealed```, idempotent and does not throw, it rolls back a transaction still open at the time, and it
+disposes the context **only when it owns it** — which is now a thing the constructor makes you state, through
+the ```ContextOwnership``` argument described above.  A layer handed a container-managed context leaves it
+alone; a layer that was given one to own releases it.
+
+### Fixed: commit and rollback no longer silently do nothing
+This is the most dangerous of the four, because there is no observable difference between it working and it
+not.  In 2.2.0 the keyless Data Access Object base began a transaction only when the context did not already
+carry one:
+
+```c#
+	// 2.2.0
+	if (Context.Database.CurrentTransaction == null)
+		_transaction = Context.Database.BeginTransaction();
+```
+When a transaction **was** already open — an outer unit of work, or another Data Access Object on the same
+shared context that got there first — ```_transaction``` stayed ```null```.  The matching commit and rollback
+then both reached it through ```?.```, so **both returned normally having done nothing.**  No exception, no
+return value indicating a skip, nothing in a log.  A Data Access Object that believed it had committed its
+work had not committed anything, and a rollback written to reverse a failed write did not run — the write was
+left to whatever the outer transaction decided later.
+
+In 3.0.0 transactions belong to the Data Access Layer and not to a Data Access Object.  ```TransactionStart```,
+```TransactionCommit``` and ```TransactionRollBack``` live on ```BaseEFDataAccess<TContext>```, no Data Access
+Object base in the library carries a transaction member of any kind, and the library never consults
+```CurrentTransaction``` to decide whether to begin one — so the check-and-skip that caused this cannot be
+expressed.  Every misuse now throws instead of returning quietly: a second ```TransactionStart``` throws
+```InvalidOperationException``` because transactions do not nest, and a commit or a rollback with nothing open
+throws for the same reason.  If you hand the layer a ```Borrowed``` context whose owner has already begun a
+transaction directly, Entity Framework Core's own exception propagates unwrapped and that outer transaction is
+left in force — this layer will not silently enroll itself in someone else's transaction.
+
+### Fixed: Update no longer un-deletes a soft-deleted row
+In 2.2.0 the soft-delete base implemented ```Update``` as whole-object replacement —
+```entry.CurrentValues.SetValues(item)``` over every mapped column, ```DeletedDate``` included.  An
+```Update``` carrying an instance that was fetched before the delete, or built fresh from a form or a message,
+wrote ```null``` over the stored ```DeletedDate``` and **the row came back to life**, reappearing in every
+```GetAll```, every ```GetPaged``` and every count.  Nothing threw and no row count looked wrong.
+
+Two more halves of the same defect sat beside it.  ```Delete``` stamped ```DeletedDate``` unconditionally
+without asking whether the row was live, so a **second** delete of an already-deleted row overwrote the
+original timestamp with a later one and returned ```1``` rather than ```0``` — meaning any retention window,
+audit trail or "deleted before" query reading that column was answering from a timestamp that had quietly
+moved.  And ```Insert``` stamped ```CreatedDate``` without clearing the other two, so a caller reusing an
+instance carried stale timestamps into a brand-new row — including, in the worst case, a ```DeletedDate```,
+storing a row that was invisible to every read the moment it was written.
+
+In 3.0.0 all three are corrected together.  ```Update``` preserves the stored ```CreatedDate``` and
+```DeletedDate``` and ignores whatever the incoming instance carries for them, so an update can neither
+rewrite history nor soft-delete a row behind ```Delete```'s back; updating a deleted row is allowed and leaves
+it deleted.  ```Delete``` checks liveness first — an already-deleted or absent row returns ```0```, changes
+nothing, and **never refreshes an existing ```DeletedDate```**, so the stamp always reports when the row was
+actually deleted and a second call is idempotent rather than an error.  ```Insert``` forces
+```UpdatedDate``` and ```DeletedDate``` to ```null``` whatever the caller assigned.  All of them are declared
+```override``` rather than ```new```, so a soft Data Access Object reached through a
+```BaseDao<TEntity, TKey>```-typed reference still soft-deletes instead of quietly hard-deleting.
+
+### Fixed: a read or a write no longer hands you the store's own object
+In 2.2.0 ```Insert``` was ```Dataset.Add(item); Context.SaveChanges();```.  ```SaveChanges``` moves the entity
+from ```Added``` to ```Unchanged``` and **leaves it in the change tracker**, so the instance you passed in
+became the layer's instance.  ```Get``` was ```Dataset.Where(i => i.Id == item.Id).SingleOrDefault()``` with
+no ```AsNoTracking``` and no projection, so it handed back the store's own tracked object rather than a copy
+of it.  Entity Framework Core tracks by default and nothing in the library changed that, so unless you had
+configured ```QueryTrackingBehavior.NoTracking``` on the context yourself, **an edit you made to a retrieved
+entity — or to something hanging off its navigation properties — and never submitted was written to the
+database on the next ```SaveChanges``` anywhere on that layer.**  It is silent, and unlike the leaked
+connection the damage lands in your data rather than in your process.
+
+In 3.0.0 ```Get```, ```GetAll``` and ```GetPaged``` read ```AsNoTracking``` and return fresh untracked
+instances — never the argument you passed and never the store's object.  ```Insert``` gives the store a copy,
+attaches everything reachable through your navigation properties as ```Unchanged``` so related rows are read
+and never written, and writes back only the identifier the row ended up carrying, once the save has returned.
+Every write detaches what it tracked before it returns.
+
+**What stops happening, which is the part to read even if none of the above sounds familiar.**  This is the
+only one of the four whose fix takes something away, and a 2.2.0 application can be depending on it without
+anyone having decided to.  A stray edit made through an entity you retrieved **no longer reaches the
+database** — if some part of your code has been relying on a change persisting without an explicit
+```Update```, that write is now silently dropped where it used to be silently applied, and it is the one item
+in this release that can change what your stored data looks like without changing a line of your own code.
+And ```Update``` against a row that does not exist now returns ```0```, where 2.2.0 threw
+```InvalidOperationException``` out of ```Single``` — so a ```catch``` you wrote around that call **stops
+firing**, and a return value you may never have checked becomes the only signal that nothing was written.
+Check it.
 
 ### Fixed: a failed Insert no longer leaves timestamps or an identifier on your instance
 A soft entity's ```Insert``` stamped the created and updated timestamps onto the caller's instance before

@@ -11,7 +11,8 @@ weighed, so your proposal can start from the open questions rather than from the
 **Numbering is per-repository and starts at 1.** It does not continue, mirror, or correspond to the indexes
 in [ProphetsWay.BaseDataAccess/docs/feature-requests.md](../../ProphetsWay.BaseDataAccess/docs/feature-requests.md)
 or [ProphetsWay.Example/docs/feature-requests.md](../../ProphetsWay.Example/docs/feature-requests.md)
-(**1–14** as of 2026-08-16; this preamble previously said 1–9, then 1–13, and both are stale). Those are
+(**1–11** and **1–17** respectively as of 2026-08-23; this preamble previously said 1–9, then 1–13, then
+1–14, and all three are stale). Those are
 separate indexes.
 This file follows their *format*; where an entry genuinely depends on one of theirs, it is cited by
 repository and number.
@@ -55,28 +56,100 @@ compiling. This is the **first verified-green state since the submodule pointer 
 this triage pass possible: entries 2, 3, 5 and 8 were previously asserted-but-unverified, and a compiling tree
 is the evidence they were waiting on. Sentences elsewhere in this file describing the repository as
 non-compiling were true when written and are **history**; they are marked where they appear rather than
-deleted. **A green build is not a passing suite** — this repository still contains no tests, by design, under
-**D10**.
+deleted. ~~**A green build is not a passing suite** — this repository still contains no tests, by design, under
+**D10**.~~ **That last sentence is dead as of 2026-08-23** — `ProphetsWay.EFTools.Tests/` holds 25 source files
+and the suite discovers 270 cases. Do not restate it.
+
+## Triage Pass — 2026-08-23
+
+**Eleven entries closed, two narrowed, three filed.** Run by `Purpose Refiner` against the owner's stated goal:
+*"i want to publish EFTools and know that all of these projects are 'finished' for now, with no outstanding
+problems/bugs/features that we'll need to build out within a week."*
+
+**Every closure below was verified by opening the artifact, on this date.** No status moved on an inherited
+claim, and where the claim could not be checked without a terminal it is recorded as the owner's measurement
+rather than as verified — see [entry 18](#18--committed-trx-files-under-testresults-are-read-as-current-and-are-not).
+
+| Moved | Entries |
+| --- | --- |
+| `Scheduled` → **`Done`** | 1, 3, 4, 5, 6, 7, 9, 10, 13 |
+| `Proposed` → **`Done`** | 14, 15 |
+| **Narrowed, still open** | 11 (certification), 12 (the release note) |
+| **Newly filed as `Proposed`** | 16 (Source Link and packaging), 17 (dead preprocessor guards), 18 (stale `.trx` artifacts) |
+
+### Closing lap, later the same day — entry 12 closes, and with it the last release blocker
+
+**`Changelog Author` discharged the D12 obligation between the pass above and this one.** `CHANGELOG.md` was
+reopened on 2026-08-23 and every heading in its v3.0.0 entry re-read; **all four defects are now named as
+`Fixed`, and the up-front 2.2.0 known-issues note is present with the `net10.0`-only caveat stated plainly.**
+The field-by-field check is on
+[The `Changelog Author` Obligation](#the-changelog-author-obligation--d12), and it is the *only* copy — the
+four citing entries point at it rather than restating it.
+
+| Moved | Entries |
+| --- | --- |
+| `Scheduled` (release note) → **`Done`** | **12** |
+| Note corrected on an entry already `Done` | 3, 13, 14 — each carried *"release note still owed"*; that clause is now false and is struck where it appears |
+
+**Nothing in this repository now blocks publishing 3.0.0.** The section below is rewritten to say so.
+**Entries 11, 16, 17 and 18 remain open and none of them is a blocker** — that judgement is unchanged from
+the pass above and was not re-litigated here.
+
+**Three claims elsewhere in this file are now not merely stale but *wrong*, and are struck where they appear:**
+
+1. [Entry 7](#7--stop-forcing-a-database-provider-on-every-consumer) — *"All three are still present as of
+   2026-08-16."* The two provider references are gone from the library `.csproj`.
+2. [Entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) fact 2 — *"The
+   provider this package currently depends on is structurally unable to verify the contract."* The package
+   depends on no provider.
+3. The preamble sentence above — *"this repository still contains no tests."*
+
+### The answer to the owner's question
+
+> **Rewritten 2026-08-23, later the same day. The one item this section named has landed.** The paragraph it
+> replaced said *"Exactly one item needs to be built before 3.0.0 is published, and it is not code"* and
+> pointed at the unmet D12 release note. **That is no longer true**, and the strikethrough is not enough —
+> the sentence would be read as current by anyone skimming for a blocker.
+
+**Nothing needs to be built before 3.0.0 is published.**
+
+The [D12 release-note obligation](#the-changelog-author-obligation--d12) — the only item that ever blocked the
+push — was discharged by `Changelog Author` on 2026-08-23 and **verified here by reopening `CHANGELOG.md`**,
+not by accepting the report. All four shipped 2.2.0 defects are named as `Fixed`, each with the
+silent-failure characteristic that made D12 an obligation rather than a formality, and the entry opens with a
+2.2.0 known-issues section a reader finds without reading the rest of it. **The trade D12 made — four patches
+for four release notes — has been paid on both sides.**
+
+**Everything else open here is comfortably deferrable.** Entries 11, 16, 17 and 18 are, in order: CI evidence
+for a claim not yet printed on the package; non-breaking packaging metadata; four dead directive lines per file
+in an unshipped project; and a housekeeping decision about committed test artifacts. **None of them is
+breaking, and none of them blocks a publish.**
+
+**What remains before the package is on nuget.org is release mechanics, not work items** — the D11 ordering,
+the tag, and the push. None of it is tracked by an entry in this index and none of it is an agent's to do.
 
 ## Index
 
 | # | Item | Status |
 | --- | --- | --- |
-| 1 | [Advance the `ProphetsWay.Example` submodule onto the 3.x contracts](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) | **Scheduled** — v3.0.0; **steps 1 and 3 landed 2026-08-16 and the tree now compiles**; steps 2, 4, 5 and 6 outstanding — step 2 is satisfied by throwing stubs, not by an implementation |
+| 1 | [Advance the `ProphetsWay.Example` submodule onto the 3.x contracts](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) | **Done** — 2026-08-23; all six steps landed. Pointer is at `f93f0a4`; both new entities are mapped and both DAOs exist. **The D11 step 3 move onto a *tag* is release mechanics, not this entry** |
 | 2 | [Move the `ProphetsWay.BaseDataAccess` reference from 2.5.0 to 3.1.0](#2--move-the-prophetswaybasedataaccess-reference-from-250-to-310) | **Done** — 2026-08-16; both projects reference 3.1.0 and the solution compiles against it |
-| 3 | [Implement the 3.x disposal contract in `BaseEFDataAccess`](#3--implement-the-3x-disposal-contract-in-baseefdataaccess) | **Scheduled** — v3.0.0; **rescoped 2026-08-16**: `Dispose` has landed, and the entry now carries only the `ObjectDisposedException` guarding. **Q2 is superseded**, not open. The **2.2.x patch for the leaked context is `Rejected`** — [D12](purpose-and-scope.md#owner-decisions--2026-08-15), 2026-08-16 — and the defect carries a [release-note obligation](#the-changelog-author-obligation--d12) instead |
-| 4 | [Make 3.x Entity Framework Core-only — retire EF6 and .NET Framework](#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework) | **Scheduled** — v3.0.0; **approved by D1** |
-| 5 | [Retarget to the house TFM standard](#5--retarget-to-the-house-tfm-standard) | **Scheduled** — v3.0.0; unblocked by 4; destination settled by **D7** as **`net10.0` only** |
-| 6 | [Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory and `Scope` traits](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits) | **Scheduled** — v3.0.0; forced by 1; rescoped 2026-08-16 and **resolved to shape B the same day**. The six adapters are **deleted** — verified 2026-08-16 — so this repository's half is done; the entry stays open on **ProphetsWay.Example FR 13**, whose seam **landed 2026-08-16 and is unverified** — nothing has been run through it |
-| 7 | [Stop forcing a database provider on every consumer](#7--stop-forcing-a-database-provider-on-every-consumer) | **Scheduled** — v3.0.0; **approved by D2** |
+| 3 | [Implement the 3.x disposal contract in `BaseEFDataAccess`](#3--implement-the-3x-disposal-contract-in-baseefdataaccess) | **Done** — 2026-08-23; `Dispose` is `sealed override` and **all ten** other members open with `ThrowIfDisposed()`. The **2.2.x patch stays `Rejected`** — [D12](purpose-and-scope.md#owner-decisions--2026-08-15) — and its [release-note obligation](#the-changelog-author-obligation--d12) is now **discharged**: `CHANGELOG.md` § *"Fixed: a Data Access Layer no longer leaks its context and its connection"*. **The "still owed" clause this row carried is dead** |
+| 4 | [Make 3.x Entity Framework Core-only — retire EF6 and .NET Framework](#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework) | **Done** — 2026-08-23; `net10.0` alone, no EF6, and **zero preprocessor directives library-wide** |
+| 5 | [Retarget to the house TFM standard](#5--retarget-to-the-house-tfm-standard) | **Done** — 2026-08-23; all three projects read `net10.0`, the destination **D7** ratifies |
+| 6 | [Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory and `Scope` traits](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits) | **Done** — 2026-08-23; shape B is built — 25 files, `TestSeam` + 13 adapters + 2 guards + 8 local classes. `ProphetsWay.Example` FR 13's seam is in use and guarded by `TestSeamTests` |
+| 7 | [Stop forcing a database provider on every consumer](#7--stop-forcing-a-database-provider-on-every-consumer) | **Done** — 2026-08-23; **both halves.** The library references `Microsoft.EntityFrameworkCore` alone, `BaseEFContext` names no provider and its string constructor is gone, and `.InMemory` moved to the test project |
 | 8 | [Remove `FluentAssertions` from `ProphetsWay.Example.DataAccess.EF`](#8--remove-fluentassertions-from-prophetswayexampledataaccessef) | **Done** — 2026-08-16; the reference is gone and the licence exposure is closed |
-| 9 | [Delete the stray `[submodule "Submod"]` block from `.gitmodules`](#9--delete-the-stray-submodule-submod-block-from-gitmodules) | **Scheduled** — v3.0.0; trivial |
-| 10 | [Collapse the `Guid`/`Int`/`Long` DAO triplication](#10--collapse-the-guidintlong-dao-triplication) | **Scheduled** — v3.0.0; **approved by D3, reversing this file's recommendation**. **Constrained by [D13](purpose-and-scope.md#owner-decisions--2026-08-15), 2026-08-16:** the generic families are **derived from** a hand-written concrete `DepartmentDao`, not designed ahead of one |
-| 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Scheduled** — v3.0.0 for the test work; **pipeline half Deferred** to its owner; **D8** makes the certification a public claim |
-| 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Scheduled** — v3.0.0, as a **release-note obligation only**; the 2.2.x patch is **Rejected** — triaged 2026-08-16, and its retained open question **closed by [D12](purpose-and-scope.md#owner-decisions--2026-08-15)** the same day |
-| 13 | [The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | **Scheduled** — v3.0.0; filed 2026-08-16. Four contract-rule violations in `RootBaseSoftDao` and a structural mismatch in `BaseNonIdDao<T>`; constrains [entry 10](#10--collapse-the-guidintlong-dao-triplication). **2.2.x patch `Rejected` ([D12](purpose-and-scope.md#owner-decisions--2026-08-15))**; the route to the fix is settled by **[D13](purpose-and-scope.md#owner-decisions--2026-08-15)**. **Strengthened 2026-08-18** — the members are `new`, not `virtual`, so the title's claim is structural rather than a judgement; and the entry is no longer a reading finding |
-| 14 | [The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | **Scheduled** — v3.0.0, **triaged 2026-08-19**. A **fourth shipped 2.2.0 defect**, and the fix is **already specified** in `docs/api-contract.md` rev 8 — it needs no new design. It carries **inside** the [entry 10](#10--collapse-the-guidintlong-dao-triplication) collapse under [D14](purpose-and-scope.md#owner-decisions--2026-08-15), is **breaking** against 2.2.0, and the 2.2.x patch is **Rejected** on [D12](purpose-and-scope.md#owner-decisions--2026-08-15). See [the triage](#triaged-2026-08-19--scheduled-for-v300-and-it-is-a-fourth-shipped-defect) |
-| 15 | [`ProphetsWay.EFTools.Guid` shadows `System.Guid` inside this assembly](#15--prophetswayeftoolsguid-shadows-systemguid-inside-this-assembly) | **Proposed** — filed 2026-08-19, awaiting triage. A **compile-time** discovery, not a reading finding: `Guid.NewGuid()` does not compile in `ProphetsWay.EFTools.Tests`. Expected to **close for free** inside [entry 10](#10--collapse-the-guidintlong-dao-triplication); what it asks is that the sub-namespaces' disappearance be treated as a required outcome of that collapse rather than an incidental one |
+| 9 | [Delete the stray `[submodule "Submod"]` block from `.gitmodules`](#9--delete-the-stray-submodule-submod-block-from-gitmodules) | **Done** — 2026-08-23; `.gitmodules` declares one submodule and no `Submod`. **It stopped the warning; it did not give this package Source Link** — see [entry 16](#16--source-link-symbol-packages-and-the-empty-packaging-metadata-stubs) |
+| 10 | [Collapse the `Guid`/`Int`/`Long` DAO triplication](#10--collapse-the-guidintlong-dao-triplication) | **Done** — 2026-08-23; the folder is flat and all 15 files declare `namespace ProphetsWay.EFTools`. Approved by **D3**, constrained by **D13** |
+| 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Scheduled** — **narrowed 2026-08-23.** Both providers are in real use; what is missing is a run of the *whole* suite on *either one*, plus the `LocalTestsOnly` half. **Not release-blocking.** Its "fact 2" is now false — read the triage note before citing it |
+| 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Done** — 2026-08-23, **both halves**. The code half was always moot (the member is gone); the release-note half landed and was verified by reopening `CHANGELOG.md` — § *"Fixed: commit and rollback no longer silently do nothing"*. **The 2.2.x patch stays `Rejected`**, which is decision history and does not reopen. **This was the last release blocker in the repository** |
+| 13 | [The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | **Done** — 2026-08-23; `RootBaseSoftDao` is deleted and the soft members are `override`s. **2.2.x patch stays `Rejected`**; its release note is **discharged** — `CHANGELOG.md` § *"Fixed: Update no longer un-deletes a soft-deleted row"*, which also names the second-`Delete` half |
+| 14 | [The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | **Done** — 2026-08-23; carried inside entry 10 under **D14**. Its release note is **discharged** — `CHANGELOG.md` § *"Fixed: a read or a write no longer hands you the store's own object"*, **including the "what stops happening" paragraph D12 says this one uniquely owes**. The clause this row carried saying that sentence was absent is dead |
+| 15 | [`ProphetsWay.EFTools.Guid` shadows `System.Guid` inside this assembly](#15--prophetswayeftoolsguid-shadows-systemguid-inside-this-assembly) | **Done** — 2026-08-23; closed for free inside entry 10, as predicted. The namespace does not exist, so the collision cannot occur |
+| 16 | [Source Link, symbol packages, and the empty packaging metadata stubs](#16--source-link-symbol-packages-and-the-empty-packaging-metadata-stubs) | **Proposed** — filed 2026-08-23. `AGENTS.md` deviation 5 had no entry here. **Non-breaking, so it can land after 3.0.0** |
+| 17 | [Five proving-ground DAOs carry dead preprocessor guards](#17--five-proving-ground-daos-carry-dead-preprocessor-guards) | **Proposed** — filed 2026-08-23. Cosmetic, unshipped, and **misleading in the one project whose job is to be copied from** |
+| 18 | [Committed `.trx` files under `TestResults/` are read as current and are not](#18--committed-trx-files-under-testresults-are-read-as-current-and-are-not) | **Proposed** — filed 2026-08-23. Seven committed run artifacts, **every one of them stale**, in a repository whose documents cite test counts as evidence |
 
 Numbers are permanent. Entries are never renumbered and never removed —
 [purpose-and-scope.md](purpose-and-scope.md) cites entries by number, and a rejected entry is decision
@@ -133,6 +206,52 @@ reads it otherwise, D11 as written wins and this paragraph is what should be cor
 [entry 13](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) rather
 than restated in each — three copies of an obligation drift, and the whole point of it is accuracy.
 
+> ## DISCHARGED — 2026-08-23
+>
+> **Every requirement below is met.** `Changelog Author` wrote the sections; `Purpose Refiner` verified them
+> by **reopening `CHANGELOG.md` and reading each heading and its body**, not by accepting the report. The
+> requirements are left standing beneath this block rather than deleted, because the record of *what was
+> owed* is what makes the discharge checkable by the next reader.
+>
+> **Requirement 1 — all four defects named as `Fixed`.** Met, four for four:
+>
+> | Entry | Required as `Fixed` | Section in `CHANGELOG.md` v3.0.0 | Silent-failure characteristic stated? |
+> | --- | --- | --- | --- |
+> | [3](#3--implement-the-3x-disposal-contract-in-baseefdataaccess) | leaked context and connection per DAL instance | *"Fixed: a Data Access Layer no longer leaks its context and its connection"* | **Yes, and correctly inverted** — this is the one of the four that *does* announce itself, and the section says so: connection-pool exhaustion, *"findable once you suspect it"* |
+> | [12](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | commit and rollback silently no-op | *"Fixed: commit and rollback no longer silently do nothing"* | **Yes** — quotes the 2.2.0 `CurrentTransaction == null` guard, and states *"No exception, no return value indicating a skip, nothing in a log"* |
+> | [13](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | `Update` wipes the stored `DeletedDate`; a second `Delete` returns `1` | *"Fixed: Update no longer un-deletes a soft-deleted row"* | **Yes** — *"Nothing threw and no row count looked wrong."* Names the second-`Delete` half explicitly, **and a third half this obligation never asked for**: `Insert` carrying a stale `DeletedDate` into a new row |
+> | [14](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | the caller's instance stayed tracked | *"Fixed: a read or a write no longer hands you the store's own object"* | **Yes** — *"It is silent, and unlike the leaked connection the damage lands in your data rather than in your process"* |
+>
+> **Entry 14's second, unique obligation is also met** — the one D12 says it owes and the other three do not.
+> The section carries a dedicated bolded paragraph, *"What stops happening, which is the part to read even if
+> none of the above sounds familiar"*, covering **both** halves: a stray edit is *"now silently dropped where
+> it used to be silently applied"*, and `Update` against an absent row returns `0` where 2.2.0 threw out of
+> `Single`, so **a `catch` a consumer wrote stops firing**. That is the hardest thing on this list to write
+> and it is the one written most fully.
+>
+> **Requirement 2 — a 2.2.0 known-issues note naming all four, with the target-framework caveat.** Met, and
+> placed better than the requirement asked. It is § *"If you are on 2.2.0: four defects you are exposed to,
+> and three of them are silent"*, and it sits **at the top of the entry**, self-describing as being there *"so
+> that a reader who is not upgrading does not have to read the rest of the entry to find them."* It states
+> that never having noticed one is not evidence of not being affected; it records **"No 2.2.1 will be cut"**
+> together with the near-empty-consumer-base premise **as a premise**, which is exactly the re-testable form
+> this file asked for; and it carries the D7 caveat in the words the obligation demanded — *"That remedy is
+> not available to everyone… if you are on `net48`, `net8.0` or `net9.0` you cannot take it at all."*
+>
+> **It goes past the obligation in one place, and the surplus is the right kind.** For the consumers who
+> cannot upgrade, it supplies **in-their-own-code mitigations** — short-lived layers, driving transactions
+> through `Context.Database`, never passing a soft-deleted entity to `Update`, and
+> `QueryTrackingBehavior.NoTracking` with the honest note that it closes the `Get` half of the fourth defect
+> **and not the `Insert` half**. D12 asked that the note not *imply* an unavailable remedy; this offers a real
+> one instead, and qualifies it.
+>
+> **Nothing was found thinner than D12 requires.** Had any of the four been, it would be recorded here as
+> still owed rather than closed — a false close on this obligation is worse than an open row, because it is
+> the last thing standing between the package and the push.
+>
+> **Statuses moved on this finding:** entry 12 `Scheduled` → **`Done`**. Entries 3, 13 and 14 were already
+> `Done` and keep that status; only their *"release note still owed"* clauses were struck.
+
 **Owner decision [D12](purpose-and-scope.md#owner-decisions--2026-08-15), 2026-08-16: the three shipped 2.2.0
 defects are documented, not patched.** No 2.2.1 will be cut. In exchange, the 3.0.0 release notes owe two
 things:
@@ -176,8 +295,14 @@ D12 was taken without them in mind.
 
 The next release of this package is **v3.0.0**, a major. That is not a preference; it is forced. Entry 2
 alone changes the transitive contract this package advertises, and entries 3, 4, 5 and 7 are each
-independently breaking. `app-variables.yml` currently reads `Major: '2' / Minor: '2' / Patch: '0'` —
-**an agent must never change it**; the bump is the owner's.
+independently breaking. ~~`app-variables.yml` currently reads `Major: '2' / Minor: '2' / Patch: '0'`~~ —
+**corrected 2026-08-23: it reads `Major: '3' / Minor: '0' / Patch: '0'`, verified by opening it. The owner has
+taken the bump; do not restate `2 / 2 / 0`.** **An agent must never change it** either way.
+
+> **Re-read 2026-08-23 — the table below is now history for every row except 11 and 12.** Eleven of its
+> fourteen rows describe work that has since landed, and the statuses in the [Index](#index) supersede this
+> column. It is kept as the record of how the release was scoped rather than as a current view. **The final
+> paragraph of this section is the part still worth reading**: this remains one indivisible release.
 
 | # | Status | Eligible for v3.0.0? | Why |
 | --- | --- | --- | --- |
@@ -208,7 +333,25 @@ the EF6 answer, and it should receive no new work — see [entry 4](#4--make-3x-
 
 ## 1 — Advance the `ProphetsWay.Example` submodule onto the 3.x contracts
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15, by owner decision
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`.** All six steps of [The work](#the-work) are on disk.
+> Verified by opening, on this date: `.git/modules/ProphetsWay.Example/HEAD`, which holds
+> **`f93f0a41a76834647962ddf9e830e01e24e05f24`** — this repository's submodule now points at
+> `ProphetsWay.Example`'s newest commit, *"Let an implementation declare what its store can structurally
+> do"*, not at `d845863` and not at `61d9e7d`, **both of which are superseded and must not be restated**;
+> `ProphetsWay.Example.DataAccess.EF/ExampleContext.cs`, which now declares **seven** `DbSet<>` properties
+> including `Departments` and `CompanyResources`, calls `ToTable` for all seven, and carries
+> `HasKey(x => new { x.CompanyId, x.ResourceId })` — the composite mapping step 2 argued was the only
+> viable one; `ProphetsWay.Example.DataAccess.EF/Daos/`, which holds `DepartmentDao.cs` and
+> `CompanyResourceDao.cs` alongside the original five; and `ProphetsWay.EFTools/BaseEFDataAccess.cs`, whose
+> `Dispose` is `sealed override` and whose ten other members each open with `ThrowIfDisposed()`.
+> **The eleven `NotWrittenYet` throwing stubs this entry was left waiting on are gone.**
+>
+> **One thing this closure does *not* cover, and it is release mechanics rather than this entry.** D11 step 3
+> advances the pointer onto a **tag** of `ProphetsWay.Example`. The pointer is on an **untagged** commit, which
+> is exactly the interim advance the clarification above permits. That tag move is still owed and belongs to
+> the release sequence, not here.
+
+**Status:** ~~**Scheduled for v3.0.0**~~ **Done — 2026-08-23.** Scheduled 2026-08-15, by owner decision
 [D6](purpose-and-scope.md#owner-decisions--2026-08-15). Previously `Proposed`. Routed here from
 [ProphetsWay.Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md), where it is recorded as the
 highest-consequence open item in that repository. **The work is entirely in this one.**
@@ -440,7 +583,25 @@ to obtain. Retained as the reason, not as an outstanding instruction.
 
 ## 3 — Implement the 3.x disposal contract in `BaseEFDataAccess`
 
-**Status:** **Scheduled for v3.0.0, and rescoped 2026-08-16.** Scheduled 2026-08-15 by owner decision
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`.** The rescoped remainder — `ObjectDisposedException`
+> guarding on every member other than `Dispose` — has landed. Verified by opening
+> `ProphetsWay.EFTools/BaseEFDataAccess.cs` on this date and reading every member declaration in it:
+> `protected void ThrowIfDisposed()` is declared at line 104, `public sealed override void Dispose()` at 286,
+> `protected virtual void DisposeCore()` at 327, and **all ten** non-`Dispose` members — `TransactionStart`,
+> `TransactionCommit`, `TransactionRollBack`, `GetAll`, `GetPaged`, `GetCount`, `Get`, `Insert`, `Update`,
+> `Delete` — open with a `ThrowIfDisposed()` call on their first statement line. `ThrowIfDisposed` is
+> `protected` rather than `private`, so a derived Data Access Layer can guard its own forwarders, which is what
+> `ProphetsWay.Example.DataAccess.EF` does.
+>
+> **The [D12 release-note obligation for this defect is discharged](#the-changelog-author-obligation--d12) —
+> corrected 2026-08-23, later the same day.** This paragraph read *"is **not** discharged by this closure, and
+> is now the single largest open item in this repository."* **That is false now and must not be restated.**
+> `CHANGELOG.md` § *"Fixed: a Data Access Layer no longer leaks its context and its connection"* names the
+> leak, quotes the 2.2.0 `Activator.CreateInstance` line, states that nothing ever disposed it and that a
+> `using` around a Data Access Layer instance **could not compile**, and identifies this as the one of the four
+> that eventually announces itself. **Nothing in this repository is open on account of D12.**
+
+**Status:** ~~**Scheduled for v3.0.0, and rescoped 2026-08-16.**~~ **Done — 2026-08-23.** Scheduled 2026-08-15 by owner decision
 [D6](purpose-and-scope.md#owner-decisions--2026-08-15); previously `Proposed`.
 
 ### The rescope — 2026-08-16, and read this before reading the rest of the entry
@@ -590,7 +751,14 @@ consumer, so "upgrade" is not a remedy available to all of them.
 
 ## 4 — Make 3.x Entity Framework Core-only — retire EF6 and .NET Framework
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15. **Approved by the owner as
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`.** Verified by opening
+> `ProphetsWay.EFTools/ProphetsWay.EFTools.csproj`, which reads `<TargetFrameworks>net10.0</TargetFrameworks>`
+> and references `Microsoft.EntityFrameworkCore` 10.0.11 and `ProphetsWay.BaseDataAccess` 3.2.0 and nothing
+> else; and by grepping all **15** `.cs` files in `ProphetsWay.EFTools/` for `#if`, `#else`, `#elif`,
+> `#endif`, `#pragma`, `UseSqlServer` and `UseInMemoryDatabase` — **zero matches, library-wide.** No EF6
+> reference, no `System.Data.Entity`, no conditionally compiled code, and no `net4x` leg survives.
+
+**Status:** ~~**Scheduled for v3.0.0**~~ **Done — 2026-08-23.** Scheduled 2026-08-15. **Approved by the owner as
 [D1](purpose-and-scope.md#owner-decisions--2026-08-15).** Previously `Proposed — awaiting the owner's scope
 decision`; this was the checkpoint, and it has been passed. The recommendation below was accepted as
 written, and the argument is preserved rather than trimmed — it will be questioned again.
@@ -691,7 +859,13 @@ added without breaking both branches — and, per the paragraph above, it is now
 
 ## 5 — Retarget to the house TFM standard
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15. **Unblocked**, not merely sequenced, by the approval of
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`.** All three projects read
+> `<TargetFrameworks>net10.0</TargetFrameworks>` — the destination **D7** ratifies — verified by opening
+> `ProphetsWay.EFTools/ProphetsWay.EFTools.csproj` and
+> `ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj` on this date. **This is the ratified exception
+> to the house standard, not the house standard**; do not later "correct" it toward `netstandard2.0;net10.0`.
+
+**Status:** ~~**Scheduled for v3.0.0**~~ **Done — 2026-08-23.** Scheduled 2026-08-15. **Unblocked**, not merely sequenced, by the approval of
 [entry 4](#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework). The destination was the
 last open part of this entry; it is **settled by [D7](purpose-and-scope.md#owner-decisions--2026-08-15)**,
 which closed **Q1**.
@@ -754,7 +928,23 @@ and verify .NET Framework behaviour; here there will be no such asset to bind.
 
 ## 6 — Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory and `Scope` traits
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15. Forced by
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`.** Shape B is built, and the upstream dependency it was
+> waiting on — `ProphetsWay.Example` FR 13 — is satisfied by the pointer this repository now carries. Verified
+> by listing `ProphetsWay.EFTools.Tests/` and opening `TestSeam.cs` on this date. The project holds **25**
+> source files: `TestSeam.cs`, whose `[ModuleInitializer]` calls
+> `TestDataAccessFactory.Use(() => Constants.GetExampleDataAccess, StoreCapabilities.TransactionIsolation)`;
+> **13** one-line adapters; **2** seam guards (`TestSeamTests.cs`, `AdapterCoverageTests.cs`); **8** classes
+> written directly against this library's own surface; and `Constants.cs`.
+>
+> **The seam is no longer "landed and unverified"** — it is the mechanism the whole adapted upstream suite runs
+> through, and `TestSeamTests` asserts by full type name that it is still pointing at
+> `ProphetsWay.Example.DataAccess.EF` rather than the identically named NoDB type.
+>
+> **The second argument is new as of 2026-08-23** and is not this entry's original scope — see
+> [ProphetsWay.Example FR 17](../../ProphetsWay.Example/docs/feature-requests.md), filed on that date for the
+> mechanism itself.
+
+**Status:** ~~**Scheduled for v3.0.0**~~ **Done — 2026-08-23.** Scheduled 2026-08-15. Forced by
 [entry 1](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts), not chosen.
 **Rescoped 2026-08-16 — see [The rescope](#the-rescope--2026-08-16) below — and the fork that rescope opened
 was resolved the same day; see [The resolution](#the-resolution--2026-08-16-shape-b-the-direction-only).**
@@ -957,7 +1147,32 @@ arrangement is structurally unable to verify part of the contract this package n
 
 ## 7 — Stop forcing a database provider on every consumer
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15. **Approved by the owner as
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`.** Both halves have landed, and the sentence in the body
+> below reading *"All three are still present as of 2026-08-16"* is **now false and must not be restated.**
+>
+> **The packaging half**, verified by opening `ProphetsWay.EFTools/ProphetsWay.EFTools.csproj` on this date:
+> the runtime `ItemGroup` carries **`Microsoft.EntityFrameworkCore` 10.0.11 alone**, above a comment reading
+> *"Provider-neutral by design: a consumer chooses their own EF provider. Never add one here."* There is no
+> `Microsoft.EntityFrameworkCore.SqlServer` and no `Microsoft.EntityFrameworkCore.InMemory` line anywhere in
+> the file. `Microsoft.EntityFrameworkCore.InMemory` and `.Sqlite` now sit in
+> `ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj` under a comment naming them test-only and
+> forbidding their return — which is the *"move `InMemory` to the test and example projects"* bullet, done.
+>
+> **The code half**, verified by grepping all 15 library `.cs` files for `UseSqlServer` and
+> `UseInMemoryDatabase` — **no matches** — and by opening `ProphetsWay.EFTools/BaseEFContext.cs`, which
+> declares one `protected BaseEFContext(DbContextOptions)` constructor and no other member. **The string
+> constructor was deleted**, which is the option this entry called *"the honest option"*; the open
+> implementation choice D2 left is therefore settled by the implementation.
+>
+> Not re-measured here, and recorded as the owner's evidence rather than mine:
+> `dotnet list package --include-transitive` before and after the removal resolves to `EntityFrameworkCore`
+> plus `ProphetsWay.BaseDataAccess` 3.2.0, with only `.Abstractions` and `.Analyzers` beneath — no SqlServer,
+> InMemory, Relational, or `Microsoft.SqlServer.Server` anywhere in the closure.
+>
+> **`AGENTS.md` deviation 3 is the same fact as this entry and still records the packaging half as open.**
+> `Repo Analyst` follows this pass and owns that file.
+
+**Status:** ~~**Scheduled for v3.0.0**~~ **Done — 2026-08-23.** Scheduled 2026-08-15. **Approved by the owner as
 [D2](purpose-and-scope.md#owner-decisions--2026-08-15).** Previously `Proposed`. The clearest scope
 violation in the package, and the one nobody had reported.
 
@@ -1128,7 +1343,16 @@ as "eligible to land ahead of the rest" anticipated. **Triaged `Done` on 2026-08
 
 ## 9 — Delete the stray `[submodule "Submod"]` block from `.gitmodules`
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15, by owner decision
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`.** Verified by opening `.gitmodules`, which is four lines
+> long and declares exactly one submodule: `[submodule "ProphetsWay.Example"]` with
+> `path = ProphetsWay.Example`, `url = https://github.com/ProphetManX/ProphetsWay.Example.git` and
+> `branch = main`. **There is no `Submod` block.**
+>
+> **Removal stopped the Source Link *warning*; it did not give this package Source Link.** That is
+> [entry 16](#16--source-link-symbol-packages-and-the-empty-packaging-metadata-stubs), filed on this date.
+> Read the two together or you will conclude symbols work here.
+
+**Status:** ~~**Scheduled for v3.0.0**~~ **Done — 2026-08-23.** Scheduled 2026-08-15, by owner decision
 [D6](purpose-and-scope.md#owner-decisions--2026-08-15). Trivial. Discovered from the other side, in
 [ProphetsWay.Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md), and recorded here because
 the file is here.
@@ -1150,7 +1374,20 @@ Delete the two lines. No build impact, no consumer impact.
 
 ## 10 — Collapse the `Guid`/`Int`/`Long` DAO triplication
 
-**Status:** **Scheduled for v3.0.0** — 2026-08-15. **Approved by the owner as
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`.** Verified by listing `ProphetsWay.EFTools/` and
+> grepping the `namespace` declaration of every file in it on this date. The folder is **flat — no `Guid/`,
+> `Int/` or `Long/` subfolder — and holds 15 `.cs` files, every one of which declares
+> `namespace ProphetsWay.EFTools` and nothing else.** The 18 key-specific closures, the two `RootBase*`
+> bridges with their `where TIdType : struct` constraint, the internal `RootDao<T,TIdType>` and the three
+> short-lived `Legacy*` types are all gone; the open-key families `BaseDao<TEntity,TKey>`,
+> `BaseGetAllDao`, `BasePagedDao`, their three soft counterparts and the four keyless types are what replaced
+> them, alongside `BaseEFContext`, `BaseEFDataAccess<TContext>`, `ContextOwnership`, and the two internal
+> statics `EntityGraph` and `SoftTimestamps`.
+>
+> `CHANGELOG.md`'s v3.0.0 entry states the same surface independently, including that **no `Legacy`-prefixed
+> class is part of 3.0.0.**
+
+**Status:** ~~**Scheduled for v3.0.0**~~ **Done — 2026-08-23.** Scheduled 2026-08-15. **Approved by the owner as
 [D3](purpose-and-scope.md#owner-decisions--2026-08-15), reversing this entry's recommendation.**
 Previously `Proposed — and recommended against`.
 
@@ -1328,6 +1565,43 @@ exactly what `docs/api-contract.md` S2 calls the flat method surface and what it
 
 ## 11 — Certify the contract suite on SQLite in-memory and a SQL Server container
 
+> **RE-TRIAGED 2026-08-23 — status **unchanged at `Scheduled`**, but the entry is **much narrower than it
+> reads**, and two of its own "verified facts" are now wrong.**
+>
+> **What has landed, verified by opening the files named on this date.** Both providers are in real use.
+> `ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj` references
+> `Microsoft.EntityFrameworkCore.Sqlite` **10.0.11** and `Microsoft.EntityFrameworkCore.InMemory` **10.0.11**
+> under a comment naming Sqlite *"the relational in-memory certification leg"*; seven of the eight locally
+> written test classes build their own SQLite in-memory context, and `AlternateKeyGuardSpikeTests`
+> parameterizes `InMemory` **and** `Sqlite` per `[Theory]`. `ProphetsWay.EFTools.Tests/Constants.cs` supplies
+> the other leg — one SQL Server connection string, `Data Source=localhost`, which is what the 13 adapted
+> upstream classes reach through `TestSeam`. **So the fast leg and the fidelity leg both exist.**
+>
+> **Fact 2 in *Why the current arrangement cannot verify what 3.x claims* is dead.** It reads *"The provider
+> this package currently depends on is structurally unable to verify the contract it is about to advertise"* —
+> the package depends on no provider at all as of [entry 7](#7--stop-forcing-a-database-provider-on-every-consumer),
+> and the transaction contract is exercised against SQL Server, not `InMemory`. **Do not restate it.**
+>
+> **Fact 1 is still true and is now the whole of this entry.** `app-variables.yml`, opened on this date, still
+> reads `LocalTestsOnly: 'yes'`, so **CI executes none of the suite** — "the pipeline is green" remains
+> evidence of compilation only.
+>
+> **What is genuinely still owed, and it is two things rather than the four this entry describes:**
+>
+> 1. **A certified run of the *whole* suite on *both* providers.** Today the split is fixed by construction:
+>    the 8 local classes are SQLite-or-`InMemory` and the 13 adapted classes are SQL Server, and **no single
+>    provider runs all of it.** D2 certifies SQLite *and* SQL Server, and D8 puts that claim on the package,
+>    so the claim currently outruns the evidence by exactly this gap. Closing it means making
+>    `Constants.GetExampleDataAccess` provider-selectable so the adapted classes can also run on SQLite.
+> 2. **The `LocalTestsOnly` half**, which is `Deferred` to the pipeline owner and is **no longer justified by
+>    its own stated reason.** That reason was a local SQL Server dependency; the majority of the local suite
+>    now needs no database at all, and item 1 above is what would let the rest run without one. Recorded so
+>    the decayed justification is not inherited as still sound. `Pipeline Engineer` owns the edit; this is not
+>    an authorization to make it.
+>
+> **Neither is release-blocking.** Both are about *proving* 3.0.0 in CI rather than about 3.0.0 being correct,
+> and item 2 changes no code a consumer receives.
+
 **Status:** **Scheduled for v3.0.0** for the test work — 2026-08-15, approved by the owner as
 [D4](purpose-and-scope.md#owner-decisions--2026-08-15) and reinforced by
 [D8](purpose-and-scope.md#owner-decisions--2026-08-15), which turns "certified on SQLite and SQL Server"
@@ -1397,9 +1671,41 @@ is this entry.
 
 ## 12 — `RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction
 
-**Status:** **Scheduled for v3.0.0 as a release-note obligation only; the 2.2.x patch is Rejected** —
-triaged 2026-08-16. Previously `Proposed — captured during a verification pass, not yet triaged by
-Purpose Refiner`. **No work is being requested on the 2.2.x line;** this entry exists so a real defect is
+> **CLOSED 2026-08-23 — both halves. This entry is `Done`, and it was the last release blocker in the
+> repository.**
+>
+> **The code half needs nothing.** `RootNonIdDao.cs` was rewritten wholesale in the 3.x collapse and the member
+> carrying the defect does not survive into the shipped surface — which is what this entry always predicted:
+> *"Nothing to schedule in code: the 3.x design removes the members that carry the defect."*
+>
+> **The release-note half is now met, and this is measured rather than reasoned.** `CHANGELOG.md` was reopened
+> later on the same date and every heading in its **v3.0.0** entry re-read. It now carries **six** `Fixed:`
+> headings where it carried two, and the four
+> [the D12 obligation](#the-changelog-author-obligation--d12) requires are all among them. **This entry's own
+> row is § *"Fixed: commit and rollback no longer silently do nothing"***, which quotes the 2.2.0
+> `if (Context.Database.CurrentTransaction == null)` guard, explains that `_transaction` stayed `null` and that
+> both members then reached it through `?.`, and states the characteristic that made this the most dangerous of
+> the four: *"No exception, no return value indicating a skip, nothing in a log."* It then says what 3.0.0 does
+> instead — transactions on the Data Access Layer, no transaction member on any Data Access Object,
+> `CurrentTransaction` never consulted, every misuse throwing.
+>
+> **The 2.2.0 known-issues note is present too**, at the top of the entry, naming all four and carrying the
+> `net10.0`-only caveat D12 requires. The full field-by-field check is recorded once, on
+> [the obligation itself](#the-changelog-author-obligation--d12), and is deliberately **not** duplicated here.
+>
+> **The table this block used to carry — four rows reading "No. Not named anywhere" — is history and must not
+> be restated.** It was accurate earlier the same day and describes a file that has since changed.
+>
+> **What does not move:** the **2.2.x patch stays `Rejected`**. That is
+> [D12](purpose-and-scope.md#owner-decisions--2026-08-15) and it is decision history, not a pending item; the
+> release note was the thing accepted *in exchange* for it, so the note landing is the trade completing rather
+> than a reason to revisit the trade.
+
+**Status:** **Done — 2026-08-23.** ~~Scheduled for v3.0.0 as a release-note obligation only~~ — the obligation
+is discharged and verified against `CHANGELOG.md`. **The 2.2.x patch remains `Rejected`.** Previously
+`Proposed — captured during a verification pass, not yet triaged by
+Purpose Refiner`, then `Scheduled` from 2026-08-16. **No work is being requested on the 2.2.x line;** this
+entry exists so a real defect is
 named rather than disappearing into a redesign.
 
 **The facts were re-verified on this date rather than affirmed** — [RootNonIdDao.cs](../ProphetsWay.EFTools/RootNonIdDao.cs)
@@ -1514,7 +1820,25 @@ agent inherited the claim — both opened `RootNonIdDao.cs`.
 
 ## 13 — The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance
 
-**Status:** **Scheduled for v3.0.0** — filed and triaged 2026-08-16. Scheduled rather than `Proposed` because
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`.** The types carrying the four violations no longer
+> exist. Verified by listing `ProphetsWay.EFTools/` on this date: there is no `RootBaseSoftDao.cs` and no
+> `LegacyBaseSoftNonIdDao.cs`; what stands in their place is `BaseSoftDao.cs`, `BaseSoftGetAllDao.cs`,
+> `BaseSoftPagedDao.cs`, `RootSoftNonIdDao.cs`, `BaseSoftNonIdDao.cs` and the internal `SoftTimestamps.cs`.
+> The structural complaint at the heart of this entry — that the soft members were `new` rather than
+> `override`, so an upcast stopped soft-deleting — is answered by the rewrite: the replacements declare them
+> as `override`s. The proving ground consumes them, `DepartmentDao` deriving from
+> `BaseSoftPagedDao<Department,int>`.
+>
+> **The [D12 release-note obligation for this defect is discharged](#the-changelog-author-obligation--d12) —
+> corrected 2026-08-23, later the same day.** This paragraph read *"is still owed — `CHANGELOG.md`'s v3.0.0
+> entry does **not** name the `DeletedDate` wipe."* **Both clauses are false now.** The entry carries
+> § *"Fixed: Update no longer un-deletes a soft-deleted row"*, which names the whole-object
+> `entry.CurrentValues.SetValues(item)` replacement, says the row *"came back to life"* in every read, and adds
+> that *"Nothing threw and no row count looked wrong."* It also names the second-`Delete` half — the refreshed
+> timestamp and the `1` where `0` belonged — **and a third half this entry never asked for**, `Insert` carrying
+> a stale `DeletedDate` into a new row so that the row is invisible to every read the moment it is written.
+
+**Status:** ~~**Scheduled for v3.0.0**~~ **Done — 2026-08-23.** Filed and triaged 2026-08-16. Scheduled rather than `Proposed` because
 it requires no scope decision: [entry 10](#10--collapse-the-guidintlong-dao-triplication) is already approved
 and already rewrites these types, and this entry is the specification of *what the rewrite must change*. It
 is filed separately from entry 10 because entry 10 is a **surface** change (18 classes → 6 generic families)
@@ -1695,7 +2019,28 @@ this file.
 
 ## 14 — The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule
 
-**Status:** **Proposed** — filed 2026-08-18, awaiting triage. Filed by an agent under the shared-capture
+> **STATUS CHANGED 2026-08-23 — `Proposed` → `Done`.** It carried inside [entry 10](#10--collapse-the-guidintlong-dao-triplication)'s
+> collapse exactly as **D14** anticipated, and the types that adopted the caller's instance were deleted with
+> the rest. Verified two ways on this date: `ProphetsWay.EFTools/` contains an internal
+> `EntityGraph.cs`, the single copy of the navigation-graph mechanics the rewrite introduced; and
+> `CHANGELOG.md`'s v3.0.0 entry carries **two `Fixed:` headings that are this entry** — *"a failed Insert no
+> longer leaves timestamps or an identifier on your instance"* and *"TargetException on a committed write"* —
+> the second describing the inverse-navigation clearing this entry identified as the mechanism.
+>
+> **The release-note obligation is now fully met — corrected 2026-08-23, later the same day.** This paragraph
+> read *"This is the one of the four D12 defects whose release-note obligation is **partly** met"*, and said
+> the entry *"still does not say… what stops happening."* **Both are false now and neither may be restated.**
+> `CHANGELOG.md` gained a third and a fourth `Fixed:` heading, one of them § *"a read or a write no longer
+> hands you the store's own object"*, which names the untracked-read half this entry is really about —
+> `Dataset.Add(item); Context.SaveChanges();` leaving the caller's instance tracked, and `Get` returning the
+> store's object with no `AsNoTracking`. **And it carries the sentence D12 says this defect uniquely owes**, as
+> a dedicated bolded paragraph headed *"What stops happening, which is the part to read even if none of the
+> above sounds familiar"*: a stray edit is *"now silently dropped where it used to be silently applied"*, and
+> `Update` against an absent row returns `0` where 2.2.0 threw out of `Single`, **so a `catch` a consumer wrote
+> stops firing.** Of the four, this is the one written most fully — which is right, because it is the only one
+> whose fix takes something away.
+
+**Status:** ~~**Proposed**~~ **Done — 2026-08-23.** Filed 2026-08-18 by an agent under the shared-capture
 rule; only `Purpose Refiner` may change this status.
 
 **Several tests in this repository are currently green *because* of this defect.** That is the entry in one
@@ -1906,8 +2251,24 @@ currently distinguishing a correct implementation from an adopting one.
 
 ## 15 — `ProphetsWay.EFTools.Guid` shadows `System.Guid` inside this assembly
 
-**Status:** **Proposed** — filed 2026-08-19 by an agent under the shared-capture rule, awaiting `Purpose
-Refiner` triage. Nothing in this index covered the ground, so it is a new entry rather than an extension of
+> **STATUS CHANGED 2026-08-23 — `Proposed` → `Done`.** It closed for free inside
+> [entry 10](#10--collapse-the-guidintlong-dao-triplication), exactly as this entry predicted, and it closed
+> some days before this triage recorded it — `AGENTS.md` had already noticed and correctly declined to change
+> the status itself.
+>
+> **What would close it**, per this entry's own last section, was *"`ProphetsWay.EFTools.Guid` no longer
+> existing as a namespace."* Verified on this date by grepping the `namespace` declaration of every `.cs` file
+> in `ProphetsWay.EFTools/`: **all 15 declare `namespace ProphetsWay.EFTools`, and no file declares
+> `ProphetsWay.EFTools.Guid`, `.Int` or `.Long`.** The namespace cannot shadow `System.Guid` because it does
+> not exist. The narrower ask — that the sub-namespaces' disappearance be treated as a *required* outcome of
+> the collapse rather than an incidental one — was met: `CHANGELOG.md` v3.0.0 gives it its own heading,
+> *"The Guid, Int and Long namespaces have been removed."*
+>
+> The stated verification — `Guid.NewGuid()` compiling unqualified inside `ProphetsWay.EFTools.Tests` — was
+> **not** re-run here; no test was compiled by this pass. The namespace's absence is the stronger and more
+> direct check, and it is the one this entry named first.
+
+**Status:** ~~**Proposed**~~ **Done — 2026-08-23.** Filed 2026-08-19 by an agent under the shared-capture rule. Nothing in this index covered the ground, so it is a new entry rather than an extension of
 [entry 10](#10--collapse-the-guidintlong-dao-triplication) — but it is **evidence for** entry 10 and should be
 triaged alongside it rather than on its own.
 
@@ -1947,3 +2308,163 @@ collapse for another reason, the `Guid` collision be weighed explicitly before i
 
 `ProphetsWay.EFTools.Guid` no longer existing as a namespace, verified by `Guid.NewGuid()` compiling
 unqualified in a file whose namespace is `ProphetsWay.EFTools.Tests`.
+
+---
+
+## 16 — Source Link, symbol packages, and the empty packaging metadata stubs
+
+**Status:** **Proposed** — filed 2026-08-23 by `Purpose Refiner` during triage. **Not breaking, so it does not
+have to ride 3.0.0.**
+
+**Filed because `AGENTS.md` deviation 5 had no entry in this index at all**, and a deviation with no feature
+request is a finding with nowhere to go. It is the same fact as that row; extend both together.
+
+### What is missing, field by field
+
+Verified by opening [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) on this
+date and reading every element in it.
+
+| Group | State |
+| --- | --- |
+| Present with values | `PackageId`, `Description`, `Authors`, `Company`, `Product`, `RepositoryUrl`, `PackageIcon`, `PackageReadmeFile`, `PackageLicenseExpression`, `PackageRequireLicenseAcceptance`, and the `ItemGroup` packing `README.md`, `CHANGELOG.md` and `profile.png` |
+| **Empty self-closing stubs** | `PackageProjectUrl`, `PackageTags`, `PackageReleaseNotes`, `Copyright`, `NeutralLanguage` — plus the pipeline-owned `Version`/`AssemblyVersion`/`FileVersion`/`InformationalVersion`, which are **correctly** empty |
+| **Absent entirely** | `PublishRepositoryUrl`, `EmbedUntrackedSources`, `IncludeSymbols`, `SymbolPackageFormat`, `ContinuousIntegrationBuild` |
+| Wrong value | `RepositoryType` is `GitHub`; the house convention is `git` |
+
+**An empty self-closing element is not a value.** The nuget.org listing therefore ships with no homepage link,
+no search tags, no release notes and no copyright.
+
+### Why the Source Link half is cheaper than it looks, and is already proven next door
+
+**This is not the open question it was in `ProphetsWay.BaseDataAccess`.** That repository's
+[FR 8](../../ProphetsWay.BaseDataAccess/docs/feature-requests.md#8--source-link-and-symbol-packages) asked
+whether enabling Source Link costs a `PackageReference` and **answered it: no.**
+`Microsoft.SourceLink.GitHub` ships inside SDK 10.0.400, so the whole csproj half is four properties plus one
+CI-conditioned fifth. It shipped there in **3.2.0** and was verified from the extracted artifacts.
+
+**The pipeline half is already done and needs nothing here.** `prophets-pipelines` pins `nuget.exe` to
+**6.4.0**, which pushes a co-located `.snupkg` alongside the `.nupkg` on a single push — read from
+`prophets-pipelines/stages/deploy-release.yml` on this date, where the pin and the co-located artifact
+download both carry comments recording the measurement. **So a `.snupkg` produced by this repository would
+publish with no template change whatsoever.**
+
+### What it buys, specifically here
+
+Two things this package needs more than most:
+
+- **This library is abstract bases.** A consumer's own DAO derives from `BaseDao<TEntity,TKey>` and every
+  interesting failure — a `DataAccessConventionException` from identifier resolution, an `ApplyStableOrder`
+  that throws, a `MatchRow` that did not translate — surfaces *inside* a frame the consumer cannot step into.
+- **`PackageTags` is empty**, so nothing about this package is discoverable by search on nuget.org. It is a
+  new major on a package with a near-empty consumer base; discoverability is not a rounding error.
+
+**The `PackageTags` and `Description` wording is also where [D8](purpose-and-scope.md#owner-decisions--2026-08-15)
+lands** — the certified-on-SQLite-and-SQL-Server claim has to be *on the package*, and today the package says
+nothing. Note the ordering constraint: **D8's wording should not be published ahead of
+[entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container)'s evidence**, which
+is the one genuine reason to let this slip past 3.0.0 rather than the only one.
+
+### Owner decision needed
+
+**Does this ride 3.0.0 or follow it as 3.0.1 / 3.1.0?** Nothing here is breaking and nothing here blocks a
+publish, so `Purpose Refiner` proposes **following it** — but the argument the other way is real: packaging
+metadata is what a *new* major's listing is judged on, and 3.0.0 is the listing most consumers will meet
+first. `Modernizer` owns the csproj either way.
+
+---
+
+## 17 — Five proving-ground DAOs carry dead preprocessor guards
+
+**Status:** **Proposed** — filed 2026-08-23 by `Purpose Refiner` during triage. Cosmetic in effect, and filed
+anyway for the reason in the last paragraph.
+
+### What was found
+
+Grepping `ProphetsWay.Example.DataAccess.EF/` for `#if`, `#else` and `#endif` on this date returns **20 matches
+in 5 files** — `Daos/CompanyDao.cs`, `Daos/JobDao.cs`, `Daos/ResourceDao.cs`, `Daos/TransactionDao.cs` and
+`Daos/UserDao.cs`. Each opens with the same four-directive preamble over its `using` block:
+
+```csharp
+#if NET8_0_OR_GREATER
+...
+#endif
+#if NET471 || NET48
+...
+#endif
+```
+
+`ProphetsWay.Example.DataAccess.EF.csproj` reads `<TargetFrameworks>net10.0</TargetFrameworks>`, so
+**`NET8_0_OR_GREATER` is unconditionally true and `NET471 || NET48` is unconditionally false.** Both arms are
+decided at every build; neither can ever change while D7 stands. `DepartmentDao.cs` and
+`CompanyResourceDao.cs` — the two written after the retarget — carry no directives at all, which is the shape
+the other five should match.
+
+### Why it is filed rather than shrugged off
+
+**Nothing here ships.** This project is not packaged, the guards emit no warning, and a consumer never sees
+them. On effect alone this is beneath the bar.
+
+It is filed because of **where** it is. `ProphetsWay.Example.DataAccess.EF` exists to be read and copied by
+someone writing their own EF Data Access Layer against these bases, and
+[entry 4](#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework) closed on the fact that the
+**library** now has zero preprocessor directives. A reader who opens the reference implementation first meets
+five files implying that multi-targeting across .NET Framework is still a thing this paradigm does. That is a
+teaching cost, and it is the one kind of cost this family of repositories consistently agrees to pay for.
+
+**Deliberately not proposed: deleting the files or rewriting the DAOs.** The change is the removal of four
+directive lines per file and nothing else. `Modernizer` or `Refactorer` owns it; **it must not be bundled with
+a behaviour change**, or the diff stops being reviewable at a glance, which is the whole reason it is cheap.
+
+---
+
+## 18 — Committed `.trx` files under `TestResults/` are read as current and are not
+
+**Status:** **Proposed** — filed 2026-08-23 by `Purpose Refiner` during triage. **Filed against a live hazard
+this pass hit directly**, not against a hypothetical one.
+
+### What happened
+
+`ProphetsWay.EFTools.Tests/TestResults/` holds **seven** committed run artifacts: `baseline.trx`,
+`efseam.trx`, `efseam2.trx`, `efseam3.trx`, `eftools-verify-20260823.trx`, `final.trx` and `lap2.trx`.
+Their names carry no ordering and only one carries a date.
+
+The newest, `eftools-verify-20260823.trx`, was opened on this date. Its `ResultSummary` reads
+**`total="270" executed="270" passed="259" failed="11"`**, and its results are stamped
+`2026-08-23T16:09–16:10-04:00`. That looks authoritative and current: right date, right total, plausible
+detail — ten `EFSnapshotDeepCopyTests` failures, all `NullReferenceException` at
+`SnapshotDeepCopyTests.cs:line 504`, plus `EFDataAccessTransactionTests.ShouldExposeUncommittedWritesToAnotherInstance`
+dying after **30.02 seconds** on a lock wait.
+
+**It is stale.** The submodule pointer this repository now carries, `f93f0a4`, was authored at roughly
+**18:53** the same day — nearly three hours *after* that run — and it is the commit that both rewrote
+`SnapshotDeepCopyTests.cs` and introduced the `StoreCapabilities` declaration that removes the 30-second lock
+wait. The artifact therefore records the state of a **superseded** submodule, and every one of its 11 failures
+is against code no longer in the tree.
+
+### Why this is worth an entry
+
+**This index and `AGENTS.md` both cite test counts as evidence**, and a reader reconciling a document against
+`TestResults/` will reconcile it against the wrong run. That is not a theoretical failure mode — the
+2026-08-18 artifacts here (147/53/94, 147/15/132, 151/57/94) had already been mistaken for current once, which
+is why `AGENTS.md` carries a sentence warning about them. A warning in one file about artifacts in another is
+the weakest possible control.
+
+### Three options, none of them chosen here
+
+| Option | Effect | Cost |
+| --- | --- | --- |
+| **Gitignore `TestResults/`** | The hazard cannot recur | Loses the ability to point at a run in review, which is how several claims in this index were once evidenced |
+| **Keep one, named for its commit** | Retains the evidence, makes staleness visible | Requires discipline at exactly the moment nobody has any — the end of a long session |
+| **Keep them, add a `README.md` in the folder** | Cheapest; nothing is lost | A note beside stale data is still stale data with a note beside it |
+
+**`Purpose Refiner` recommends the first and does not act on it.** The house rule is to *genericize rather than
+delete* where a hygiene fix has a teaching cost — and here there is no teaching cost, because a `.trx` teaches
+nothing a `CHANGELOG.md` or this index does not say better. The counter-argument, recorded so it is not
+re-proposed as unfinished work: several claims in this file and in `AGENTS.md` were originally evidenced by
+pointing at a `.trx`, and ignoring the folder removes that option permanently.
+
+**Whatever is decided, the immediate correction is not optional: `eftools-verify-20260823.trx` must not be read
+as the current state of this suite.** The owner reports the suite at **270 / 270 / 0** after `f93f0a4`;
+**that figure was not re-measured by this pass** — no test was run — and it is recorded here as the owner's
+measurement, corroborated only by the fact that `f93f0a4` touches precisely the two files carrying all 11
+failures.

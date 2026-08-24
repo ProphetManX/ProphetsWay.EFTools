@@ -4,26 +4,65 @@ _Generated 2026-08-15. Evidence-based; every claim cites a source file._
 
 ---
 
-## Reading Note — Rewritten 2026-08-22, then corrected the same day for lap 4
+## Reading Note — re-derived 2026-08-23 at HEAD `a9e8199`
 
-**This document was re-profiled against the working tree on 2026-08-22, after implementation laps 1, 2 and
-3 — and then corrected again hours later, after lap 4 (`d00aad3`) landed and made a third of it false.** Six
-passes of dated corrections had accreted on top of a 2026-08-15 original, and the result no longer
-told a reader what was true. The correction history is compressed here; the sections below describe the
-**tree as it stands at `d00aad3`**, not the tree as any earlier pass found it.
+**This document was re-profiled against the working tree on 2026-08-22 after laps 1–4, and re-derived again
+on 2026-08-23 after four more commits landed and made several of its headline figures false.** Seven passes
+of dated corrections have accreted on top of a 2026-08-15 original. The correction history is compressed
+here; the sections below describe the **tree as it stands at `a9e8199`**, not the tree as any earlier pass
+found it. **Every figure below was re-taken this pass by listing a directory, opening a file or grepping a
+pattern — none was carried forward.**
 
-**Lap 4 is a pure deletion — 24 files, 773 lines, and no modification to any surviving file.** It removed
-the 18 key-specific closures and with them the `ProphetsWay.EFTools.Guid` / `.Int` / `.Long` namespaces
-entirely, the `RootBaseDao<T,TIdType>` and `RootBaseSoftDao<T,TIdType>` bridges, the internal
-`RootDao<T,TIdType>`, and `LegacyRootNonIdDao<T>` / `LegacyBaseNonIdDao<T>` / `LegacyBaseSoftNonIdDao<T>`.
-The file-by-file stat came from the owner and **could not be re-run here — this agent has no terminal.**
-What *was* done here is stronger: the **effect** was verified directly against the tree by listing the
-library folder and grepping every type declaration and every preprocessor directive in it.
+### The four commits of 2026-08-23, read from `.git/logs/HEAD`
+
+| Commit | Subject | Effect — and the artifact opened to confirm it |
+| --- | --- | --- |
+| `0da679f` | *Take BaseDataAccess 3.2.0 and delete the CS8766 suppressions* | Dependency `3.1.0` → **`3.2.0`** in both consuming `.csproj`, and **ten `CS8766` suppression pairs deleted across eight library files.** Grepping all 15 library files for `#pragma` / `#if` / `#else` / `#elif` / `#endif` / `#region` / `#define` now returns **only twelve `#nullable enable` lines** — so the *mechanism* for nullable annotations is per-file, and no `.csproj` sets `<Nullable>`. The suppressions were load-bearing: 3.1.0 shipped no nullable metadata, 3.2.0 does, and the compiler now verifies what was being silenced |
+| `77cfe5c` | *Stop forcing EF providers on consumers* | `Microsoft.EntityFrameworkCore.SqlServer` and `.InMemory` **removed from the library**. Opened [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj): its whole reference list is `Microsoft.EntityFrameworkCore` 10.0.11 and `ProphetsWay.BaseDataAccess` 3.2.0, and the `ItemGroup` carries *"Provider-neutral by design: a consumer chooses their own EF provider. Never add one here."* `.InMemory` moved to the test project. **Closes FR 7 / D2, both halves** |
+| `3ac9615` | *Load navigations in the EF UserDao and TransactionDao* | `ApplyIncludes` overrides in the proving ground — `UserDao.cs` line 25, `TransactionDao.cs` lines 39–45. **Cleared nine `Scope=Contract` failures that were all `NullReferenceException`.** A proving-ground wiring gap, never a library defect |
+| `a9e8199` | *Declare the EF store's capabilities to the upstream suite* | Submodule pointer → **`f93f0a4`**; `TestSeam.cs` now passes `StoreCapabilities.TransactionIsolation` as a second argument to `TestDataAccessFactory.Use`. **Took the suite to 270 / 270 / 0** and removed ~30 s of SQL Server lock-wait |
+
+**A task packet circulated on 2026-08-23 transposed the middle two hashes**, attributing `ApplyIncludes` to
+`77cfe5c`. The reflog is authoritative: `77cfe5c` is the provider removal, `3ac9615` is `ApplyIncludes`.
+
+### The capability mechanism, and the two tests that must never be "fixed"
+
+Upstream added a `[Flags]` enum `StoreCapabilities` — `None`, `DenormalizedNavigationWrites`,
+`TransactionIsolation` — read from
+[StoreCapabilities.cs](../ProphetsWay.Example/ProphetsWay.Example.Tests/StoreCapabilities.cs) and
+[TestDataAccessFactory.cs](../ProphetsWay.Example/ProphetsWay.Example.Tests/TestDataAccessFactory.cs). An
+implementation **declares what its store can structurally do**, and two `Scope=Characterization` tests
+branch on the declaration rather than failing forever.
+
+**The EF DAL declares `TransactionIsolation` only, and the absence of `DenormalizedNavigationWrites` is
+itself a positive declaration** — a normalized relational store cannot hold a second, denormalized copy of
+a navigation node. **The branch that absence selects is the stronger assertion**: it proves `Update` did not
+cascade into the Company, Job and Department rows the caller never named. Adding the flag would assert an
+in-memory outcome against a relational store and fail.
+
+The two tests are
+`SnapshotDeepCopyTests.ShouldReadANavigationPropertyEditBackOnlyWhereTheStoreDenormalizesTheWrite` — whose
+sibling asserts the opposite **as `Contract`**, making the pair mutually exclusive for a normalized store —
+and
+`DataAccessTransactionTests.ShouldExposeUncommittedWritesToAnotherInstanceOnlyWhereTheStoreDoesNotIsolateThem`,
+which would need `READ UNCOMMITTED` to pass. Both are outside the conformance gate by design, and **no
+`Scope=Contract` assertion reads either flag**, so neither is a way out of a rule.
+
+**Lap 4 remains the reason the library is the shape it is**, and its record is kept below. It was a pure
+deletion — 24 files, 773 lines, no modification to any surviving file — removing the 18 key-specific
+closures and with them the `ProphetsWay.EFTools.Guid` / `.Int` / `.Long` namespaces entirely, the
+`RootBaseDao<T,TIdType>` and `RootBaseSoftDao<T,TIdType>` bridges, the internal `RootDao<T,TIdType>`, and
+`LegacyRootNonIdDao<T>` / `LegacyBaseNonIdDao<T>` / `LegacyBaseSoftNonIdDao<T>`. The file-by-file stat came
+from the owner; the **effect** was verified directly against the tree.
 
 **What earlier passes said that is now false, so it is not re-derived below:**
 
 | Superseded claim | Where it stood | What the tree says |
 | --- | --- | --- |
+| `ProphetsWay.BaseDataAccess` reference is **3.1.0** | Dependencies, Planned 3.x Direction | **3.2.0**, in both consuming `.csproj` — opened 2026-08-23 |
+| Library references `Microsoft.EntityFrameworkCore.SqlServer` and `.InMemory` | Dependencies, Packaging Audit, Gaps 3, Gaps 11 | **Neither is present.** `77cfe5c` removed both |
+| Suite is **270 / 259 / 11**; 11 failures remain | Tests and Build Facts, Gaps 5, Open Questions 4 | **270 / 270 / 0**, and the conformance gate is **245 / 245 / 0** in about two seconds |
+| Submodule pointer is `61d9e7d`, unchanged since 2026-08-18 | Projects in the Solution, Planned 3.x Direction | **`f93f0a4`** — `3.1.0-4-gf93f0a4`, advanced by `a9e8199` |
 | Library has **27 source files**, then **39** — 34 public abstract classes, 1 enum, 4 internal classes | Projects in the Solution, Public API Surface | **15 files, one flat folder, no subfolders** — 12 public abstract classes, 1 enum, 2 internal static classes. **Both 27 and 39 are superseded** |
 | **24 of the 39 files are the 2.2.x shape lap 4 deletes**, and every variant of that sentence | Throughout | **Lap 4 has landed.** Those 24 files do not exist |
 | The dead `#if NET461 \|\| NET471 \|\| NET48` blocks **survive in 24 files** | What It Actually Does, Planned 3.x Direction, Gaps 2 | **Zero preprocessor directives of any kind remain library-wide** — grepped all 15 files for `#if`, `#else`, `#elif`, `#endif`, `#region`, `#endregion`, `#define` |
@@ -46,12 +85,12 @@ SQL Server. Build and test *results* are attributed to the owner's 2026-08-22 ru
 The case counts are the exception: they were derived by static count and **reconcile with the reported runner
 totals exactly**, which is stated where it matters.
 
-**Unchanged and re-verified rather than inherited:** the submodule pointer
-(`.git/modules/ProphetsWay.Example/HEAD`, still `61d9e7dfb209c4a92b0c16d058aad1af08031fb5`) and the packaging
-metadata block ([ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), which lap 4
-did not touch). **`app-variables.yml` is *not* in that list any more** — it changed, and the change closes
-the question this document had been recording. It now reads `3` / `0` / `0`. **What is still open is not a
-decision:** 3.0.0 is set and **not yet tagged or published**, and nuget.org still serves 2.2.0.
+**Unchanged and re-verified rather than inherited:** the packaging metadata block
+([ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), re-opened 2026-08-23 —
+`77cfe5c` touched only its `PackageReference` list, not its `PropertyGroup`) and `app-variables.yml`, which
+reads `Major: '3'` / `Minor: '0'` / `Patch: '0'`. **The submodule pointer is *not* in that list any more** —
+it moved. **What is still open is not a decision:** 3.0.0 is set and **not yet tagged or published**, and
+nuget.org still serves 2.2.0.
 
 ---
 
@@ -64,8 +103,8 @@ writes only the members their own contract adds.
 
 **Two versions of that sentence are true at once, and the difference matters.** The **published 2.2.0**
 package supplies EF6 *and* EF Core bases against `ProphetsWay.BaseDataAccess` 2.5.0. **The working tree is
-an EF Core-only library against 3.1.0**, targeting `net10.0` alone, and since lap 4 it carries the
-twelve-class 3.0.0 surface **and nothing else** — the 2.2.x surface it replaces was deleted in `d00aad3`
+an EF Core-only, provider-neutral library against 3.2.0**, targeting `net10.0` alone, carrying the
+twelve-class 3.0.0 surface **and nothing else**, and referencing **no database provider at all**
 ([ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj),
 [CHANGELOG.md](../CHANGELOG.md), [docs/api-contract.md](api-contract.md)).
 
@@ -154,15 +193,15 @@ submodule` and `Solution Items`. Three projects are owned by this repository; fo
 
 ### The submodule pointer
 
-`.git/modules/ProphetsWay.Example/HEAD` holds **`61d9e7dfb209c4a92b0c16d058aad1af08031fb5`** — read
-2026-08-22, **unchanged since 2026-08-18**. `.gitmodules` declares one block: `path = ProphetsWay.Example`,
-`url = https://github.com/ProphetManX/ProphetsWay.Example.git`, `branch = main`.
+`.git/modules/ProphetsWay.Example/HEAD` holds **`f93f0a41a76834647962ddf9e830e01e24e05f24`** — read
+2026-08-23, advanced the same day by `a9e8199`. `.gitmodules` declares one block: `path =
+ProphetsWay.Example`, `url = https://github.com/ProphetManX/ProphetsWay.Example.git`, `branch = main`.
 
-**It is one commit past the `3.1.0` tag, not the tag itself.** `git submodule status` renders it
-`3.1.0-1-g61d9e7d`; that one commit is the merge of `ProphetsWay.Example` PR #21
-(`3.1.1-eftool-findings`) on 2026-08-18, which opened the untagged **3.1.1** line and added
-`TestDataAccessFactory.Use` — the seam this repository's harness is built on. **Any text describing the
-pointer as `d845863`, as "the 3.1.0 tree", or as sitting on a tagged release is superseded.**
+**It is four commits past the `3.1.0` tag, not the tag itself.** `git submodule status` renders it
+`3.1.0-4-gf93f0a4`, on the untagged **3.1.1** line. Those commits brought in `TestDataAccessFactory.Use`
+and the `StoreCapabilities` enum the harness now depends on. **Every earlier pointer this document has
+carried — `967fd26`, `d845863`, `61d9e7d` — is superseded**, as is any description of the pointer as
+sitting on a tagged release.
 
 **The malformed `[submodule "Submod"]` block is gone.** `.gitmodules` was re-read on 2026-08-22 and contains
 only the block above. See the Source Link note under Packaging Audit for what its presence cost while it
@@ -235,29 +274,32 @@ the same thing and asks that it be described as new public surface
 
 ### Published library
 
-Read from [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) on 2026-08-22.
+Read from [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) on 2026-08-23.
 **No EF6 row appears because no EF6 reference exists** — a repository-wide search for a `PackageReference`
-to `EntityFramework` matches nothing.
+to `EntityFramework` matches nothing. **And no provider row appears either**, as of `77cfe5c`.
 
 | Dependency | Version | Why it is present |
 | --- | --- | --- |
 | `Microsoft.EntityFrameworkCore` | **10.0.11** | The implementation |
-| `Microsoft.EntityFrameworkCore.SqlServer` | **10.0.11** | **Nothing in the library's C# source needs it.** A leftover; FR 7 / D2 removes it |
-| `Microsoft.EntityFrameworkCore.InMemory` | **10.0.11** | Same — no library source references it |
-| `ProphetsWay.BaseDataAccess` | **3.1.0** | Parent DAL contracts |
+| `ProphetsWay.BaseDataAccess` | **3.2.0** | Parent DAL contracts. **Moved 3.1.0 → 3.2.0 in `0da679f`**; 3.2.0 annotates those contracts for nullable reference types, which is what let the library's ten `CS8766` suppressions be deleted |
 
-The three EF Core references sit inside
+**That is the whole list — two entries.** What a consumer restores transitively is those two plus
+`Microsoft.EntityFrameworkCore.Abstractions` and `.Analyzers` beneath the first. The `ItemGroup` now carries
+the comment *"Provider-neutral by design: a consumer chooses their own EF provider. Never add one here."*
+
+The `Microsoft.EntityFrameworkCore` reference sits inside
 `Condition="!$(TargetFramework.StartsWith('net4')) and $(TargetFramework.StartsWith('net'))"`, which is
 unconditionally true given the single `net10.0` target — the condition is a vestige of the EF6 split and
 now gates nothing.
 
-**The provider problem is now packaging-only, and that is a narrowing.** Earlier passes of this document
-recorded `UseSqlServer` in `BaseEFContext`. It is gone: a grep of every `.cs` under `ProphetsWay.EFTools/`
-for `UseSqlServer` and `UseInMemoryDatabase` returns nothing, and the provider is named in
-[ExampleDataAccess.cs](../ProphetsWay.Example.DataAccess.EF/ExampleDataAccess.cs), the consumer's own file.
-What remains is that a PostgreSQL consumer of the eventual package still transitively restores two
-providers they will never use. Removing a transitive reference is breaking, so it lands in 3.0.0 —
-[FR 7](feature-requests.md), **D2**.
+**The provider problem is closed on both halves — corrected 2026-08-23.** Earlier passes recorded
+`UseSqlServer` in `BaseEFContext` (gone: a grep of every `.cs` under `ProphetsWay.EFTools/` for
+`UseSqlServer` and `UseInMemoryDatabase` returns nothing) and then, after that, two leftover
+`PackageReference` entries. **Both are gone.** `Microsoft.EntityFrameworkCore.InMemory` moved into
+[ProphetsWay.EFTools.Tests.csproj](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj) as a
+test-only reference beside `.Sqlite`. **Removing a transitive reference is breaking**, which is why it
+landed before the 3.0.0 tag rather than after — afterwards it would have cost a 4.0.0.
+[FR 7](feature-requests.md) / **D2** are `Done`.
 
 **There is no central version file.** No `Directory.Packages.props`, no `Directory.Build.props`, and
 `ManagePackageVersionsCentrally` is set nowhere — so the three `.csproj` files are the only place package
@@ -271,16 +313,19 @@ eventual 3.0.0 package must resolve**. Recorded here as a project-file fact; the
 ### Tests and proving ground
 
 - `ProphetsWay.EFTools.Tests` uses `Microsoft.NET.Test.Sdk` 17.13.0, xUnit 2.9.3,
-  `xunit.runner.visualstudio` 3.0.2, coverlet 6.0.4, and **`Microsoft.EntityFrameworkCore.Sqlite`
-  10.0.11** in its own `ItemGroup`, commented *"Relational provider for the SQLite in-memory certification
-  leg; must not move into the library."* It project-references `ProphetsWay.Example.DataAccess.EF` and
-  `ProphetsWay.Example.Tests`. **It carries no Shouldly reference of its own** — the assertion library
-  arrives transitively from `ProphetsWay.Example.Tests`
+  `xunit.runner.visualstudio` 3.0.2, coverlet 6.0.4, and **both `Microsoft.EntityFrameworkCore.Sqlite` and
+  `Microsoft.EntityFrameworkCore.InMemory` 10.0.11** in one `ItemGroup`, commented *"Test-only EF
+  providers: Sqlite for the relational in-memory certification leg, InMemory for the guard spike theories.
+  Neither must move into the library."* `.InMemory` arrived here from the library in `77cfe5c`. It
+  project-references `ProphetsWay.Example.DataAccess.EF` and `ProphetsWay.Example.Tests`. **It carries no
+  Shouldly reference of its own** — the assertion library arrives transitively from
+  `ProphetsWay.Example.Tests`
   ([ProphetsWay.EFTools.Tests.csproj](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj)).
 - `ProphetsWay.Example.DataAccess.EF` references `Microsoft.EntityFrameworkCore` and
-  `Microsoft.EntityFrameworkCore.SqlServer` (both 10.0.11) and `ProphetsWay.BaseDataAccess` **3.1.0**, and
-  nothing else. **It carries no `InMemory` provider** — unlike the library. The FluentAssertions 8.2.0
-  reference earlier passes recorded here is **gone**, closing the paid-commercial-licence exposure
+  `Microsoft.EntityFrameworkCore.SqlServer` (both 10.0.11) and `ProphetsWay.BaseDataAccess` **3.2.0**, and
+  nothing else. **Its `SqlServer` reference is correct and must not be removed** — it is the *consumer*,
+  and naming its own provider is the arrangement provider neutrality exists to produce. The FluentAssertions
+  8.2.0 reference earlier passes recorded here is **gone**, closing the paid-commercial-licence exposure
   ([ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj)).
 - The submodule's Example tests use **Shouldly 4.3.0**, xUnit 2.9.3, `xunit.runner.visualstudio` 3.0.2,
   `Microsoft.NET.Test.Sdk` 17.13.0 and coverlet 6.0.4
@@ -301,10 +346,9 @@ No EFTools-owned project sets `LangVersion`, so each target uses its SDK default
 [ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj),
 [ProphetsWay.EFTools.Tests.csproj](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj)).
 
-**Both halves of the 3.x TFM/provider direction are now partly or wholly done.** `net10.0` alone is what
-the approved EF Core-only design requires, and the retarget delivered it. Provider neutrality is **done in
-code and not in packaging** — the library still carries the SQL Server and InMemory package references. See
-Dependencies.
+**Both halves of the 3.x TFM/provider direction are now done.** `net10.0` alone is what the approved EF
+Core-only design requires, and the retarget delivered it. Provider neutrality is **done in code and in
+packaging** as of `77cfe5c` — the library references no provider at all. See Dependencies.
 
 ## Packaging Audit
 
@@ -328,10 +372,17 @@ Dependencies.
 | `PublishRepositoryUrl` + `EmbedUntrackedSources` + SourceLink | Missing | Consumer source navigation/debugging metadata absent |
 | `IncludeSymbols` + `SymbolPackageFormat=snupkg` | Missing | No symbol package configuration |
 | `Deterministic` / `ContinuousIntegrationBuild` | Not explicit / missing | SDK builds are deterministic by default; CI-specific normalization is absent |
+| `GenerateDocumentationFile` | Missing | The library's XML documentation is among the best in the workspace and **none of it ships** — no `.xml` is produced or packed, so a consumer gets no IntelliSense from it |
 
 All source states above come from
-[ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj). The README, changelog,
-and icon packing entries are correctly paired.
+[ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), re-read field by field on
+**2026-08-23**. The README, changelog, and icon packing entries are correctly paired. Also present and
+inert: `ApplicationIcon` and `Win32Resource`, both empty; `GeneratePackageOnBuild` is `false` and
+`SignAssembly` is `false`. The pipeline-owned `Version` / `AssemblyVersion` / `FileVersion` /
+`InformationalVersion` are empty, which is correct.
+
+**This whole section is now also [FR 16](feature-requests.md)**, filed `Proposed` on 2026-08-23 and
+recorded there as **non-breaking, so it may land after 3.0.0**.
 
 ### Source Link is off — and the malformed `.gitmodules` block that used to mask the question is gone
 
@@ -387,10 +438,12 @@ is implemented; writing future behavior into the current package metadata would 
 the spike", or "nothing tests this library's own public surface" — all four are false.**
 
 - **`TestSeam.cs`** — an `internal static` class whose `[ModuleInitializer]` calls
-  `TestDataAccessFactory.Use(() => Constants.GetExampleDataAccess)`. That one call points the **entire**
-  upstream suite at `ProphetsWay.Example.DataAccess.EF.ExampleDataAccess` for the assembly's whole run. A
-  module initializer rather than a fixture, because xUnit runs collections in parallel and a fixture is
-  constructed after another collection may already have built a DAL
+  `TestDataAccessFactory.Use(() => Constants.GetExampleDataAccess, StoreCapabilities.TransactionIsolation)`.
+  **The second argument arrived in `a9e8199` and is not decoration** — see the Reading Note. That one call
+  points the **entire** upstream suite at `ProphetsWay.Example.DataAccess.EF.ExampleDataAccess` for the
+  assembly's whole run, and declares the shape of the store it is pointing at. A module initializer rather
+  than a fixture, because xUnit runs collections in parallel and a fixture is constructed after another
+  collection may already have built a DAL
   ([TestSeam.cs](../ProphetsWay.EFTools.Tests/TestSeam.cs)).
 - **13 adapters** — `EFBaseDataAccessTests`, `EFCompanyDaoTests`, `EFCompanyResourceDaoTests`,
   `EFCompanyResourceDataAccessTests`, `EFDataAccessDisposalTests`, `EFDataAccessTransactionTests`,
@@ -429,33 +482,47 @@ the spike", or "nothing tests this library's own public surface" — all four ar
 
 ### The case count, and why it can be stated without a terminal
 
-**270 discoverable cases**, counted 2026-08-22 by grepping every `[Fact]`, `[Theory]` and `[InlineData]` in
-`ProphetsWay.EFTools.Tests/` and in `ProphetsWay.Example.Tests/`. The two halves were counted independently
-and reconcile with the runner totals the owner reported, which is the strongest available check short of
-running it:
+**270 discoverable cases**, re-counted 2026-08-23 by grepping every `[Fact]`, `[Theory]`, `[InlineData]` and
+`[Trait]` in `ProphetsWay.EFTools.Tests/` and in `ProphetsWay.Example.Tests/`. The two halves were counted
+independently and **reconcile with both runner totals the owner reported — the suite total and the gate
+total — exactly**, which is the strongest available check short of running it:
 
 | Half | Cases | Derivation |
 | --- | --- | --- |
-| Adapted upstream | **144** | The upstream suite is 164; `ConventionShowcaseTests` (11) and `ExceptionPassthroughShowcaseTests` (9) are deliberately unadapted, leaving 164 − 20 |
-| Declared here | **126** | 31 + 29 + 21 + 14 + 12 + 5 + 4 + 3, plus the 7 guard cases |
+| Adapted upstream | **144** | 129 `[Fact]` + 15 `[InlineData]` across the 13 top-level upstream classes. `ConventionShowcaseTests` (11) and `ExceptionPassthroughShowcaseTests` (9) live in `ConventionShowcase/` and are deliberately unadapted, leaving 164 − 20 |
+| Declared here | **126** | 88 `[Fact]` + 38 `[InlineData]`, i.e. 31 + 29 + 21 + 14 + 12 + 5 + 4 + 3 across the eight local classes, plus the 7 guard cases |
 | **Total** | **270** | |
 
-**Trait partition of the local 126 — every case carries exactly one `Scope`, or the `Guard` key:**
-`Scope=Contract` 99, `Scope=Characterization` 19, `Scope=Dispatcher` 1, `Guard=Seam` 7. By `Area`:
-`Keyless` 64, `KeyPredicate` 25, `AlternateKeys` 14, `SoftDelete` 12, `Insert` 4 — and
-`Keyless` + `Insert` = **68**, which is exactly the lap gate `--filter "Area=Keyless|Area=Insert"` the owner
-reported passing 68/68.
+**Trait partition of all 270 — every case carries exactly one `Scope`, or the `Guard` key:**
 
-**Last measured result: 2026-08-22, reported by the owner *after* lap 4 — 270 total, 259 passed, 11 failed.**
-The 11 are **10 × `EFSnapshotDeepCopyTests`** — that upstream class in its entirety, since
-`SnapshotDeepCopyTests` declares exactly 10 `[Fact]` — plus
-`EFDataAccessTransactionTests.ShouldExposeUncommittedWritesToAnotherInstance`, a SQL Server
-transaction-visibility timeout. **Not re-run by this pass.** **Lap 4 moved none of these figures**, which is
-the expected result of deleting 24 files that nothing referenced: it fixed nothing and broke nothing.
+| Trait | Local | Upstream adapted | Total |
+| --- | --- | --- | --- |
+| `Scope=Contract` | 99 | 139 | **238** |
+| `Guard=Seam` | 7 | 0 | **7** |
+| `Scope=Characterization` | 19 | 5 | **24** |
+| `Scope=Dispatcher` | 1 | 0 | **1** |
+| | | | **270** |
 
-**The `.trx` files in `ProphetsWay.EFTools.Tests/TestResults/` are stale and must not be read as current.**
-`baseline`, `efseam2` and `efseam3` all record 147/53/94; `efseam` records 147/15/132; `lap2` and `final`
-record 151/57/94. All six are laps from 2026-08-18, before three implementation laps and 119 new cases.
+**`Scope=Contract` + `Guard=Seam` = 245, which is the conformance gate figure exactly.** The two
+`Scope=Dispatcher` upstream classes are the unadapted `ConventionShowcase` pair, so the only `Dispatcher`
+case in this assembly is the one local `KeylessDaoTests` method. By `Area` on the local 126: `Keyless` 64,
+`KeyPredicate` 25, `AlternateKeys` 14, `SoftDelete` 12, `Insert` 4 — `Keyless` + `Insert` = **68**, which
+was **lap 4's** gate (`--filter "Area=Keyless|Area=Insert"`) and is **not** the release gate. Do not quote
+the 68 as current.
+
+**Last measured result: 2026-08-23, reported by the owner after all four of that day's commits — 270 total,
+270 passed, 0 failed; conformance gate `--filter "Scope=Contract|Guard=Seam"` 245 / 245 / 0 in about two
+seconds, with the full run down from roughly thirty-two seconds to about two.** Not re-run by this pass, but
+both totals reconcile with the static count above. **The eleven failures the previous pass recorded are
+cleared, and neither cause was a library defect:** `3ac9615` supplied the missing `ApplyIncludes` overrides
+in the proving ground, clearing nine `NullReferenceException`s inside `EFSnapshotDeepCopyTests`; `a9e8199`
+declared `StoreCapabilities.TransactionIsolation`, which lets the last two assert the outcome correct for a
+*declared* relational store. **Do not restate 270 / 259 / 11 or 151 / 123 / 28.**
+
+**Every `.trx` file in `ProphetsWay.EFTools.Tests/TestResults/` is stale, the newest included.**
+`eftools-verify-20260823.trx` reads authoritative and its run predates `a9e8199`; the older six are laps
+from 2026-08-18 recording 147/53/94, 147/15/132 and 151/57/94. **Never cite a `.trx` in this repository as
+current.** Filed as [FR 18](feature-requests.md).
 
 **`AlternateKeyGuardSpikeTests.cs` is now inside a gate.** Earlier passes recorded it as carrying **zero**
 `[Trait]` attributes and therefore selected by no filtered invocation. That is **false as of 2026-08-22**:
@@ -479,21 +546,21 @@ by grepping every attribute in the file. It is inside `Scope=Characterization` a
     and that this was harmless because lap 4 would delete them. **It did.** There is nothing untested about
     a file that does not exist; **do not re-report this as a coverage gap.**
   - **Provider portability of the *conformance* suite.** Which provider a case runs on splits cleanly along
-    the same line the case counts do, and it is not the split this document previously implied. The **144
-    adapted upstream cases** reach the store through `Constants.GetExampleDataAccess`, which is
-    `new ExampleDataAccess(connectionString)` against a **local SQL Server** carrying `ProphetsWay.Example`
-    — one provider, one machine, and the reason `LocalTestsOnly: 'yes'` exists. The **locally written
-    classes already run on SQLite in-memory**: `UseSqlite` appears in `KeylessDaoTests`,
-    `KeylessSoftDaoTests`, `KeyPredicateOpenKeyTests`, `SoftDeleteTimestampHookTests`,
-    `FailedInsertWriteBackTests`, `IdentifierResolutionTests` and `AlternateKeyGuardSpikeTests`, which also
-    parameterizes over `UseInMemoryDatabase`; `CompanyResourceConversionTests` and `AdapterCoverageTests`
-    are reflection-only and touch no store at all. **So the `Microsoft.EntityFrameworkCore.Sqlite`
-    reference is in use, not merely staged** — verified 2026-08-22 by grepping every provider call in the
-    test project. What [FR 11](feature-requests.md) / **D4** still owe is running the **contract** suite —
-    the 144 — on both legs; today no assertion about `IExampleDataAccess` has ever executed against
-    anything but SQL Server.
+    the same line the case counts do. The **144 adapted upstream cases** reach the store through
+    `Constants.GetExampleDataAccess`, which is `new ExampleDataAccess(connectionString)` against a **local
+    SQL Server** carrying `ProphetsWay.Example` — one provider, one machine, and the reason
+    `LocalTestsOnly: 'yes'` exists. The **locally written classes already run on SQLite in-memory**:
+    `UseSqlite` appears in `KeylessDaoTests`, `KeylessSoftDaoTests`, `KeyPredicateOpenKeyTests`,
+    `SoftDeleteTimestampHookTests`, `FailedInsertWriteBackTests`, `IdentifierResolutionTests` and
+    `AlternateKeyGuardSpikeTests`, which also parameterizes over `UseInMemoryDatabase`;
+    `CompanyResourceConversionTests` and `AdapterCoverageTests` are reflection-only and touch no store at
+    all. **So both providers are in real use.** What [FR 11](feature-requests.md) / **D4** still owe is a
+    *certified* run of the **whole** suite on **either one** — `Purpose Refiner` narrowed the entry that
+    way on 2026-08-23 and recorded it **not release-blocking**.
   - **CI.** `LocalTestsOnly: 'yes'` skips the whole suite, so none of the 270 cases runs on a build agent —
-    including the SQLite ones, which need no local database and could run there today.
+    including the SQLite ones, which need no local database, and the 245-case conformance gate, which now
+    completes in about two seconds. **The recorded justification for the flag has decayed** even though the
+    flag itself may still be right for the SQL Server leg.
 - **The restore mismatch is closed.** `ProphetsWay.EFTools.Tests` now targets `net10.0` alone and
   `ProphetsWay.Example.Tests` is `net48;net10.0`, so the single leg has a compatible asset
   ([ProphetsWay.EFTools.Tests.csproj](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj),
@@ -544,9 +611,9 @@ by grepping every attribute in the file. It is inside `Scope=Characterization` a
   artifacts
   ([restore-build-test.yml](../../prophets-pipelines/steps/restore-build-test.yml),
   [ci-build.yml](../../prophets-pipelines/stages/ci-build.yml)).
-- **The solution builds clean — reported by the owner on 2026-08-22, not re-measured here.**
-  `dotnet build` succeeds with **0 warnings and 0 errors**. **That supersedes the 7-warning figure from the
-  2026-08-16 build**, which this document carried for six days; do not restate it as current. The
+- **The solution builds clean — reported by the owner on 2026-08-22 and again on 2026-08-23, not re-measured
+  here.** `dotnet build` succeeds with **0 warnings and 0 errors**. **That supersedes the 7-warning figure
+  from the 2026-08-16 build**, which this document carried for six days; do not restate it as current. The
   2026-08-16 run — `dotnet build ProphetsWay.EFTools.sln -c Debug`, SDK 10.0.400 — is retained here only
   because it is what closed the three breaks recorded as `AGENTS.md` Deviation 8: every project compiled,
   `ProphetsWay.EFTools`, `ProphetsWay.Example.DataAccess.EF` and `ProphetsWay.EFTools.Tests` on `net10.0`;
@@ -633,8 +700,16 @@ Every derivation below was read from the file cited on 2026-08-22.
 `BaseEFContext(string)`, no `BaseEFDataAccess(string)` or `BaseEFDataAccess(DbContextOptions)`, no
 parameterless in-memory default, and no `ProphetsWay.EFTools.Int` / `.Guid` / `.Long` using-directive
 anywhere in it. Five of its seven DAO files do still open with dead `#if NET8_0_OR_GREATER` /
-`#if NET471 || NET48` blocks — `CompanyDao`, `JobDao`, `ResourceDao`, `TransactionDao`, `UserDao` — which
-are inert under `net10.0` and are noise a reader should not copy.
+`#if NET471 || NET48` blocks — `CompanyDao`, `JobDao`, `ResourceDao`, `TransactionDao`, `UserDao`, grepped
+again 2026-08-23 — which are inert under `net10.0` and are noise a reader should not copy. Filed as
+[FR 17](feature-requests.md).
+
+**Two of those five gained a real override on 2026-08-23, and it is worth copying.** `3ac9615` added
+`ApplyIncludes` to `UserDao` (Company, Job, Department — `UserDao.cs` line 25) and to `TransactionDao`
+(Company, plus User with its own three through `ThenInclude` — `TransactionDao.cs` lines 39–45, with the
+comment *"`Include(x => x.User)` is restated per `ThenInclude` because each chain resumes from the
+Transaction root"*). **Navigation loading is opt-in through that seam**: unoverridden, every navigation on
+a returned instance is `null`, which is exactly what nine `Scope=Contract` failures were.
 
 ## README Accuracy Check
 
@@ -666,7 +741,7 @@ so the rewrite must say which line it describes.
 | “This base class will create your `DbContext` automatically when constructed as defined by `TContextType`” | **Wrong, and it is the load-bearing error** | The one constructor is `protected BaseEFDataAccess(TContext context, ContextOwnership ownership)` and its `<remarks>` say it “has no side effect beyond capturing the two values — no query, no connection, no transaction.” Both public constructors are gone |
 | “By passing it `TIdType` it will give you access to `yourDAL.Get<T>(idValue)`” | **Half right, wrong cause** | `Get<T>(id)` still works, but it is inherited from `ProphetsWay.BaseDataAccess`'s reflection dispatcher, which `BaseEFDataAccess<TContext>` derives from — no type parameter confers it |
 | DAL sample: parameterless constructor calling `UseInMemoryDatabase`; `ExampleDataAccess(string)` calling `UseSqlServer`; `ExampleDataAccess(DbContextOptions options) : base(options)` | **First and third are wrong; the second is right for the wrong reason** | There is no in-memory default — `CHANGELOG.md` records its removal. `base(options)` does not exist. The connection-string constructor survives **in the consumer's own file**, which is the point the README should be making and does not: the library names no provider |
-| “The library has 35 unit tests” | **Stale by an order of magnitude** | **270** discoverable cases; last reported 259 passed / 11 failed on 2026-08-22. See *Tests and Build Facts* |
+| “The library has 35 unit tests” | **Stale by an order of magnitude** | **270** discoverable cases; **270 passed / 0 failed** as last reported, 2026-08-23. See *Tests and Build Facts* |
 | “Each set of tests is a new class inheriting from each original test class, but overriding a property that returns an instance of a particular interface” | **The first half is right, the mechanism is wrong** | The 13 adapters are literally `public class EFXxxTests : XxxTests { }` and **override nothing**. The redirect is `TestSeam.cs` — a `[ModuleInitializer]` calling `TestDataAccessFactory.Use` once for the whole assembly |
 | “I don't have the unit tests running in the build pipeline because they are actually hitting a local database” | **Accurate, and literally so** | `LocalTestsOnly: 'yes'` removes the `dotnet test` task, and `Constants.cs` holds a live `Data Source=localhost` SQL Server string |
 | Soft delete, keyless DAOs, `ContextOwnership`, disposal, DAL transactions, provider neutrality | **Absent** | Ten DAO base classes — six keyed families and four keyless ones — one enum, and the entire disposal and transaction contract are undocumented. `Dispose` is `sealed`, idempotent, non-throwing, rolls back an open transaction and disposes the context only when `Owned`; all 10 non-`Dispose` members throw `ObjectDisposedException` once disposed. The README teaches none of it |
@@ -688,31 +763,34 @@ after `d00aad3`.
 | Approved item | State | Evidence |
 | --- | --- | --- |
 | **D1 — EF Core only**; 2.2.x remains the EF6 / .NET Framework answer, and no EF6 companion package is built | **Done, and the residue is gone too.** No `PackageReference` to `EntityFramework` exists anywhere, and **there is no conditionally compiled code left in the library at all** — the dead `#if NET461 \|\| NET471 \|\| NET48` blocks carrying `using System.Data.Entity;` lived only in the 24 files `d00aad3` deleted. **Do not restate "dead but not deleted" or "still appears in 24 library files"** | Grepped all 15 files for every preprocessor directive 2026-08-22 — zero hits; [CHANGELOG.md](../CHANGELOG.md) |
-| **D2 / [FR 7](feature-requests.md) — relational-provider-neutral** | **Half done, and the halves are worth separating.** **Code: done.** `UseSqlServer` and `UseInMemoryDatabase` match nothing under `ProphetsWay.EFTools/`; `BaseEFContext` names no provider and `BaseEFDataAccess<TContext>` takes a built context. **Packaging: not done.** `Microsoft.EntityFrameworkCore.SqlServer` and `.InMemory` 10.0.11 are still `PackageReference`s of the library, so a PostgreSQL consumer restores two providers they will never use | [BaseEFContext.cs](../ProphetsWay.EFTools/BaseEFContext.cs), [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) |
+| **D2 / [FR 7](feature-requests.md) — relational-provider-neutral** | **Done, both halves — corrected 2026-08-23. Do not restate "packaging: not done."** **Code:** `UseSqlServer` and `UseInMemoryDatabase` match nothing under `ProphetsWay.EFTools/`; `BaseEFContext` names no provider and `BaseEFDataAccess<TContext>` takes a built context. **Packaging:** `77cfe5c` removed `Microsoft.EntityFrameworkCore.SqlServer` and `.InMemory` from the library and moved `.InMemory` into the test project. The library's whole reference list is `Microsoft.EntityFrameworkCore` 10.0.11 + `ProphetsWay.BaseDataAccess` 3.2.0 | [BaseEFContext.cs](../ProphetsWay.EFTools/BaseEFContext.cs), [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), opened 2026-08-23 |
 | **D3 / [FR 10](feature-requests.md) — six generic root-namespace DAO families replacing the 18 closures, no compatibility wrappers** | **Done, both halves.** **Do not restate this as "Not started", and do not restate "the 18 have not been deleted."** `BaseDao` / `BaseGetAllDao` / `BasePagedDao` and the three `BaseSoft*` counterparts are all in the tree with an **unconstrained `TKey`**, and four keyless types were added beyond the approved six. Lap 4 (`d00aad3`) then removed the 18 closures, both `Root*` bridges, `RootDao` and the three `Legacy*` types. **S3 held — nothing transitional shipped** | [api-contract.md](api-contract.md) § *The Public Surface*; the *Public API Surface* tables above |
-| **D4 / [FR 11](feature-requests.md) — SQLite in-memory as the fast CI leg, SQL Server container for provider fidelity** | **Started, and further along than "not started" — corrected 2026-08-22.** Seven of the eight locally written test classes already stand up **SQLite in-memory** contexts, so the library's own surface is exercised on a second relational provider today. **The conformance suite is not**: all 144 adapted upstream cases run against a local SQL Server through `Constants.GetExampleDataAccess`, and `LocalTestsOnly: 'yes'` keeps every leg out of CI. What is owed is the *contract* suite on both providers and a container to host the SQL Server one | Grepped every `UseSqlite` / `UseInMemoryDatabase` / `UseSqlServer` in the test project 2026-08-22; [Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs), [app-variables.yml](../app-variables.yml) |
+| **D4 / [FR 11](feature-requests.md) — SQLite in-memory as the fast CI leg, SQL Server container for provider fidelity** | **Started, and narrowed 2026-08-23.** Seven of the eight locally written test classes stand up **SQLite in-memory** contexts, so the library's own surface is exercised on a second relational provider today. **The conformance suite is not**: all 144 adapted upstream cases run against a local SQL Server through `Constants.GetExampleDataAccess`, and `LocalTestsOnly: 'yes'` keeps every leg out of CI. `Purpose Refiner` narrowed the entry to *a run of the whole suite on either provider* and recorded it **not release-blocking** | Grepped every `UseSqlite` / `UseInMemoryDatabase` / `UseSqlServer` in the test project 2026-08-23; [Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs), [app-variables.yml](../app-variables.yml) |
 | **D7 — `net10.0` only** for the library, the tests and the EF proving ground | **Done 2026-08-16.** A **ratified exception** to the house `netstandard2.0;net10.0` standard, not drift | All three `.csproj` files; [purpose-and-scope.md](purpose-and-scope.md#owner-decisions--2026-08-15) |
-| **[FR 2](feature-requests.md) — move to `ProphetsWay.BaseDataAccess` 3.1.0** | **Done 2026-08-16** in both consuming projects | [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) |
+| **[FR 2](feature-requests.md) — move to `ProphetsWay.BaseDataAccess` 3.1.0** | **Done 2026-08-16 in both consuming projects, and moved again to 3.2.0 in `0da679f` on 2026-08-23.** 3.2.0 annotates the parent contracts for nullable reference types, which is what allowed the library's ten `CS8766` suppression pairs to be deleted — there are now **zero `#pragma` directives** in the library | [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), opened 2026-08-23 |
 | **[FR 3](feature-requests.md) — implement the 3.x disposal contract** | **Done, including the half this document twice recorded as open.** `Dispose` is `sealed override`, idempotent, non-throwing, rolls back an open transaction and disposes the context only under `Owned`, with `protected virtual DisposeCore()` as the derived hook. **All 10 non-`Dispose` members open with `ThrowIfDisposed()`** — the three transaction members and the seven dispatcher overrides — and `ThrowIfDisposed` is `protected` so a derived layer guards its own forwarders. **The sentence "`ObjectDisposedException` guarding on the transaction members has not [been implemented]" is dead** | [BaseEFDataAccess.cs](../ProphetsWay.EFTools/BaseEFDataAccess.cs), verified by grep — the guard is declared once and called at ten sites |
-| **[FR 1](feature-requests.md) — advance the `ProphetsWay.Example` submodule** | **Done 2026-08-16, advanced again 2026-08-18.** The pointer is `61d9e7d`, one commit past the `3.1.0` tag, on the open `3.1.1` line | `.git/modules/ProphetsWay.Example/HEAD` |
+| **[FR 1](feature-requests.md) — advance the `ProphetsWay.Example` submodule** | **Done, and advanced twice more.** The pointer is **`f93f0a4`**, four commits past the `3.1.0` tag on the open `3.1.1` line, moved by `a9e8199` on 2026-08-23 to pick up the `StoreCapabilities` enum | `.git/modules/ProphetsWay.Example/HEAD` |
 | **[FR 6](feature-requests.md) — rebuild the test project on the 3.x seam** | **Done, in a shape the original request did not anticipate.** The six old adapters were deleted 2026-08-16 and **superseded the same night**: thirteen new adapters plus `TestSeam.cs` replaced them once `TestDataAccessFactory.Use` landed upstream, per owner decision **D10** shape B. The Entity Framework conformance run they stood in for **now happens** | [TestSeam.cs](../ProphetsWay.EFTools.Tests/TestSeam.cs) |
 | **[FR 8](feature-requests.md) — remove FluentAssertions**, **[FR 9](feature-requests.md) — delete the stray `[submodule "Submod"]` block** | **Both are done in the tree as of 2026-08-16** — the reference is gone from the EF proving ground's `.csproj`, and `.gitmodules` holds one well-formed block. **Their entries still read `Scheduled`; only `Purpose Refiner` may close a status**, so this row states the tree, not the triage | [ProphetsWay.Example.DataAccess.EF.csproj](../ProphetsWay.Example.DataAccess.EF/ProphetsWay.Example.DataAccess.EF.csproj), [.gitmodules](../.gitmodules) |
 
-**What remains before 3.0.0 can be tagged**, stated as a list rather than left implicit. **Lap 4 was item 1
-and is struck; the version decision was item 5 and is struck. Neither is outstanding.**
+**What remains before 3.0.0 can be tagged**, stated as a list rather than left implicit. **Re-derived
+2026-08-23: items 1, 2, 4 and 5 are all struck. One item on this list is now a document, not code.**
 
 1. ~~**Lap 4 — delete the 24 legacy files** and the dead `#if` blocks that live in them.~~ **DONE —
-   `d00aad3`.** 24 files, 773 lines, no modification to any surviving file. The `#if` blocks left with the
-   files that held them.
-2. **Remove the two provider `PackageReference`s** — the packaging half of D2 / FR 7. Still open; lap 4 did
-   not touch [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj), re-opened
-   2026-08-22 to confirm.
-3. **Build the two certification legs** — D4 / FR 11. What is owed is the *contract* suite on both
-   providers; SQLite is already in real use by the local classes.
-4. **Get the suite green** — 11 failures remain at the last reported run, unchanged by lap 4.
-5. ~~**The version decision.**~~ **CLOSED by the owner.** `app-variables.yml` reads `3` / `0` / `0` — opened
-   2026-08-22. What remains is mechanical rather than a decision: **the tag and the publish have not
-   happened, and nuget.org still serves 2.2.0.**
+   `d00aad3`.** 24 files, 773 lines, no modification to any surviving file.
+2. ~~**Remove the two provider `PackageReference`s** — the packaging half of D2 / FR 7.~~ **DONE —
+   `77cfe5c`, 2026-08-23**, and deliberately before the tag: removing a transitive reference after
+   publishing would have cost a 4.0.0.
+3. **Build the two certification legs** — D4 / FR 11. **Narrowed 2026-08-23 to a run of the whole suite on
+   either provider, and recorded not release-blocking.**
+4. ~~**Get the suite green.**~~ **DONE — 270 / 270 / 0**, gate 245 / 245 / 0.
+5. ~~**The version decision.**~~ **CLOSED by the owner.** `app-variables.yml` reads `3` / `0` / `0`.
+6. **The one genuinely time-critical item is `CHANGELOG.md`, and it is not this document's.** `Purpose
+   Refiner`'s 2026-08-23 triage records the **[D12 release-note obligation as unmet**: the v3.0.0 entry
+   names two of the four shipped 2.2.0 defects as `Fixed` and carries no 2.2.0 known-issues note. The
+   `CHANGELOG.md` is packed into the `.nupkg`, so it must land **before** the push. `Changelog Author`'s
+   file — see [feature-requests.md](feature-requests.md) entry 12.
+7. **The tag and the publish.** 3.0.0 is set and not yet released; nuget.org still serves 2.2.0.
 
 **FR 15 is closed as a side effect of lap 4.** `ProphetsWay.EFTools.Guid` shadowed `System.Guid` in any file
 importing it; the namespace no longer exists, so the collision cannot occur.
@@ -746,10 +824,14 @@ findings are marked closed with their evidence rather than deleted.**
    branches do not survive anywhere — the files that carried them are deleted and **zero preprocessor
    directives remain library-wide**. It matters to a consumer reading nuget.org today, which still serves
    2.2.0, and to nobody reading this tree.
-3. **Narrowed to packaging — the code half closed.** `UseSqlServer` and `UseInMemoryDatabase` match nothing
-   under `ProphetsWay.EFTools/`. What leaks is two `PackageReference` entries. **Read this together with
-   the *Dependencies* section, or you will conclude the library still picks your provider** — it does not;
-   it merely makes you restore two you did not ask for. [FR 7](feature-requests.md), **D2**.
+3. **CLOSED 2026-08-23 — both halves of provider neutrality are done.** This item read "Narrowed to
+   packaging — the code half closed," and the packaging half has since closed too. `UseSqlServer` and
+   `UseInMemoryDatabase` match nothing under `ProphetsWay.EFTools/`, and `77cfe5c` removed
+   `Microsoft.EntityFrameworkCore.SqlServer` and `.InMemory` from
+   [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) — re-opened to confirm.
+   The library references `Microsoft.EntityFrameworkCore` and `ProphetsWay.BaseDataAccess` and nothing
+   else. `.InMemory` now sits in the test project. [FR 7](feature-requests.md) / **D2** are `Done`.
+   **Do not re-report this as open.**
 4. **CLOSED.** This item read "`GetPaged` orders by ID, but `GetAll` does not; soft paging has no explicit
    ordering either." That described the internal `RootDao<T, TIdType>`, where `GetAll` was
    `Dataset.ToList()` and `GetPaged` was `Dataset.OrderBy(x => x.Id).Skip(skip).Take(take)`. **That file was
@@ -768,11 +850,13 @@ findings are marked closed with their evidence rather than deleted.**
    earlier sentences said against their own eight-row table; `CompanyResourceDao` exists on
    `RootNonIdDao<CompanyResource>`. What is genuinely uncovered: **the conformance suite on a second
    provider** — the 144 adapted cases run against a local SQL Server alone, even though the local classes
-   already run on SQLite in-memory ([FR 11](feature-requests.md)) — and **CI** (`LocalTestsOnly: 'yes'`
-   skips all 270). **The third item this list used to name — the 24 legacy files — is gone with `d00aad3`
-   and is not a gap.** **11 failures remain** at the last reported run, unchanged by lap 4 — 10 ×
-   `EFSnapshotDeepCopyTests` plus
-   `EFDataAccessTransactionTests.ShouldExposeUncommittedWritesToAnotherInstance`.
+   already run on SQLite in-memory ([FR 11](feature-requests.md), narrowed 2026-08-23 and recorded **not
+   release-blocking**) — and **CI** (`LocalTestsOnly: 'yes'` skips all 270). **The third item this list used
+   to name — the 24 legacy files — is gone with `d00aad3` and is not a gap.** **The suite is green as of
+   2026-08-23: 270 / 270 / 0, gate 245 / 245 / 0.** The eleven failures this item previously recorded were
+   cleared by `3ac9615` (nine missing-`ApplyIncludes` `NullReferenceException`s in the proving ground) and
+   `a9e8199` (the `StoreCapabilities` declaration). **Neither was a library defect, and neither of the two
+   capability-branching tests may be "fixed"** — see the Reading Note. **Do not restate 270 / 259 / 11.**
 6. **Packaging lacks homepage, tags, SourceLink, symbols and CI build metadata.** **Unchanged, and the
    Source Link half needs both of its facts or it reads wrong.** The malformed `[submodule "Submod"]` block
    is gone and its warning with it — the owner's 2026-08-22 build reports 0 warnings where the 2026-08-16
@@ -780,6 +864,8 @@ findings are marked closed with their evidence rather than deleted.**
    SourceLink package reference exists and none of `PublishRepositoryUrl`, `EmbedUntrackedSources`,
    `IncludeSymbols`, `SymbolPackageFormat` or `ContinuousIntegrationBuild` is present. See the Packaging
    Audit for the exact snippets. `RepositoryType` is also `GitHub` where the house standard is `git`.
+   **Filed 2026-08-23 as [FR 16](feature-requests.md), `Proposed`, and recorded there as non-breaking — so
+   it may land after 3.0.0 rather than before it.**
 7. **NARROWED further by lap 4 — the documentation gap has inverted, and only the build-level one is left.**
    This item said XML documentation exists on the 18 key-specific leaves "but not on the principal context,
    DAL, root bridge, or keyless public API." **Three of those four are now among the best-documented files
@@ -812,15 +898,26 @@ findings are marked closed with their evidence rather than deleted.**
     is still true and is **not** a decision: **3.0.0 is set but not yet tagged or published, so nuget.org
     still serves 2.2.0** and a consumer reading the listing meets the EF6-and-`net4x` package. **No agent
     may change `Major`/`Minor`/`Patch` under any circumstances.**
-11. **NEW 2026-08-22, after lap 4 — a vestigial condition on the EF Core `ItemGroup`.** The three EF Core
-    `PackageReference`s in
-    [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) sit inside
-    `Condition="!$(TargetFramework.StartsWith('net4')) and $(TargetFramework.StartsWith('net'))"`, which is
-    unconditionally true given the single `net10.0` target. It is a leftover of the EF6/EF Core split and
-    now gates nothing. **Harmless, and not urgent** — but it is the last structural trace of the EF6 branch
-    outside the `<Description>`, and whoever removes the two provider references for D2 / FR 7 will be
-    editing that exact `ItemGroup` anyway. Recorded so it is done once rather than twice. `Modernizer`'s
-    territory, not this document's.
+11. ~~**NEW 2026-08-22, after lap 4 — a vestigial condition on the EF Core `ItemGroup`.**~~ **PARTLY
+    OVERTAKEN 2026-08-23.** The `ItemGroup` now holds **one** `PackageReference`,
+    `Microsoft.EntityFrameworkCore`, and carries the comment *"Provider-neutral by design: a consumer
+    chooses their own EF provider. Never add one here."* The `Condition="!$(TargetFramework.StartsWith('net4'))
+    and $(TargetFramework.StartsWith('net'))"` **is still there** and is still unconditionally true under
+    the single `net10.0` target, so it still gates nothing — re-opened
+    [ProphetsWay.EFTools.csproj](../ProphetsWay.EFTools/ProphetsWay.EFTools.csproj) to confirm. It is the
+    last structural trace of the EF6 branch outside the `<Description>`. **Harmless, not urgent**, and
+    `Modernizer`'s territory rather than this document's.
+12. **NEW 2026-08-23 — five proving-ground DAOs carry dead preprocessor guards.** `CompanyDao.cs`,
+    `JobDao.cs`, `ResourceDao.cs`, `TransactionDao.cs` and `UserDao.cs` in
+    `ProphetsWay.Example.DataAccess.EF/Daos/` each open with `#if NET8_0_OR_GREATER` and
+    `#if NET471 || NET48` blocks under a **`net10.0`-only** project — grepped 2026-08-23. **This is scoped
+    to the proving ground; the library's zero-directives claim is separate and true.** It is cosmetic and
+    unshipped, and it matters only because the proving ground's whole job is to be copied from. Filed as
+    [FR 17](feature-requests.md), `Proposed`.
+13. **NEW 2026-08-23 — the committed `.trx` files read as authoritative and are all stale.** Seven run
+    artifacts under `ProphetsWay.EFTools.Tests/TestResults/`, the newest
+    (`eftools-verify-20260823.trx`) predating `a9e8199`. In a repository whose documents cite test counts
+    as evidence, that is a trap. Filed as [FR 18](feature-requests.md), `Proposed`.
 
 ## Open Questions for the Owner
 
@@ -844,11 +941,17 @@ deleted, so they are not re-asked.**
    `Scope=Characterization`, but its own `<remarks>` call it "an empirical spike, not a specification," and
    it asserts about EF Core rather than about this library. Keeping it is defensible; it is a judgement
    this document should not make.
-4. **The 11 remaining failures.** 10 are `EFSnapshotDeepCopyTests` in its entirety, which points at
-   [FR 14](feature-requests.md) — the SNAPSHOT-rule finding — rather than at ten separate defects. The
-   eleventh is `EFDataAccessTransactionTests.ShouldExposeUncommittedWritesToAnotherInstance`. Is closing
-   FR 14 a 3.0.0 blocker, or does 3.0.0 ship with the deviation documented?
-5. **When is 3.0.0 tagged and published?** Everything the tag was waiting on except the suite is done: the
-   surface is complete, the deletion has landed, the version is set. Outstanding before or alongside it are
-   the provider `PackageReference` removal (D2 / FR 7), the certification legs (D4 / FR 11), and the 11
-   failures. Which of those are release blockers is the owner's call, not this document's.
+4. ~~**The 11 remaining failures.**~~ **CLOSED 2026-08-23 — the suite is 270 / 270 / 0.** Nine of the ten
+   `EFSnapshotDeepCopyTests` failures were `NullReferenceException` from a proving-ground DAO that never
+   overrode `ApplyIncludes`, fixed in `3ac9615`; the remaining two were closed by declaring
+   `StoreCapabilities.TransactionIsolation` in `a9e8199`, which lets two `Characterization` tests assert
+   the outcome correct for a declared relational store. **Neither cause was a library defect and neither
+   test may be "fixed" further.** [FR 14](feature-requests.md) was closed by `Purpose Refiner` on the same
+   date; it is not a 3.0.0 blocker.
+5. **When is 3.0.0 tagged and published?** Everything the tag was waiting on in *code* is done: the surface
+   is complete, the deletion has landed, provider neutrality is complete, the version is set, and the suite
+   is green. **The one item `Purpose Refiner` records as genuinely unmet is not code** — the D12
+   release-note obligation on `CHANGELOG.md`, which is packed into the `.nupkg` and so must land before the
+   push. Deferrable: the certification legs (FR 11), packaging metadata and Source Link (FR 16), the dead
+   guards in the proving ground (FR 17) and the stale `.trx` files (FR 18). Which of those are blockers is
+   the owner's call, not this document's.

@@ -18,6 +18,38 @@ the package *claim* — are now closed by [D7](#owner-decisions--2026-08-15) and
 [D8](#owner-decisions--2026-08-15).** The two questions still open, Q2 and Q3, are answerable by whoever
 implements v3.0.0 and do not block the release being planned.
 
+> ## Currency refresh — 2026-08-23. **The plan this document scoped has been executed.**
+>
+> **Eleven feature requests closed on this date and one more later the same day, and this document was written
+> while all of them were still ahead.** Read it accordingly: **the analysis is sound and the tense is wrong**
+> in places. Every scope verdict below was tested against what shipped and **none of them failed** — which is
+> the useful thing this refresh reports, and the reason the document is amended rather than rewritten.
+>
+> **What is now true, each verified on this date by opening the artifact named and not by inheriting it:**
+>
+> | Claim | Verified against | Value |
+> | --- | --- | --- |
+> | The submodule pointer | `.git/modules/ProphetsWay.Example/HEAD` | **`f93f0a4`** — `f93f0a41a76834647962ddf9e830e01e24e05f24`. **Every earlier SHA in this document — `d845863`, `61d9e7d` — is superseded** |
+> | The contracts reference | both `.csproj` files | **`ProphetsWay.BaseDataAccess` 3.2.0**, not 3.1.0 and not 2.5.0 |
+> | Target frameworks | all three `.csproj` files | **`net10.0`** alone — the D7 destination, reached |
+> | Provider neutrality | `ProphetsWay.EFTools.csproj` | `Microsoft.EntityFrameworkCore` 10.0.11 and `ProphetsWay.BaseDataAccess` 3.2.0, **and nothing else.** `.SqlServer` and `.InMemory` are gone |
+>
+> **The one item that ever blocked publishing is discharged.** The
+> [D12 release-note obligation](#the-obligation-this-creates-on-changelog-author) was met by `Changelog Author`
+> and verified by reopening `CHANGELOG.md`; see that section, which is the only place the check is recorded.
+>
+> **The owner's near-term question, answered on this date:** *nothing needs to be built within a week.* The
+> D12 release note was the sole time-critical item in the family and it has landed. What stands between this
+> package and nuget.org is **release mechanics — the D11 ordering, the tag, the push** — not work items.
+> [FR 11](feature-requests.md) (provider certification), 16 (Source Link and packaging), 17 (dead directives in
+> the proving ground) and 18 (stale `.trx` artifacts) are all open, all non-breaking, and **none blocks a
+> publish.**
+>
+> **The purpose sentence, the drift analysis, the cohesion map and the extraction verdict are unchanged.**
+> Drifts 2, 3 and 4 — the EF6/EF Core fork, the forced provider, and the library not implementing the contract
+> it advertises — are **closed by what shipped**, and they are the clearest evidence the scope calls were right:
+> each was named here before the work started and each was fixed as named.
+
 ---
 
 ## Settled One-Sentence Purpose
@@ -72,9 +104,9 @@ pose. Every status change in [feature-requests.md](feature-requests.md) traces t
 
 | # | Decision | Closes |
 |---|---|---|
-| **D1** | **3.x is Entity Framework Core-only.** The published **2.2.x** line remains available and installable as the legacy EF6 / .NET Framework answer. **No EF6 companion package will be built** \u2014 that option is rejected, not deferred. | [FR 4](feature-requests.md#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework) |
+| **D1** | **3.x is Entity Framework Core-only.** The published **2.2.x** line remains available and installable as the legacy EF6 / .NET Framework answer. **No EF6 companion package will be built** — that option is rejected, not deferred. | [FR 4](feature-requests.md#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework) |
 | **D2** | **3.x is relational-provider-neutral.** The consumer configures their provider through `DbContextOptions`. **SQL Server, PostgreSQL, MySQL/MariaDB, SQLite and Oracle are conceptually in scope** as relational providers. **Only SQLite and SQL Server will be certified** by this repository's tests. **Cosmos and other non-relational providers are out of scope.** | [FR 7](feature-requests.md#7--stop-forcing-a-database-provider-on-every-consumer) |
-| **D3** | **Collapse the 18 key-specific public DAO classes into six generic root-namespace DAO families** \u2014 `BaseDao<TEntity, TKey>` and its five siblings. The public breaking change is **accepted** and lands in the same major. **No compatibility wrappers**, unless implementation evidence later forces reconsideration. | [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication) \u2014 **this reverses the agent recommendation** |
+| **D3** | **Collapse the 18 key-specific public DAO classes into six generic root-namespace DAO families** — `BaseDao<TEntity, TKey>` and its five siblings. The public breaking change is **accepted** and lands in the same major. **No compatibility wrappers**, unless implementation evidence later forces reconsideration. | [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication) — **this reverses the agent recommendation** |
 | **D4** | **Test strategy is two-legged:** SQLite in-memory as the fast CI contract/query gate, and a SQL Server container for provider fidelity. Blanket `LocalTestsOnly: 'yes'` is to be retired eventually; **the pipeline work itself is separately owned.** | [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) |
 | **D5** | **`docs/architecture.md` and per-project `docs/requirements.md` are `n/a`** for this library. This document plus `AGENTS.md` and the README are sufficient. | Confirms the house convention; ratifies the [Stale Inherited Claims](#stale-inherited-claims) row |
 | **D6** | The **BaseDataAccess 3.1.0 upgrade, the `ProphetsWay.Example` submodule advance to 3.1.0, disposal/transaction compliance, provider decoupling, `FluentAssertions` removal and the malformed `.gitmodules` cleanup** are all intended for the 3.x cycle. | [FR 1](feature-requests.md#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts), [2](feature-requests.md#2--move-the-prophetswaybasedataaccess-reference-from-250-to-310), [3](feature-requests.md#3--implement-the-3x-disposal-contract-in-baseefdataaccess), [7](feature-requests.md#7--stop-forcing-a-database-provider-on-every-consumer), [8](feature-requests.md#8--remove-fluentassertions-from-prophetswayexampledataaccessef), [9](feature-requests.md#9--delete-the-stray-submodule-submod-block-from-gitmodules) |
@@ -710,6 +742,19 @@ Not this agent's to execute, and it must not be lost. It is stated in one place 
 [feature-requests.md § The `Changelog Author` obligation](feature-requests.md#the-changelog-author-obligation--d12)
 — and cited from the three entries rather than restated in each.
 
+> **DISCHARGED — 2026-08-23.** `Changelog Author` wrote the sections and `Purpose Refiner` verified them by
+> reopening `CHANGELOG.md`. **All four shipped defects are named as `Fixed`**, each with the silent-failure
+> characteristic that made this an obligation rather than a formality, and the **2.2.0 known-issues note is
+> present at the top of the v3.0.0 entry with the D7 `net10.0`-only caveat stated plainly** — *"if you are on
+> `net48`, `net8.0` or `net9.0` you cannot take it at all"* — together with mitigations for the consumers that
+> sentence strands. **The trade D12 made — four patches for four release notes — is paid on both sides.** The
+> field-by-field check is recorded once, at the link above, and is deliberately not duplicated here.
+>
+> **The premise above is still the premise.** Discharging the obligation does not retire the sentence this
+> section exists to protect: if a 2.2.x consumer on a `net4x` or `net8.0` target ever surfaces, D12 was taken
+> without them in mind, and a written release note does not change that — it is what was offered *instead* of
+> a remedy they could take.
+
 ---
 
 ## The Hand-Written `DepartmentDao` — Settled (D13)
@@ -983,26 +1028,33 @@ specifies and which nothing has yet run.
 ## Recommended Refinements
 
 Numbered to match [feature-requests.md](feature-requests.md). Effort is relative, not calendar time.
-"Breaking?" is judged against the **published 2.2.0 package**. **Every row is now `Scheduled` for v3.0.0**
-following the owner decisions above — including row 10, which this document had recommended against.
+"Breaking?" is judged against the **published 2.2.0 package**.
+
+> **Status column rewritten 2026-08-23.** It read *"Every row is now `Scheduled` for v3.0.0"*, which was
+> accurate when written and describes a plan rather than a tree. **Ten of the eleven rows have landed.**
+> Statuses below are read from the [feature-requests.md index](feature-requests.md#index) as re-verified on
+> that date; the *Rationale*, *Effort* and *Breaking?* columns are the original scope judgements and are left
+> exactly as they were, because a scope call is only testable if it is still legible after the work.
 
 | # | Change | Rationale | Effort | Breaking? | Status |
 |---|---|---|---|---|---|
-| 1 | Advance the `ProphetsWay.Example` submodule onto 3.x and bring the EF DAL with it | The paradigm claim is currently a statement about history. Routed here from [Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md) | **Large** | No (repo-internal), but gates everything | **Scheduled** (D6) — **step 1 of 6 landed 2026-08-16**; the pointer is at `61d9e7d` (**SHA corrected 2026-08-20**; `d845863` was the first advance), the remaining five steps are not done, and the repository does not compile in the interim |
-| 2 | `ProphetsWay.BaseDataAccess` `2.5.0` → `3.1.0` | The library advertises a contract it does not reference | Small edit, **large** consequence | **Yes** — transitively | **Scheduled** (D6) |
-| 3 | Implement the 3.x disposal contract in `BaseEFDataAccess` | Required by #2 to compile; the *design* is the real work | Medium | **Yes** — new abstract obligation on derived DALs | **Scheduled** (D6); ~~carries **Q2**~~ **Q2 closed by api-contract S7/S8/A9**. `Dispose` has landed; what remains is `ObjectDisposedException` guarding on seven members (A19) |
-| 4 | **Make 3.x EF Core-only; retire EF6/.NET Framework** | Two semantics under one package ID; blocks #5 | Medium (deletion) | **Yes** — by intent; 2.2.x remains | **Scheduled** (D1) |
-| 5 | Retarget to **`net10.0` only** — off `net4x` and the undotted `net80`/`net90` monikers | `net461`/`net471` are EOL; `net80`/`net90` are non-canonical and EOL 10 Nov 2026; EF Core 10 ships only `net10.0` | Medium — the `#if` conditions go with #4 | **Yes** — TFM removal | **Scheduled** (D1 entails it; destination settled by **D7**) |
-| 6 | Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory + `Scope` traits | The inheritance hook it uses no longer exists upstream | Medium | No — `IsPackable=false` | **Scheduled** (forced by 1); **rescoped 2026-08-16** — there is no adapter to rebuild and the seam is upstream. **The fork that rescope opened is closed by [D10](#owner-decisions--2026-08-15): shape B, direction only.** The six adapters are **deleted**; the seam is `ProphetsWay.Example`'s and its design is deferred until Lap 1 |
-| 7 | Stop forcing `SqlServer` + `InMemory` on consumers | A decoupling library must not pick a provider | Small–medium | **Yes** — consumers add their own provider | **Scheduled** (D2) |
-| 8 | Remove `FluentAssertions` 8.2.0 from `ProphetsWay.Example.DataAccess.EF` | Paid licence; test library in a non-test project | Trivial | No — not packaged | **Scheduled** (D6) |
-| 9 | Delete the stray `[submodule "Submod"]` block in `.gitmodules` | Malformed; will confuse `git submodule` | Trivial | No | **Scheduled** (D6) |
-| 10 | Collapse the `Guid`/`Int`/`Long` triplication into six generic families | Owner-approved; the "untranslatable predicate" objection was **factually wrong** | Medium | **Yes** — accepted, no wrappers | **Scheduled** (D3) |
-| 11 | Certify on SQLite in-memory + a SQL Server container; retire blanket `LocalTestsOnly` | `InMemory` cannot honour transactions, so it cannot verify the contract this package now claims; **D8** makes the certification a public claim, so it must be earned | Medium | No | **Scheduled** (D4, D8); pipeline half **Deferred** |
+| 1 | Advance the `ProphetsWay.Example` submodule onto 3.x and bring the EF DAL with it | The paradigm claim is currently a statement about history. Routed here from [Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md) | **Large** | No (repo-internal), but gates everything | **Done** — 2026-08-23, all six steps. Pointer at **`f93f0a4`**, both new entities mapped, both DAOs written. **The "step 1 of 6", the `61d9e7d` SHA and "does not compile in the interim" are all superseded** |
+| 2 | `ProphetsWay.BaseDataAccess` `2.5.0` → `3.1.0` | The library advertises a contract it does not reference | Small edit, **large** consequence | **Yes** — transitively | **Done** — and it went **past** this row's destination: both `.csproj` files read **3.2.0**, which is what let the ten `CS8766` suppressions be deleted rather than shipped |
+| 3 | Implement the 3.x disposal contract in `BaseEFDataAccess` | Required by #2 to compile; the *design* is the real work | Medium | **Yes** — new abstract obligation on derived DALs | **Done** — 2026-08-23. `Dispose` is `sealed override`, idempotent, non-throwing, rolls back and disposes only when `Owned`; **all ten** other members open with `ThrowIfDisposed()`. **The "seven members (A19)" remainder is closed** |
+| 4 | **Make 3.x EF Core-only; retire EF6/.NET Framework** | Two semantics under one package ID; blocks #5 | Medium (deletion) | **Yes** — by intent; 2.2.x remains | **Done** — no EF6 anywhere, and **zero preprocessor directives library-wide**. The dead `#if NET461 \|\| NET471 \|\| NET48` blocks went out with the files carrying them, in one removal rather than two |
+| 5 | Retarget to **`net10.0` only** — off `net4x` and the undotted `net80`/`net90` monikers | `net461`/`net471` are EOL; `net80`/`net90` are non-canonical and EOL 10 Nov 2026; EF Core 10 ships only `net10.0` | Medium — the `#if` conditions go with #4 | **Yes** — TFM removal | **Done** — all three projects read `net10.0`, the destination **D7** ratifies. Verified by opening each `.csproj` |
+| 6 | Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory + `Scope` traits | The inheritance hook it uses no longer exists upstream | Medium | No — `IsPackable=false` | **Done** — shape B as [D10](#owner-decisions--2026-08-15) chose it: `TestSeam` + 13 adapters + 2 seam guards + 8 classes written against this library directly. The upstream seam is in use and guarded by a test |
+| 7 | Stop forcing `SqlServer` + `InMemory` on consumers | A decoupling library must not pick a provider | Small–medium | **Yes** — consumers add their own provider | **Done** — 2026-08-23, **both halves**, and deliberately **before** the 3.0.0 tag: removing a transitive reference after publishing would have cost a 4.0.0 |
+| 8 | Remove `FluentAssertions` 8.2.0 from `ProphetsWay.Example.DataAccess.EF` | Paid licence; test library in a non-test project | Trivial | No — not packaged | **Done** — 2026-08-16; the licence exposure is closed |
+| 9 | Delete the stray `[submodule "Submod"]` block in `.gitmodules` | Malformed; will confuse `git submodule` | Trivial | No | **Done** — 2026-08-23. **It cost more than "trivial" implied**: it was disabling Source Link on a published package, three warnings per build. **Removing it stopped the warning and did not give the package Source Link** — that is [FR 16](feature-requests.md), still open |
+| 10 | Collapse the `Guid`/`Int`/`Long` triplication into six generic families | Owner-approved; the "untranslatable predicate" objection was **factually wrong** | Medium | **Yes** — accepted, no wrappers | **Done** — 2026-08-23, no wrappers as [D3](#owner-decisions--2026-08-15) required. The folder is flat and every file declares `namespace ProphetsWay.EFTools`; the three key-typed namespaces no longer exist |
+| 11 | Certify on SQLite in-memory + a SQL Server container; retire blanket `LocalTestsOnly` | `InMemory` cannot honour transactions, so it cannot verify the contract this package now claims; **D8** makes the certification a public claim, so it must be earned | Medium | No | **Scheduled — narrowed 2026-08-23, and explicitly not release-blocking.** Both providers are in *real use*; what is missing is a run of the **whole** suite on **either one**. **Its "fact 2" is now false** — the package depends on no provider at all |
 
 **These are not independent.** #2 forces #3; #4 unblocks #5; #1 forces #6; #7 forces #11. The realistic
 unit of work is **one v3.0.0 release containing #1–#11**, with nothing deferred out of it except the
-pipeline edits inside #11, which belong to another owner.
+pipeline edits inside #11, which belong to another owner. **That prediction held**: ten of the eleven landed
+together in one indivisible release, and the only row that did not is the one whose remainder is CI evidence
+rather than surface.
 
 **Row 12 is absent from this table and that is deliberate.**
 [FR 12](feature-requests.md#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction)
@@ -1053,13 +1105,17 @@ row's scope, effort or breaking-ness. Ratification and one amendment:
 Corrected here because this document's charter is markdown under `docs/`. **`AGENTS.md` and `README.md` are
 not this agent's files to edit** — these are reported for their owners.
 
+> **Two rows below had themselves gone stale by 2026-08-23 and are corrected in place — a table of stale
+> claims is the last place that should carry one.** They are marked rather than deleted, because the point of
+> the table is the audit trail.
+
 | Claim | Where | Status | Evidence |
 |---|---|---|---|
 | "`ProphetsWay.Example` is **vendored** here" | `AGENTS.md`, Known Deviations #1 | **False** | [.gitmodules](../.gitmodules) declares `path = ProphetsWay.Example`, `url = …/ProphetsWay.Example.git`, `branch = main`. It is a submodule. It cannot drift; it is *pinned*. `ProphetsWay.Example` corrected the same claim from its side |
 | "Two copies … drift independently" | `AGENTS.md`, Known Deviations #1 | **False**, follows from the above | The problem is **coordination**, not duplication |
-| "**This is the most modern repo in the family** … targets `net9.0` … When conventions conflict, prefer this repo's approach" | `AGENTS.md`, This Repo | **Stale, and actively harmful as guidance** | `ProphetsWay.BaseDataAccess` and `ProphetsWay.Example` are both at `netstandard2.0;net10.0` as of their 3.1.0 releases. This repo is at `net461;net471;net48;net80;net90` with **no `netstandard2.0`** and references the parent at 2.5.0. It is now the **least** modern of the three. An agent following that line will copy the wrong pattern |
-| "EFTools carries an EF implementation of the very same `IExampleDataAccess`, and the tests do not change" | `ProphetsWay.Example/README.md` | **Pending, not permanently false** | **The reason moved again on 2026-08-20, and this cell's SHA and evidence were both stale.** The pointer is at **`61d9e7d`**, one commit past the `3.1.0` tag \u2014 not `d845863`. Both `ProphetsWay.Example.DataAccess.EF.csproj` and `ProphetsWay.EFTools.csproj` now reference `ProphetsWay.BaseDataAccess` **3.1.0**, and `ExampleDataAccess` supplies `Dispose` (inherited) and a written `IDepartmentDao` group. What is left is narrower: **`CompanyResourceDao` does not exist**, so three `ICompanyResourceDao` forwarders throw and roughly 28 of the 151 harness tests are red. FR 1's remaining steps are what make the claim true again |
-| "The pipeline is green" as evidence the tests ran | general | **Misleading** | `LocalTestsOnly: 'yes'` in [app-variables.yml](../app-variables.yml) — CI skips them |
+| "**This is the most modern repo in the family** … targets `net9.0` … When conventions conflict, prefer this repo's approach" | `AGENTS.md`, This Repo | ~~**Stale, and actively harmful as guidance**~~ — **this cell's own rebuttal is now stale too; corrected 2026-08-23** | The original claim is still wrong for its original reason — no repository should be preferred by default. **But the evidence this cell offered has expired.** It read *"This repo is at `net461;net471;net48;net80;net90` with **no `netstandard2.0`** and references the parent at 2.5.0. It is now the **least** modern of the three."* **All three clauses are false as of 2026-08-23**, verified by opening the `.csproj` files: TFMs are **`net10.0`** across all three projects, and both consuming projects reference `ProphetsWay.BaseDataAccess` **3.2.0**. The absence of `netstandard2.0` is now the **ratified D7 exception**, not a symptom of neglect. **Do not restate the old TFM list as current** |
+| "EFTools carries an EF implementation of the very same `IExampleDataAccess`, and the tests do not change" | `ProphetsWay.Example/README.md` | ~~"Pending, not permanently false"~~ — **TRUE, 2026-08-23. The claim has landed and this cell's rebuttal is dead** | **Every fact this cell carried is superseded and none may be restated.** The pointer is **`f93f0a4`** — read from `.git/modules/ProphetsWay.Example/HEAD` on 2026-08-23, **not `61d9e7d` and not `d845863`**. Both `.csproj` files reference `ProphetsWay.BaseDataAccess` **3.2.0**, not 3.1.0. **`CompanyResourceDao` exists** — `ProphetsWay.Example.DataAccess.EF/Daos/CompanyResourceDao.cs` — so the three forwarders no longer throw. **The "roughly 28 of the 151 harness tests are red" figure is dead**; the suite is **270 / 270 / 0** with the conformance gate at **245 / 245 / 0**. [FR 1](feature-requests.md) and [Example FR 5](../../ProphetsWay.Example/docs/feature-requests.md) are both `Done` |
+| "The pipeline is green" as evidence the tests ran | general | **Misleading** | `LocalTestsOnly: 'yes'` in [app-variables.yml](../app-variables.yml) — CI skips them. **Still true, and its justification has weakened**: the conformance gate now runs in about two seconds and most locally written classes use SQLite in-memory and need no server — see [FR 11](feature-requests.md) |
 | `docs/architecture.md`, per-project `docs/requirements.md` | house convention | **`n/a`, not missing** — ratified by [D5](#owner-decisions--2026-08-15) | Library repo, not a multi-project application solution. The owner has confirmed this document plus `AGENTS.md` and the README are sufficient |
 | `docs/nuget-extraction-proposal.md` | house convention | **`n/a`, not missing** | No candidate clears the dependency test. See [the extraction verdict](#the-extraction-verdict--docsnuget-extraction-proposalmd-is-na-not-missing) |
 | `docs/repo-profile.md` | house convention | **Present** — corrected 2026-08-15, re-verified 2026-08-16 | It was absent when this document's first pass ran, which is why that pass read source directly. `Repo Analyst` has since produced it, dated 2026-08-15. Its findings **agree** with this document on every overlapping claim — the EF6/EF Core `Update` divergence, the hardcoded `UseSqlServer`, the InMemory reference and the malformed `[submodule "Submod"]` block. **Its submodule rows were corrected on 2026-08-16**, after the pointer advanced; see the note below |
@@ -1069,6 +1125,15 @@ not this agent's files to edit** — these are reported for their owners.
 Recorded here because several statements in this document were written against the older pointer and a
 reader needs the correction in the same place as the text. **No decision or status below has been changed
 by this note; that is `Purpose Refiner`'s to do.**
+
+> **The pointer has advanced twice more since, and is now `f93f0a4`** —
+> `f93f0a41a76834647962ddf9e830e01e24e05f24`, read from `.git/modules/ProphetsWay.Example/HEAD` on
+> **2026-08-23**. `git submodule status` describes it as `3.1.0-4-gf93f0a4`: **four** commits past that tag, on
+> the open, untagged **3.1.1** line. It carries `TestDataAccessFactory.Use` and the `StoreCapabilities` enum
+> this repository's test harness now depends on. **`d845863` and `61d9e7d` are both history and neither may be
+> restated as current.** The three bullets below are kept as the record of what the *first* advance broke; all
+> three are closed. **D11 step 3 wants the pointer on a tag before release — that is release mechanics, and it
+> is the one part of this note still forward-looking.**
 
 The `ProphetsWay.Example` submodule is now at **`61d9e7d`** — **SHA corrected 2026-08-20**; this line read
 `d845863 — the 3.1.0 tree`, which was the first advance on 2026-08-16. The current pointer is **one commit
@@ -1088,8 +1153,11 @@ about the repository as it stands:
 - ~~**No EFTools-owned `.cs` or `.csproj` has been changed to match.**~~ **Also superseded, and only one
   clause of it survives.** The reference is at **3.1.0**, the TFMs are `net10.0`, `BaseEFDataAccess` has a
   `Dispose`, and the Data Access Layer root has been rebuilt as `BaseEFDataAccess<TContext>` with a
-  `ContextOwnership` enum beside it — verified 2026-08-19 by listing `ProphetsWay.EFTools/`. **What is still
+  `ContextOwnership` enum beside it — verified 2026-08-19 by listing `ProphetsWay.EFTools/`. ~~**What is still
   true: the EF6 `#if` branches are still in the C# sources, dead under a `net10.0`-only build, and the 18
-  key-specific DAO classes are still there.** Those two are the whole of what this bullet now says.
+  key-specific DAO classes are still there.**~~ **Both clauses are false as of 2026-08-23 and neither may be
+  restated.** The 18 key-specific classes and the `#if` blocks went out together in the deletion lap; the
+  library is **15 files in one flat folder with zero preprocessor directives**, and the reference is at
+  **3.2.0**. Nothing in this bullet is outstanding.
 | "The key-type namespaces are **required** so the default `Get` can build a proper select by Id" | `README.md`, and **restated by this document** in its first pass | **False** | [RootDao.cs](../ProphetsWay.EFTools/RootDao.cs) already compares generically on the EF Core branch — `Single(x => x.Id.Equals(item.Id))` in `Update`, `OrderBy(x => x.Id)` in `GetPaged`. `Int/BaseDao.Get` uses `==` because `int` allows it, not because a generic form is untranslatable. **This document inherited the claim from the README without opening `RootDao.cs`**, and it was the load-bearing argument in the recommendation the owner overturned as [D3](#owner-decisions--2026-08-15) |
-| "Retarget to `netstandard2.0;net10.0`" as this repo's house-standard destination | this document, first pass; house convention | **Unachievable here — and now a ratified exception, not a violation** | `ProphetsWay.EFTools.csproj` pins `Microsoft.EntityFrameworkCore` **9.0.4**, which ships no `netstandard2.0` asset — EF Core has been runtime-targeted since 5.0, and **EF Core 10 exposes only `net10.0`**. An EF Core-only library cannot carry the family's reach floor. Raised as **Q1**; **closed by [D7](#owner-decisions--2026-08-15)** — the destination is `net10.0` alone. `AGENTS.md` still needs the line recording it |
+| "Retarget to `netstandard2.0;net10.0`" as this repo's house-standard destination | this document, first pass; house convention | **Unachievable here — and now a ratified exception, not a violation** | `ProphetsWay.EFTools.csproj` pinned `Microsoft.EntityFrameworkCore` **9.0.4** when this was written and reads **10.0.11** as of 2026-08-23; neither ships a `netstandard2.0` asset — EF Core has been runtime-targeted since 5.0, and **EF Core 10 exposes only `net10.0`**. An EF Core-only library cannot carry the family's reach floor. Raised as **Q1**; **closed by [D7](#owner-decisions--2026-08-15)** — the destination is `net10.0` alone, **and the tree has reached it**. `AGENTS.md` now carries the line recording it |

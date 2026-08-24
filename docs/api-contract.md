@@ -1,5 +1,21 @@
 # API Contract — ProphetsWay.EFTools 3.0.0
 
+> **Correction pass — 2026-08-23, by `Repo Analyst`. Two defects, both analysis errors rather than design
+> decisions, corrected against the tree at HEAD `a9e8199`.** No section is restructured and no decision is
+> re-litigated.
+>
+> 1. **The nullability mechanism was stated backwards, twice over.** See
+>    [Framework and language](#framework-and-language). No `.csproj` sets `<Nullable>`; the mechanism is
+>    per-file `#nullable enable`. And obliviousness in `ProphetsWay.BaseDataAccess` 3.1.0 **produced**
+>    `CS8766` rather than suppressing it — ten suppression pairs existed to silence it and were deleted
+>    with the move to **3.2.0** in `0da679f`.
+> 2. **F10's two remedies are not equivalent, and `InsertRoot` does have a keyed counterpart.** Found
+>    2026-08-22 and never filed; now
+>    [F16](#f16--f10s-two-remedies-are-not-equivalent-and-only-the-first-satisfies-the-obligation).
+>
+> **Every claim restated as still accurate in this pass was re-checked by opening the artifact it
+> describes**, and the artifact is named where the claim sits. Nothing was affirmed by inheritance.
+
 **Status: Stage 2 — Revision 11, *under review*.** A `Code Reviewer` pass over **implementation lap 3** — the
 four keyless Data Access Object classes, which landed green — returned four findings **against this document**
 rather than against the code. They are keyed **F11–F14** in the lap series, and a fifth, **F15**, was found
@@ -492,7 +508,7 @@ It cites both and duplicates neither.
 - [Snapshot and Tracking](#snapshot-and-tracking)
 - [Forced Behavior Changes](#forced-behavior-changes)
 - [Two 2.2.0 Defects This Design Retires](#two-220-defects-this-design-retires)
-- [Implementation-Lap Findings](#implementation-lap-findings) — lap F10–F15, and where F2/F3/F7/F8 landed
+- [Implementation-Lap Findings](#implementation-lap-findings) — lap F10–F16, and where F2/F3/F7/F8 landed
 - [Migration](#migration)
 - [Test Obligations](#test-obligations)
 - [Reclassified, Deferred and Rejected](#reclassified-deferred-and-rejected)
@@ -515,7 +531,7 @@ document traces to one of them, or to a gap-filling decision recorded in
 | **S3** | **Delete the `Guid`/`Int`/`Long` namespaces. No compatibility wrappers** | 18 types removed. `using ProphetsWay.EFTools.Guid;` no longer shadows `System.Guid` |
 | **S4** | **Any key type — no `where TKey : struct`.** `string`, nullable value and value keys are all supported, through a **provider-translatable** equality predicate | Answers **Q3**. See [The Key Equality Predicate](#the-key-equality-predicate) |
 | **S5** | **Keyless support is kept and extended with ordered paging**, and keyless DAOs are **not** forced to inherit `IBasePagedDao` (which drags in `IBaseDao`). Paging is offered as **conventional public methods** a custom DAO interface can bind to, plus a **protected stable-ordering hook that every keyless DAO publishing a read member must override** (A15) | See [The Keyless DAO Families](#the-keyless-dao-families) |
-| **S6** | **Nullable reference annotations are enabled** for 3.x | `<Nullable>enable</Nullable>`; `Get` returns `TEntity?` |
+| **S6** | **Nullable reference annotations are enabled** for 3.x | **Per-file `#nullable enable`**, not a csproj property; `Get` returns `TEntity?`. **Corrected 2026-08-23** — see [Framework and language](#framework-and-language) |
 | **S7** | **`BaseEFDataAccess<TContext>` accepts a configured `TContext` directly.** No `TIdType`, no `Activator.CreateInstance`. The derived DAL builds the connection string / provider options | Answers **Q2** — yes, v3.0.0 takes the context |
 | **S8** | **Explicit ownership at construction**, expressed as `ContextOwnership.Owned` — created by the derived DAL, disposed with it — or `ContextOwnership.Borrowed` — injected, never disposed (A9). Only the DAL root disposes; **all DAOs share one context**, and that context backs **one live DAL instance only** (A10) | Implements the parent's "disposes what it created" rule |
 | **S9** | **The DAO `Ensure*` transaction helpers are removed.** DAL-level `TransactionStart` / `TransactionCommit` / `TransactionRollBack` are the **sole** transaction authority and must match the `ProphetsWay.BaseDataAccess` 3.1.0 contract in full | See [Transactions](#transactions) |
@@ -696,7 +712,7 @@ left **unwritten**, which is precisely what let an implementer settle both by in
 
 | # | Decision | Forced by |
 |---|---|---|
-| **A38** | **The write plumbing is `protected`, is the same on both halves, and is stated.** `TrackForWrite(TEntity item)` is **`protected`** and `ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)` is **`protected virtual`** on `BaseDao<TEntity, TKey>` **and** on `RootNonIdDao<TEntity>` alike, with identical signatures and identical contracts. **`InsertRoot(TEntity item, DateTime? stamp)` stays `private protected`** and is keyless-only; the asymmetry is stated rather than left to be noticed. Full reasoning per member at [The write plumbing](#the-write-plumbing--trackforwrite-applyupdatevalues-insertroot--a38) | **F11.** `RootNonIdDao.ApplyUpdateValues` shipped `private protected` while carrying `BaseDao.ApplyUpdateValues`'s own sentence — *"the override point for 'this family owns a column and the caller does not'"* — so the code **withdrew an extension point its documentation offered**. `TrackForWrite` shipped the same way while its keyed twin is documented as the member *"a consumer's custom write"* goes through, and on the keyless half a consumer **cannot** hand-roll the A34 pre-detach conformingly: there is no resolved key to match on, so doing it by hand means compiling `MatchRow` and re-implementing all of A39. **And the justification offered — that an external deriver loses nothing they cannot get by overriding `UpdateCore` — is false**: an `UpdateCore` override cannot reach the plumbing either, so overriding it is how a deriver *loses* the pre-detach |
+| **A38** | **The write plumbing is `protected`, is the same on both halves, and is stated.** `TrackForWrite(TEntity item)` is **`protected`** and `ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)` is **`protected virtual`** on `BaseDao<TEntity, TKey>` **and** on `RootNonIdDao<TEntity>` alike, with identical signatures and identical contracts. **`InsertRoot(TEntity item, DateTime? stamp)` stays `private protected`** and is declared on **both** halves — *the original wording of this row said "and is keyless-only"; that was false and is corrected 2026-08-23, see [F16](#f16--f10s-two-remedies-are-not-equivalent-and-only-the-first-satisfies-the-obligation)*; the reason it is not `protected` is stated rather than left to be noticed. Full reasoning per member at [The write plumbing](#the-write-plumbing--trackforwrite-applyupdatevalues-insertroot--a38) | **F11.** `RootNonIdDao.ApplyUpdateValues` shipped `private protected` while carrying `BaseDao.ApplyUpdateValues`'s own sentence — *"the override point for 'this family owns a column and the caller does not'"* — so the code **withdrew an extension point its documentation offered**. `TrackForWrite` shipped the same way while its keyed twin is documented as the member *"a consumer's custom write"* goes through, and on the keyless half a consumer **cannot** hand-roll the A34 pre-detach conformingly: there is no resolved key to match on, so doing it by hand means compiling `MatchRow` and re-implementing all of A39. **And the justification offered — that an external deriver loses nothing they cannot get by overriding `UpdateCore` — is false**: an `UpdateCore` override cannot reach the plumbing either, so overriding it is how a deriver *loses* the pre-detach |
 | **A39** | **The compiled `MatchRow` must be total in memory, and the library does not paper over one that is not.** For **every** instance of `TEntity`, in any state and however incompletely populated, the compiled predicate must **return a `bool` and must not throw**, must be side-effect free, and must read nothing but the entity's own mapped scalars. Where it throws anyway, the pre-detach scan **wraps** the exception in `DataAccessConventionException` — original as `InnerException`, message naming the Data Access Object type, `MatchRow`, and the fact that the evaluation was against an **already-tracked entry rather than against `item`**. **Swallowing is forbidden.** The in-memory pass may match a **superset** of the store pass, and that is accepted | **F12**, and it widens [A34](#revision-9-additions) rather than replacing it. A34's constraint named the constructs that cannot be *compiled* and stopped there. The delegate runs over **every** `ChangeTracker.Entries<TEntity>()` entry — a sibling's leftovers, the owner's own under `ContextOwnership.Borrowed`, and `Added` entries whose scalars are still CLR defaults — so `x => x.Code.Trim() == item.Code.Trim()`, which SQL resolves to `NULL` and no match, throws `NullReferenceException` in memory. `Delete` and `UpdateCore` then fail **on a valid `item` because of an unrelated tracked entry**, invisibly at the call site, with a type in neither the parent's vocabulary nor this library's two additions |
 | **A40** | **`MatchRow` is built from values the caller owns and this library never writes.** On the two soft families — **keyed and keyless alike** — `CreatedDate`, `UpdatedDate` and `DeletedDate` **must not appear in a `MatchRow` override**. It binds every member that locates through the hook: `Delete`, `GetCore`, `UpdateCore`, and any custom write built on `TrackForWrite` | **F13.** `RootSoftNonIdDao.UpdateCore` assigns `item.UpdatedDate = GetCurrentTimestamp()` **before** delegating to the base member, which is what calls `TrackForWrite` → `MatchRow(item)` — so a predicate reading that timestamp is built from the value this method has just overwritten and locates nothing. `BaseSoftDao.Update` has the same shape. **The assignment is deliberate** (A13's one reading of the clock) and is not being changed; **reordering was weighed and rejected** as neither necessary nor sufficient — see [Timestamps are not identity](#timestamps-are-not-identity--a40) |
 
@@ -877,8 +893,30 @@ times.
 - **`net10.0` only** — [D7](purpose-and-scope.md#owner-decisions--2026-08-15). No `netstandard2.0`,
   no `net4x`, no `#if`.
 - **EF Core only.** No `System.Data.Entity`, no EF6 branch — [D1](purpose-and-scope.md#owner-decisions--2026-08-15).
-- **`<Nullable>enable</Nullable>`** (S6). `ProphetsWay.BaseDataAccess` 3.1.0 is compiled null-oblivious, so
-  declaring `TEntity? Get(TEntity item)` against `T Get(T item)` produces no warning.
+- **Nullable reference annotations are on, and the mechanism is `#nullable enable` per file** (S6).
+  **Corrected 2026-08-23; the sentence that stood here was wrong on both of its counts.** It read
+  *"`<Nullable>enable</Nullable>` (S6). `ProphetsWay.BaseDataAccess` 3.1.0 is compiled null-oblivious, so
+  declaring `TEntity? Get(TEntity item)` against `T Get(T item)` produces no warning."*
+  - **No `.csproj` in this repository sets `<Nullable>`.** Grepped all three project files on 2026-08-23:
+    `Nullable`, `NoWarn` and `LangVersion` match **nothing**, and there is no `Directory.Build.props` or
+    `Directory.Build.targets` anywhere between the repository and the drive root. What turns annotations
+    on is a `#nullable enable` directive on **line 1 of twelve of the library's fifteen files** — every
+    file except `BaseEFContext.cs`, `BaseEFDataAccess.cs` and `ContextOwnership.cs`. A reader who "fixes"
+    a csproj to match the old sentence changes the compilation of those three.
+  - **Obliviousness did not silence the warning — it produced it.** Against
+    `ProphetsWay.BaseDataAccess` **3.1.0**, which shipped no nullable metadata at all, the library carried
+    **ten `#pragma warning disable CS8766` / `restore` pairs across eight files** purely to suppress
+    *"nullability of reference types in return type doesn't match implicitly implemented member."* They
+    were deleted in `0da679f` — *"Take BaseDataAccess 3.2.0 and delete the CS8766 suppressions"*, read
+    from `.git/logs/HEAD` — in the same change that moved the dependency to **3.2.0**, which annotates
+    those contracts. **There are now zero `#pragma` directives in the library**, verified by grepping all
+    fifteen files on 2026-08-23. The suppressions were load-bearing, not noise: 3.2.0 lets the compiler
+    *verify* what 3.1.0 forced the library to *silence*. A forced `--no-incremental` rebuild with
+    `-p:WarningsAsErrors=CS8766` passing clean is the owner's measurement, dated 2026-08-23 and
+    attributed rather than re-run here.
+  - **Consequence for this document:** every reference below to `<Nullable>enable</Nullable>` — in the
+    **J9** log row and in the `Assignment` sketch — names the *intent* correctly and the *mechanism*
+    wrongly. Read them as `#nullable enable`.
 - **No provider package reference.** `Microsoft.EntityFrameworkCore` only. **That includes
   `Microsoft.EntityFrameworkCore.Metadata` and `Microsoft.EntityFrameworkCore.ValueGeneration`**, which
   [A32](#revision-9-additions) reads to decide whether an identifier is generated by the **store**, by **EF
@@ -1985,7 +2023,7 @@ that does not mention a member sanctions nothing about it** (lap finding F11).
 |---|---|---|---|
 | `TrackForWrite` | `BaseDao<TEntity, TKey>` **and** `RootNonIdDao<TEntity>` | **`protected`** | `protected TEntity? TrackForWrite(TEntity item)` |
 | `ApplyUpdateValues` | `BaseDao<TEntity, TKey>` **and** `RootNonIdDao<TEntity>` | **`protected virtual`** | `protected virtual void ApplyUpdateValues(EntityEntry<TEntity> entry, TEntity item)` |
-| `InsertRoot` | **`RootNonIdDao<TEntity>` only** | **`private protected`** | `private protected void InsertRoot(TEntity item, DateTime? stamp)` |
+| `InsertRoot` | `BaseDao<TEntity, TKey>` **and** `RootNonIdDao<TEntity>` | **`private protected`** | `private protected void InsertRoot(TEntity item, DateTime? stamp)` |
 
 **Not `virtual`, not `protected`, and not part of this surface:** the per-entry detach scan behind
 `TrackForWrite` (`DetachTrackedRowsCarrying` on the keyed half, `DetachTrackedRowsMatching` on the keyless
@@ -2032,7 +2070,7 @@ column and the caller does not"*, and `RootSoftNonIdDao` is the library's own us
 - **Consistency with the keyed family is therefore identity, not analogy**: same signature, same default body,
   same contract, same accessibility. **No difference is claimed and none needs justifying.**
 
-#### `InsertRoot` stays `private protected` — the one asymmetry, stated
+#### `InsertRoot` stays `private protected` — and it exists on **both** halves
 
 It is the whole of `Insert` with the soft families' timestamp steps folded in, taking the stamp as a
 parameter so that one reading of the clock reaches the stored copy and the caller's instance alike.
@@ -2040,15 +2078,21 @@ parameter so that one reading of the clock reaches the stored copy and the calle
 - **Its `DateTime? stamp` parameter is meaningless to an external deriver.** It is `null` on the hard
   families and the soft families' single clock reading on the soft ones, so the only conforming argument an
   outside caller could pass is the one the class already passes. **A `protected` member is a promise, and
-  this one has nothing to promise.**
-- **It has no keyed counterpart.** `BaseSoftDao.Insert` stamps `item`, delegates to `base.Insert`, and
-  restores in a `finally` — [F10](#f10--a-failed-insert-must-not-leave-stamps-on-the-callers-instance)'s
-  second permitted remedy. The keyless half takes the first remedy instead, which is where `InsertRoot` comes
-  from. Publishing it would put a member on the keyless protected surface with **nothing opposite it**, and
-  would freeze a private division of labour between two classes in one assembly into public API.
-- **Both remedies are sanctioned by F10 and neither branch is required to adopt the other's.** The asymmetry
-  is in the mechanism, not in the contract: both branches deliver *an `Insert` that stores no row leaves the
-  caller's instance exactly as it arrived*.
+  this one has nothing to promise.** That reasoning is unchanged and is why it stays `private protected`.
+- **The "no keyed counterpart" claim is false and is struck — corrected 2026-08-23.** This bullet read
+  *"It has no keyed counterpart. `BaseSoftDao.Insert` stamps `item`, delegates to `base.Insert`, and
+  restores in a `finally` — F10's second permitted remedy. The keyless half takes the first remedy
+  instead, which is where `InsertRoot` comes from."* **Every clause of that is contradicted by the tree.**
+  `private protected void InsertRoot(TEntity item, DateTime? stamp)` is declared at
+  [`BaseDao.cs`](../ProphetsWay.EFTools/BaseDao.cs) **line 366** with the identical signature, and
+  `BaseSoftDao.Insert` is three statements ending in `InsertRoot(item, GetCurrentTimestamp())`
+  ([`BaseSoftDao.cs`](../ProphetsWay.EFTools/BaseSoftDao.cs) line 136). **Both halves take the first
+  remedy**, and both are `private protected` for the same stated reason — `BaseDao.InsertRoot`'s own
+  `<remarks>` say *"A38's reasoning for the keyless counterpart applies here unchanged."* The symmetry is
+  therefore total: `TrackForWrite`, `ApplyUpdateValues` and `InsertRoot` are all declared on both halves,
+  and the first two are `protected` while the third is not.
+- **There is no asymmetry left to justify, and F10's two remedies are not interchangeable.** See
+  [F16](#f16--f10s-two-remedies-are-not-equivalent-and-only-the-first-satisfies-the-obligation).
 
 ### `Get(TEntity item)`
 
@@ -3160,9 +3204,8 @@ namespace ProphetsWay.EFTools
 		/// <remarks>
 		/// <b><c>private protected</c>, and deliberately not part of the protected surface</b> (A38).
 		/// <paramref name="stamp"/> is meaningless to a deriver outside this assembly — the only conforming value
-		/// is the one the class already passes — and the member has <b>no keyed counterpart</b>, because
-		/// <c>BaseSoftDao.Insert</c> takes F10's other permitted remedy instead. Publishing it would freeze a
-		/// private division of labour between two classes in one assembly into public API.
+		/// is the one the class already passes. <b>It has an identical keyed counterpart on
+		/// <c>BaseDao&lt;TEntity, TKey&gt;</c></b>, also <c>private protected</c>, for the same reason (F16).
 		/// </remarks>
 		private protected void InsertRoot(TEntity item, DateTime? stamp);
 	}
@@ -3678,7 +3721,7 @@ worth stating:
 | `MatchRow` reading a soft timestamp | **Forbidden** ([A40](#revision-11-additions)). `CreatedDate`, `UpdatedDate` and `DeletedDate` are this family's columns; `RootSoftNonIdDao.UpdateCore` stamps `UpdatedDate` onto `item` before the predicate is built, so such an override locates nothing |
 | `TrackForWrite` *(protected, all four)* | The locating half of a write — the A34 pre-detach, then the `AsTracking().IgnoreQueryFilters()` fetch. **`protected` so a custom write can reach it** ([A38](#revision-11-additions)); on this half that is necessity rather than convenience |
 | `ApplyUpdateValues` *(protected virtual, all four)* | Writes `item`'s mapped scalars less the key properties onto the tracked entry (A35). **The override point for "this family owns a column and the caller does not"**, and identical in every respect to `BaseDao.ApplyUpdateValues` (A38). The soft root overrides it to restore `CreatedDate` and `DeletedDate` (A30) |
-| `InsertRoot` *(private protected, keyless only)* | `Insert` with the soft timestamp steps folded in. **Deliberately not on the protected surface** (A38) — its `stamp` parameter admits exactly one conforming value from outside, and it has no keyed counterpart |
+| `InsertRoot` *(private protected, both halves)* | `Insert` with the soft timestamp steps folded in. **Deliberately not on the protected surface** (A38) — its `stamp` parameter admits exactly one conforming value from outside. **It is declared on `BaseDao<TEntity, TKey>` as well**; the "keyless only" this row carried until 2026-08-23 was wrong ([F16](#f16--f10s-two-remedies-are-not-equivalent-and-only-the-first-satisfies-the-obligation)) |
 | Soft types | The same soft-delete deltas as [`BaseSoftDao`](#basesoftdaotentity-tkey--the-soft-delete-deltas) — including timestamp normalization on retrieval (A13) — with `MatchRow` doing the locating |
 
 ### `ICompanyResourceDao` — the shape this exists to serve
@@ -5136,7 +5179,8 @@ home in this document rather than only in a handoff file.
 > a bare `F`*n* elsewhere in this document is a Revision 7 review finding.** `F10` and above are unambiguous
 > — the review series stops at `F8` and the lap series stopped at `F9` — which is why it was safe to continue
 > the lap numbering here rather than open a third series. **`F11`–`F15` are Revision 11's**, from the
-> `Code Reviewer` pass over lap 3.
+> `Code Reviewer` pass over lap 3. **`F16` is the 2026-08-23 correction pass's**, and is a finding against
+> this document rather than against the code.
 
 Lap findings **F1–F9** are listed in that handoff file; only the ones this document has acted on are restated
 here.
@@ -5148,6 +5192,7 @@ here.
 | **F7** — the relabel clause has a machine-dependent kill | **Open, and now named inside the obligation it affects** rather than only in the handoff. Not closed by F3's re-cut |
 | **F8** — R4-S2 is half-discharged | **Carried into lap 3.** The obligation is now stated on `RootSoftNonIdDao`'s own `<remarks>` as well as in the [Soft delete](#soft-delete) group, so a `Test Designer` reading the declaration site cannot miss it |
 | **F10** — a failed soft `Insert` leaves stamps on the caller's instance | **New, below** |
+| **F16** — F10's two permitted remedies are **not** equivalent, and the second is unsound on F10's own second failure shape | **New, below** — [F16](#f16--f10s-two-remedies-are-not-equivalent-and-only-the-first-satisfies-the-obligation). Found 2026-08-22 while closing the post-save write-back window (`fdc6e95`) and **never filed** until 2026-08-23. It also corrects three statements that `InsertRoot` has no keyed counterpart |
 | **F11** — three keyless plumbing members' accessibility contradicts their own documentation, and this document names none of them | **Closed by [A38](#revision-11-additions)** — [The write plumbing](#the-write-plumbing--trackforwrite-applyupdatevalues-insertroot--a38). `TrackForWrite` → `protected`, `ApplyUpdateValues` → `protected virtual`, `InsertRoot` **stays** `private protected`. **The whole surface is now stated on both halves**, which is the half of the fix that stops the recurrence |
 | **F12** — A34's purity constraint is too narrow, and the compiled predicate can throw | **Closed by [A39](#revision-11-additions)** — [The keyless constraint is in-memory totality](#the-keyless-constraint-is-in-memory-totality-not-merely-translatability--a39). The constraint gains **totality and null-safety over partially-populated entries**, and the library **wraps** rather than swallowing or leaking |
 | **F13** — `RootSoftNonIdDao.UpdateCore` mutates `item` before the predicate is built | **Closed by [A40](#revision-11-additions)** — [Timestamps are not identity](#timestamps-are-not-identity--a40). **Not by reordering**, and the rejection is reasoned rather than deferred. Binds the keyed soft family too |
@@ -5195,18 +5240,24 @@ an exception leaving the member. The obligation is therefore: **if `Insert` thro
 successful `Insert` writes back exactly what the member's own contract says it writes back — the identifier
 on the keyed families (OD-11), the three timestamps on the soft ones — and nothing else.
 
-**Two permitted remedies, and the choice is the implementer's** — the same shape [A30](#revision-6-additions)
-takes for the soft `Update`'s timestamps:
+**Two candidate remedies were offered here, and — corrected 2026-08-23 — only the first of them
+discharges the obligation.** The paragraph that stood here read *"Two permitted remedies, and the choice
+is the implementer's"* and closed *"Both remedies deliver the obligation; neither is mandated."* **That
+equivalence is false.** It is filed as
+[F16](#f16--f10s-two-remedies-are-not-equivalent-and-only-the-first-satisfies-the-obligation) and the
+remedy list below is restated accordingly.
 
-- **Stamp the copy, and assign onto `item` only after `SaveChanges` has returned.** This is A24 steps 6b and
-  9b implemented as written, and it is the one that matches `DepartmentDao.Insert`.
-- **Stamp `item` first, and restore its three previous values in a `finally` when the write did not happen.**
-  This is `BaseSoftDao.Update`'s existing shape applied to `Insert`.
+- **MANDATED — stamp the copy, and assign onto `item` only after `SaveChanges` has returned.** This is A24
+  steps 6b and 9b implemented as written, and it is the one that matches `DepartmentDao.Insert`. It is what
+  both shipped `InsertRoot` bodies do.
+- **WITHDRAWN — stamp `item` first, and restore its three previous values in a `finally` when the write did
+  not happen.** Sound against a throwing `SaveChanges`; **unsound against the obligation's second failure
+  shape**, and the obligation binds on both. See F16.
 
-**The second remedy is legitimate here, unlike in [A35](#revision-9-additions).** A35 withdrew its
-restore-afterwards option because EF Core raises the key-is-read-only exception **during** the copy, leaving
-no "after". Here the throw comes from `SaveChanges`, which is strictly after the assignment, so the `finally`
-has something to restore. Both remedies deliver the obligation; neither is mandated.
+**The withdrawal is narrower than [A35](#revision-9-additions)'s and for a different reason.** A35 withdrew
+its restore-afterwards option because EF Core raises the key-is-read-only exception **during** the copy,
+leaving no "after" to restore in. Here there is an "after" — and the problem is that the `finally` may run
+**over a row that is already committed**, which no restore can un-store.
 
 #### Where it traces, and why it is `[C]` rather than `[X]`
 
@@ -5249,6 +5300,60 @@ reproduces on the keyless branch unless the term is in the specification first. 
 
 **The fix itself is `Implementer` work inside lap 3 and is not written here.** This section specifies what
 conformance requires.
+
+### F16 — F10's two remedies are not equivalent, and only the first satisfies the obligation
+
+**Found 2026-08-22 while lap 3 closed the post-save write-back window (`fdc6e95`); never filed until
+2026-08-23.** It is recorded here because two passages of this document — the remedy list in
+[F10](#f10--a-failed-insert-must-not-leave-stamps-on-the-callers-instance) and the `InsertRoot` bullet in
+[The write plumbing](#the-write-plumbing--trackforwrite-applyupdatevalues-insertroot--a38) — asserted the
+equivalence in terms, and a third restated it inside a code sketch. All three are corrected.
+
+#### The claim, and why it fails
+
+F10's obligation binds on **two** failure shapes, in its own words: *"an exception out of `SaveChanges`,
+**and** an exception out of anything the member does after reading `item`."* The second shape includes
+everything that runs after a `SaveChanges` that **succeeded**.
+
+- **On the first shape the two remedies are interchangeable.** Nothing was stored, so stamping the copy and
+  restoring `item` in a `finally` land on the same observable state.
+- **On the second they are not.** The row is **committed**. A `finally` cannot un-store it. Restoring
+  `item`'s three previous timestamps therefore hands the caller an instance carrying a **real,
+  store-assigned identifier** beside timestamps the stored row does not have — a state that says neither
+  *stored* nor *not stored*, and one a caller cannot act on in either direction. Remedy one has no such
+  window: it performs the **whole** write-back immediately after the save and **ahead of every later step
+  that can throw**, so the instance and the row always agree.
+
+**"Did not store a row" is the obligation's antecedent, and an exception is only a proxy for it.** Remedy
+two silently substitutes the proxy for the antecedent; remedy one does not need the proxy at all.
+
+#### The evidence, all opened rather than reasoned
+
+| Artifact | What it shows |
+|---|---|
+| [`BaseDao.cs`](../ProphetsWay.EFTools/BaseDao.cs) lines 366–401 | `InsertRoot` performs identifier and stamp write-back in one block after `SaveChanges`, carrying the comment *"once the row is committed the instance must agree with it, and a restore in a finally cannot un-store a row"* |
+| [`BaseSoftDao.cs`](../ProphetsWay.EFTools/BaseSoftDao.cs) line 136 | `Insert` is `InsertRoot(item, GetCurrentTimestamp())` — **remedy one**, not the remedy-two shape this document attributed to it |
+| [`RootSoftNonIdDao.cs`](../ProphetsWay.EFTools/RootSoftNonIdDao.cs) line 116 | The keyless soft `Insert` is the same call into `RootNonIdDao.InsertRoot` — **the two branches are identical, not complementary** |
+| `FailedInsertWriteBackTests.ShouldLeaveTheCallersInstanceAgreeingWithTheStoredRowWhenAKeyedSoftInsertThrowsAfterSaving` | The pinned case. It opens the second failure shape with a `TrapCollection<T>` that refuses one `Remove` after the save, and asserts **agreement with the stored row** rather than restoration |
+
+#### What changes in this document
+
+1. **F10's remedy list**: remedy one is **mandated**, remedy two is **withdrawn for `Insert`**.
+2. **`InsertRoot` has a keyed counterpart** — `BaseDao.InsertRoot`, same signature, same
+   `private protected`. The three passages saying otherwise are struck: the A38 decision row, the A38
+   member table, and the keyless-member-contract table.
+3. **Nothing about accessibility changes.** `InsertRoot` stays `private protected` on both halves for the
+   reason A38 already gives — its `stamp` parameter admits exactly one conforming value from outside.
+
+#### What does *not* change
+
+**The `BaseSoftDao.Update` row of the table above still says remedy two is "the model."** That table is a
+snapshot of the **shipped lap 2 code** and is kept as one. In the tree as it now stands, `Update` also runs
+through a post-save-ordered `UpdateRoot`, whose `<remarks>` say the stamp is written *"onto the tracked row
+after `ApplyUpdateValues` rather than onto `item` before it, so the caller's instance is never mutated on
+behalf of a write that may not happen"* ([`BaseDao.cs`](../ProphetsWay.EFTools/BaseDao.cs) line 417).
+**F16 is scoped to `Insert`**; whether A30's `Update` wording needs the same treatment is a separate
+question and is not decided here.
 
 ### F11–F15 — what the lap 3 pass says about this document
 
