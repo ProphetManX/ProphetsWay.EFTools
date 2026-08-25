@@ -2,6 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0</TargetFrameworks>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 
 		<Description>
 A small library that is useful when utilizing EntityFramework for a Data Access Layer (DAL) while adhering to Business Layer to DAL decoupling.
@@ -17,7 +18,7 @@ For more information on this project, please go to https://github.com/ProphetMan
 		<RootNamespace>ProphetsWay.EFTools</RootNamespace>
 		<AssemblyName>ProphetsWay.EFTools</AssemblyName>
 		<PackageId>ProphetsWay.EFTools</PackageId>
-		<RepositoryType>GitHub</RepositoryType>
+		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/ProphetManX/ProphetsWay.EFTools</RepositoryUrl>
 		<ApplicationIcon />
 		<Win32Resource />
@@ -27,19 +28,29 @@ For more information on this project, please go to https://github.com/ProphetMan
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		
-		
+
+		<!-- Source Link. Microsoft.SourceLink.GitHub ships inside the SDK, so no PackageReference is needed. -->
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
 		<!-- Assembly Override Properties -->
 		<Version />
 
-		<Copyright />
-		<PackageProjectUrl />
-		<PackageTags />
-		<PackageReleaseNotes />
-		<NeutralLanguage />
+		<Copyright>Copyright © Prophet's Way</Copyright>
+		<PackageProjectUrl>https://github.com/ProphetManX/ProphetsWay.EFTools</PackageProjectUrl>
+		<PackageTags>entity-framework efcore ef-core dal data-access data-access-layer dao repository abstraction decoupling</PackageTags>
+		<PackageReleaseNotes>See CHANGELOG.md, included in this package, or https://github.com/ProphetManX/ProphetsWay.EFTools/blob/main/CHANGELOG.md</PackageReleaseNotes>
+		<NeutralLanguage>en-US</NeutralLanguage>
 		<AssemblyVersion />
 		<FileVersion />
 		<InformationalVersion />
+	</PropertyGroup>
+
+	<!-- Deterministic build paths in CI only; unconditionally on, it breaks local debugging. TF_BUILD is set by Azure Pipelines. -->
+	<PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
 
