@@ -70,6 +70,29 @@ implements v3.0.0 and do not block the release being planned.
 > it advertises — are **closed by what shipped**, and they are the clearest evidence the scope calls were right:
 > each was named here before the work started and each was fixed as named.
 
+## Certification Refresh — 2026-08-29
+
+**Local Microsoft SQL Server Gate 1 is satisfied.** The authoritative run record is
+`.agent-runs/20260829-1450-eftools-fr11-gate1/07-test-designer-certification-run.md` under the project parent.
+It records external `EFTOOLS_PROVIDER=SqlServer` selection, an unfiltered **328 discovered / 328 passed /
+0 failed / 0 skipped** run, all **14** selection-exempt provider-comparison cases executed, **314**
+provider-honouring cases, **58** passing provider-selection guards, and **zero** disposable
+`EFToolsTest_*` databases before and after. Those are dated observations from one run, not a permanent
+suite-size promise.
+
+**FR 11 remains `Scheduled`.** Gate 1 being satisfied does not discharge its whole-suite SQLite or
+pipeline/`LocalTestsOnly` obligations. Those remaining obligations do not block the 3.0.0 tag.
+[FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql) remains the separate,
+unsatisfied Azure SQL Gate 2 and the remaining certification blocker; no Azure resource or run is inferred
+from the local result.
+
+The Security Reviewer Low finding about localhost `TrustServerCertificate=true` is deduplicated as
+[FR 20](feature-requests.md#20--decide-the-localhost-sql-server-certificate-validation-boundary),
+`Proposed`. It is confined to local, non-packable test infrastructure and carries no owner decision.
+
+This refresh supersedes present-tense 2026-08-24 statements below that say Gate 1 has not run or that both
+gates remain unsatisfied. Their dated planning snapshots and decision history remain intact.
+
 ---
 
 ## Settled One-Sentence Purpose
@@ -567,7 +590,7 @@ behind a friendlier name reintroduces the coupling.
 
 > Settled 2026-08-24 as [D20](#owner-decisions--2026-08-15) and [D21](#owner-decisions--2026-08-15). Tracked as
 > [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container),
-> which is now **release-blocking**.
+> whose local SQL Server Gate 1 was release-blocking and is now satisfied.
 >
 > 🔴 **Extended later the same day by [D22](#owner-decisions--2026-08-15). There are now TWO certification
 > gates on the 3.0.0 tag, not one.** The heading is left exactly as it was so existing links keep resolving;
@@ -575,10 +598,10 @@ behind a friendlier name reintroduces the coupling.
 >
 > | Gate | Provider | Decision | Tracked as | Evidence today |
 > | --- | --- | --- | --- | --- |
-> | **Gate 1** | **Local Microsoft SQL Server** | D20 · D21 | [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | Server reachable; `ProphetsWay.Example` schema has a zero-drift DACPAC deploy report; **the run has not happened** |
+> | **Gate 1** | **Local Microsoft SQL Server** | D20 · D21 | [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Satisfied 2026-08-29:** external `EFTOOLS_PROVIDER=SqlServer`; unfiltered 328 / 328 / 0 / 0; 14 selection-exempt executed; 314 provider-honouring; 58 guards passed; 0 disposable databases before and after |
 > | **Gate 2** | **Azure SQL** | **D22** | [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql) | **None.** No subscription named, no resource deployed, no run attempted |
 >
-> **Neither gate is satisfied, and neither may be inferred from the other** — see
+> **Gate 1 is satisfied; Gate 2 is not, and neither may be inferred from the other** — see
 > [Azure SQL is a separate scope question](#azure-sql-is-a-separate-scope-question-and-it-reaches-this-librarys-own-contract),
 > which is now *answered* rather than open, and whose reasoning is why these are two gates rather than one
 > gate with two providers.
@@ -613,7 +636,7 @@ are untouched.** The certified tier is still **SQLite and SQL Server**. D20 says
 
 | Obligation | Source | Gates the 3.0.0 tag? | State |
 |---|---|---|---|
-| **The whole suite green against SQL Server** — ~~all 270 cases~~ **see [the restatement below](#what-all-270-on-sql-server-means-now--restated-2026-08-24); the count moved to 287 and 14 cases are structurally exempt from the *selection*, not from the *run*** | **D20** | 🔴 **Yes** | Owed. The environment exists (D21); the run does not |
+| **The whole suite green against SQL Server** — see [the restatement below](#what-all-270-on-sql-server-means-now--restated-2026-08-24); counts are run snapshots and 14 cases are structurally exempt from the *selection*, not from the *run* | **D20** | **Yes** | **Satisfied 2026-08-29:** external SQL Server selection; unfiltered 328 / 328 / 0 / 0; 14 exempt executed; 314 provider-honouring; 58 guards passed; 0 disposable databases before and after |
 | **The whole suite green against SQLite** — same restatement | D2, D4 | **No** | Owed. **Not cancelled, not descoped** — deferred behind the gate |
 | `LocalTestsOnly: 'yes'` retired so CI runs any of it | D4 | **No** | `Deferred` to `Pipeline Engineer`. **No `.yml` change is authorized** |
 | Certification wording on `<Description>`, `PackageTags`, README | D8 | **No**, but it must not *precede* the evidence | **Unmet** — verified 2026-08-24 against the csproj at `e2f2120` and the README. Fortunate: writing it on 2026-08-23 would have published a claim with a whole-suite run behind neither provider. **[D22](#owner-decisions--2026-08-15) adds Azure SQL to what that wording must eventually cover**; the phrasing belongs to `Modernizer` and `README Author`, and the "must not precede the evidence" rule now applies to two gates |
@@ -664,8 +687,9 @@ hold in one run:**
    than the spike selects its own provider — otherwise (3) is unfalsifiable and the two-store arrangement
    survives while being described as one.
 5. **The evidence records four counts and the provider** — total discovered, exempt, provider-honouring,
-   failed. At the time of writing that is **287 / 14 / 273 / 0**. **The counts are a snapshot; the criterion is
-   the definition above**, and a later lap that adds tests changes the numbers and not the bar.
+   failed. When this criterion was written the planning snapshot was **287 / 14 / 273 / 0**. **The counts are
+   a snapshot; the criterion is the definition above**, and a later lap that adds tests changes the numbers
+   and not the bar. The completed 2026-08-29 run records **SqlServer / 328 / 14 / 314 / 0**.
 
 **Criteria 1 and 4 are ordinarily test-design detail and are named here deliberately**, because without them
 criterion 3 is *self-reported*: a seam that answers its own questions can report `SqlServer` while every store it
@@ -676,9 +700,10 @@ cleanup identity and store existence, foreign-key enforcement, disposal without 
 handling, the conditional third refusal assertion. They are not purpose requirements and must not be imported
 here.
 
-**What this does *not* relax.** The spike is exempt from the *provider selection*, not from the *run*. **All 287
-cases execute in the certification command and all 287 must pass.** An exemption from *which store it opened* is
-not an exemption from *whether it passed*.
+**What this does *not* relax.** The spike is exempt from the *provider selection*, not from the *run*. In the
+completed Gate 1 command all **328** discovered cases executed and passed, including all 14 spike cases. A
+future certification command must likewise execute and pass every case it discovers. An exemption from
+*which store it opened* is not an exemption from *whether it passed*.
 
 #### The same restatement governs Gate 2
 
@@ -754,14 +779,14 @@ an instance from cli and us that to test?"* Treat it as the approved **direction
 
 | | Gate 1 — local SQL Server | Gate 2 — Azure SQL |
 |---|---|---|
-| **Blocked on** | Nothing. The environment is ready today ([D21](#owner-decisions--2026-08-15)) | An infrastructure design the owner has not yet settled |
-| **The work** | Provider-selectable test wiring the seven store-backed local classes actually consume, plus a schema-provisioning decision — then a **whole-suite run** meeting [the five criteria](#gate-1s-success-criterion-stated-so-it-does-not-go-stale) locally (**287 / 14 exempt / 273 honouring / 0 failed** at today's counts) | Bicep authored and built → `what-if` previewed against an available Azure context → **owner-approved** deployment → DACPAC applied → suite run → **owner-approved** teardown |
+| **Blocked on** | **Satisfied 2026-08-29** | An infrastructure design the owner has not yet settled |
+| **The work** | **Complete:** provider-selectable test wiring plus an externally selected, unfiltered local run meeting [the five criteria](#gate-1s-success-criterion-stated-so-it-does-not-go-stale) at **328 / 14 exempt / 314 honouring / 0 failed** | Bicep authored and built → `what-if` previewed against an available Azure context → **owner-approved** deployment → DACPAC applied → suite run → **owner-approved** teardown |
 | **Irreversible steps** | None. Local database, local run | **Two** — the deployment and the teardown. **Each needs the owner's explicit approval at the moment it is taken**; neither is pre-authorized by D22 |
-| **Order** | **First.** It is the cheaper gate and it de-risks the second: a suite that cannot reach 270 locally will not reach it remotely | **After.** Its input is a suite already proven provider-selectable |
+| **Order** | **Completed first.** The suite is now proven provider-selectable locally | **Next.** Its input is the completed Gate 1 result |
 
-**Doing Gate 2 first would mean debugging test wiring and cloud infrastructure at the same time**, against a
-billed resource, with no local baseline to attribute a failure to. That is the argument for the ordering; it
-is not a claim that Gate 2 is less important.
+**Completing Gate 1 first avoided debugging test wiring and cloud infrastructure at the same time**, against
+a billed resource with no local baseline to attribute a failure to. That remains the argument for the order;
+it is not a claim that Gate 2 matters less.
 
 #### Open Azure design decisions — the owner's, and none of them is inferable
 
@@ -784,23 +809,20 @@ is not a claim that Gate 2 is less important.
 **The decision the owner still owes is no longer *whether* — it is *these eleven values*.** An agent that
 invents any of them has manufactured a fact about someone's cloud account.
 
-### What Stage 3 is contracted to deliver
+### What Stage 3 delivered
 
-The implementation scope is **re-derived from the current wiring** in
-[FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) and
-is not repeated here. The one-line summary a downstream agent needs: **the 13 adapted upstream classes already
-run on SQL Server through `TestSeam` → `Constants`; the seven store-backed local classes each build their own
-SQLite in-memory context and call `EnsureCreated()`, and reach `Constants` never.** Making `Constants`
-provider-selectable is therefore **necessary and not sufficient**, and any plan that stops there cannot reach
-270.
+The shared `TestStore` now resolves the external provider selection, `Constants` follows that selection for
+the 13 adapted upstream classes, and the six store-backed local fixture classes open and clean their stores
+through the same seam. `AlternateKeyGuardSpikeTests` deliberately retains its two-provider comparison as the
+single closed selection exemption; all 14 of its cases still execute in the whole-suite command.
 
-**Stage 3 is Gate 1 and nothing else.** It is local test wiring plus one whole-suite run against the owner's
-local MSSQL instance, measured against
-[the five criteria above](#gate-1s-success-criterion-stated-so-it-does-not-go-stale) rather than against a
-literal case count. **No Bicep, no `what-if`, no Azure deployment, no Azure DACPAC apply and no Azure test run
-is part of it** — that is [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql), and it
-starts from an infrastructure design the owner has not settled. A Stage 3 lap that reaches for Azure is out of
-its own scope.
+**Stage 3 delivered Gate 1 and nothing else.** Its local test wiring and whole-suite run met
+[the five criteria above](#gate-1s-success-criterion-stated-so-it-does-not-go-stale) on 2026-08-29 at
+**328 discovered / 14 selection-exempt / 314 provider-honouring / 0 failed**, with no skips and zero
+disposable databases before and after. **No Bicep, `what-if`, Azure deployment, Azure DACPAC apply, or Azure
+test run was part of it** — that remains
+[FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql), starting from an infrastructure
+design the owner has not settled.
 
 ---
 
@@ -1325,7 +1347,7 @@ Numbered to match [feature-requests.md](feature-requests.md). Effort is relative
 | 8 | Remove `FluentAssertions` 8.2.0 from `ProphetsWay.Example.DataAccess.EF` | Paid licence; test library in a non-test project | Trivial | No — not packaged | **Done** — 2026-08-16; the licence exposure is closed |
 | 9 | Delete the stray `[submodule "Submod"]` block in `.gitmodules` | Malformed; will confuse `git submodule` | Trivial | No | **Done** — 2026-08-23. **It cost more than "trivial" implied**: it was disabling Source Link on a published package, three warnings per build. **Removing it stopped the warning and did not give the package Source Link** — that is [FR 16](feature-requests.md), still open |
 | 10 | Collapse the `Guid`/`Int`/`Long` triplication into six generic families | Owner-approved; the "untranslatable predicate" objection was **factually wrong** | Medium | **Yes** — accepted, no wrappers | **Done** — 2026-08-23, no wrappers as [D3](#owner-decisions--2026-08-15) required. The folder is flat and every file declares `namespace ProphetsWay.EFTools`; the three key-typed namespaces no longer exist |
-| 11 | Certify on SQLite in-memory + a SQL Server container; retire blanket `LocalTestsOnly` | `InMemory` cannot honour transactions, so it cannot verify the contract this package now claims; **D8** makes the certification a public claim, so it must be earned | Medium | No | 🔴 **Scheduled — RELEASE-BLOCKING as of 2026-08-24 ([D20](#owner-decisions--2026-08-15)).** The **SQL Server** whole-suite run gates the 3.0.0 tag. ~~narrowed 2026-08-23, and explicitly not release-blocking~~ — **struck; do not restate.** The **SQLite** whole-suite leg and the `LocalTestsOnly` half are still owed and are **not** blockers. **Its "fact 2" is still false** — the package depends on no provider at all |
+| 11 | Certify on SQLite in-memory + SQL Server; retire blanket `LocalTestsOnly` | `InMemory` cannot honour transactions, so it cannot verify the contract this package now claims; **D8** makes certification a public claim, so it must be earned | Medium | No | **Scheduled — local SQL Server Gate 1 satisfied 2026-08-29.** The run was 328 / 328 / 0 / 0 with 14 selection-exempt cases executed, 314 provider-honouring cases, 58 passing guards, and zero disposable databases before and after. The **SQLite** whole-suite leg and `LocalTestsOnly` half remain owed and are not blockers; Azure SQL remains separate FR 19 Gate 2 |
 
 **These are not independent.** #2 forces #3; #4 unblocks #5; #1 forces #6; #7 forces #11. The realistic
 unit of work is **one v3.0.0 release containing #1–#11**, with nothing deferred out of it except the

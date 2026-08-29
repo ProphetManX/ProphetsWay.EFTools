@@ -61,6 +61,38 @@ deleted. ~~**A green build is not a passing suite** — this repository still co
 **D10**.~~ **That last sentence is dead as of 2026-08-23** — `ProphetsWay.EFTools.Tests/` holds 25 source files
 and the suite discovers 270 cases. Do not restate it.
 
+## Triage Pass — 2026-08-29 — Gate 1 satisfied, FR 11 still Scheduled
+
+**Scope verdict: In scope.** Recording provider-certification evidence serves the settled purpose directly:
+the library promises provider-neutral relational plumbing, and D20 makes a demonstrated local SQL Server run
+the release bar for that claim. It changes neither the purpose sentence nor the package surface.
+
+The local SQL Server half of [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container)
+is now **satisfied**. The authoritative execution record is
+`.agent-runs/20260829-1450-eftools-fr11-gate1/07-test-designer-certification-run.md` under the project parent:
+
+| Gate 1 measure | Observed 2026-08-29 result |
+| --- | ---: |
+| External provider selection | `EFTOOLS_PROVIDER=SqlServer` |
+| Unfiltered whole suite | **328 discovered / 328 passed / 0 failed / 0 skipped** |
+| Provider-comparison spike | **14 selection-exempt cases, all executed and passed** |
+| Provider-honouring cases | **314** |
+| Provider-selection guards | **58 passed / 0 failed / 0 skipped** |
+| Disposable `EFToolsTest_*` databases | **0 before / 0 after** |
+
+Those numbers are a dated run result, not a permanent suite-size promise. They discharge the five Gate 1
+criteria in `purpose-and-scope.md`: external selection, no-filter green execution, the single closed
+selection exemption, a passing guard, and recorded provider/count evidence.
+
+**No status transition is applied. FR 11 remains `Scheduled`.** Its whole-suite SQLite certification and
+pipeline/`LocalTestsOnly` obligations remain open under D2/D4. They are not release blockers. Gate 1 being
+satisfied also does not satisfy [entry 19](#19--certify-the-contract-suite-against-azure-sql): Azure SQL
+remains the separate, unsatisfied Gate 2 and the remaining certification blocker on the 3.0.0 tag.
+
+The Security Reviewer found one Low, test-only localhost transport issue. The full index contained no request
+covering it, so it is captured once as new [entry 20](#20--decide-the-localhost-sql-server-certificate-validation-boundary),
+`Proposed`. No remediation or owner decision is inferred.
+
 ## Triage Pass — 2026-08-24 — **the release gate**
 
 > 🔴 **READ THIS BEFORE THE 2026-08-23 PASS BELOW. One entry moved from "not a blocker" to "the blocker,"
@@ -258,25 +290,26 @@ not an agent's to do.
 
 | # | Item | Status |
 | --- | --- | --- |
-| 1 | [Advance the `ProphetsWay.Example` submodule onto the 3.x contracts](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) | **Done** — 2026-08-23; all six steps landed. Pointer is at `f93f0a4`; both new entities are mapped and both DAOs exist. **The D11 step 3 move onto a *tag* is release mechanics, not this entry** |
-| 2 | [Move the `ProphetsWay.BaseDataAccess` reference from 2.5.0 to 3.1.0](#2--move-the-prophetswaybasedataaccess-reference-from-250-to-310) | **Done** — 2026-08-16; both projects reference 3.1.0 and the solution compiles against it |
+| 1 | [Advance the `ProphetsWay.Example` submodule onto the 3.x contracts](#1--advance-the-prophetswayexample-submodule-onto-the-3x-contracts) | **Done** — 2026-08-23; all six implementation steps landed, both new entities are mapped, and both DAOs exist. The exact submodule pointer is mutable and belongs in runtime evidence, not this current-status row. **The D11 step 3 move onto a tag is release mechanics, not this entry** |
+| 2 | [Move the `ProphetsWay.BaseDataAccess` reference from 2.5.0 to 3.1.0](#2--move-the-prophetswaybasedataaccess-reference-from-250-to-310) | **Done** — 2026-08-16; both consuming projects now reference **3.2.0**, re-verified 2026-08-29 by reopening both project files |
 | 3 | [Implement the 3.x disposal contract in `BaseEFDataAccess`](#3--implement-the-3x-disposal-contract-in-baseefdataaccess) | **Done** — 2026-08-23; `Dispose` is `sealed override` and **all ten** other members open with `ThrowIfDisposed()`. The **2.2.x patch stays `Rejected`** — [D12](purpose-and-scope.md#owner-decisions--2026-08-15) — and its [release-note obligation](#the-changelog-author-obligation--d12) is now **discharged**: `CHANGELOG.md` § *"Fixed: a Data Access Layer no longer leaks its context and its connection"*. **The "still owed" clause this row carried is dead** |
 | 4 | [Make 3.x Entity Framework Core-only — retire EF6 and .NET Framework](#4--make-3x-entity-framework-core-only--retire-ef6-and-net-framework) | **Done** — 2026-08-23; `net10.0` alone, no EF6, and **zero preprocessor directives library-wide** |
 | 5 | [Retarget to the house TFM standard](#5--retarget-to-the-house-tfm-standard) | **Done** — 2026-08-23; all three projects read `net10.0`, the destination **D7** ratifies |
-| 6 | [Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory and `Scope` traits](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits) | **Done** — 2026-08-23; shape B is built — 25 files, `TestSeam` + 13 adapters + 2 guards + 8 local classes. `ProphetsWay.Example` FR 13's seam is in use and guarded by `TestSeamTests` |
+| 6 | [Rebuild `ProphetsWay.EFTools.Tests` on the 3.x factory and `Scope` traits](#6--rebuild-prophetswayeftoolstests-on-the-3x-factory-and-scope-traits) | **Done** — 2026-08-23; shape B is built. `TestSeam` and 13 adapters use `ProphetsWay.Example` FR 13's seam; later provider-selection fixtures and guards belong to [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) |
 | 7 | [Stop forcing a database provider on every consumer](#7--stop-forcing-a-database-provider-on-every-consumer) | **Done** — 2026-08-23; **both halves.** The library references `Microsoft.EntityFrameworkCore` alone, `BaseEFContext` names no provider and its string constructor is gone, and `.InMemory` moved to the test project |
 | 8 | [Remove `FluentAssertions` from `ProphetsWay.Example.DataAccess.EF`](#8--remove-fluentassertions-from-prophetswayexampledataaccessef) | **Done** — 2026-08-16; the reference is gone and the licence exposure is closed |
 | 9 | [Delete the stray `[submodule "Submod"]` block from `.gitmodules`](#9--delete-the-stray-submodule-submod-block-from-gitmodules) | **Done** — 2026-08-23; `.gitmodules` declares one submodule and no `Submod`. **It stopped the warning; it did not give this package Source Link** — see [entry 16](#16--source-link-symbol-packages-and-the-empty-packaging-metadata-stubs) |
 | 10 | [Collapse the `Guid`/`Int`/`Long` DAO triplication](#10--collapse-the-guidintlong-dao-triplication) | **Done** — 2026-08-23; the folder is flat and all 15 files declare `namespace ProphetsWay.EFTools`. Approved by **D3**, constrained by **D13** |
-| 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | 🔴 **Scheduled — RELEASE-BLOCKING as of 2026-08-24 ([D20](purpose-and-scope.md#owner-decisions--2026-08-15)).** The **whole suite on local SQL Server** is **Gate 1** on the 3.0.0 tag: *"if we can't say EFTools is cleared to work in SQL Server, then it's not worth pushing out."* **[Entry 19](#19--certify-the-contract-suite-against-azure-sql) is Gate 2 and is equally blocking** — this entry does not cover Azure SQL. The **SQLite** whole-suite leg and the `LocalTestsOnly` half are still owed under D2/D4, are **not** a gate, and are **not a substitute** for either. **Do not restate "Not release-blocking"** — that read was correct on 2026-08-23 and is dead. **Do not restate "all 270" either** — the count is **287** and 14 cases are exempt from the provider *selection*; see [the restatement](#the-close-condition-restated-2026-08-24--the-number-moved-the-bar-did-not). Its "fact 2" is still false; read both triage notes before citing the entry |
+| 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Scheduled — local SQL Server Gate 1 satisfied 2026-08-29.** The externally selected, unfiltered run was **328 / 328 / 0 / 0**, with 14 selection-exempt cases executed, 314 provider-honouring cases, 58 passing guards, and 0 disposable databases before and after. The **SQLite** whole-suite leg and pipeline/`LocalTestsOnly` half remain owed under D2/D4 and are not release blockers. [Entry 19](#19--certify-the-contract-suite-against-azure-sql) remains separate, unsatisfied Gate 2 |
 | 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Done** — 2026-08-23, **both halves**. The code half was always moot (the member is gone); the release-note half landed and was verified by reopening `CHANGELOG.md` — § *"Fixed: commit and rollback no longer silently do nothing"*. **The 2.2.x patch stays `Rejected`**, which is decision history and does not reopen. ~~**This was the last release blocker in the repository**~~ — **struck 2026-08-24: it was the last blocker *then known*.** [Entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) became one under [D20](purpose-and-scope.md#owner-decisions--2026-08-15). This entry is unaffected and stays `Done` |
 | 13 | [The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | **Done** — 2026-08-23; `RootBaseSoftDao` is deleted and the soft members are `override`s. **2.2.x patch stays `Rejected`**; its release note is **discharged** — `CHANGELOG.md` § *"Fixed: Update no longer un-deletes a soft-deleted row"*, which also names the second-`Delete` half |
 | 14 | [The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | **Done** — 2026-08-23; carried inside entry 10 under **D14**. Its release note is **discharged** — `CHANGELOG.md` § *"Fixed: a read or a write no longer hands you the store's own object"*, **including the "what stops happening" paragraph D12 says this one uniquely owes**. The clause this row carried saying that sentence was absent is dead |
 | 15 | [`ProphetsWay.EFTools.Guid` shadows `System.Guid` inside this assembly](#15--prophetswayeftoolsguid-shadows-systemguid-inside-this-assembly) | **Done** — 2026-08-23; closed for free inside entry 10, as predicted. The namespace does not exist, so the collision cannot occur |
-| 16 | [Source Link, symbol packages, and the empty packaging metadata stubs](#16--source-link-symbol-packages-and-the-empty-packaging-metadata-stubs) | **Proposed** — filed 2026-08-23. `AGENTS.md` deviation 5 had no entry here. **Non-breaking, so it can land after 3.0.0** |
+| 16 | [Source Link, symbol packages, and the empty packaging metadata stubs](#16--source-link-symbol-packages-and-the-empty-packaging-metadata-stubs) | **Proposed.** The implementation facts are now satisfied by `e2f2120`, but no quoted owner decision authorizes a status transition; see the current-fact note in the entry |
 | 17 | [Five proving-ground DAOs carry dead preprocessor guards](#17--five-proving-ground-daos-carry-dead-preprocessor-guards) | **Proposed** — filed 2026-08-23. Cosmetic, unshipped, and **misleading in the one project whose job is to be copied from** |
 | 18 | [Committed `.trx` files under `TestResults/` are read as current and are not](#18--committed-trx-files-under-testresults-are-read-as-current-and-are-not) | **Proposed** — filed 2026-08-23. Seven committed run artifacts, **every one of them stale**, in a repository whose documents cite test counts as evidence |
 | 19 | [Certify the contract suite against Azure SQL](#19--certify-the-contract-suite-against-azure-sql) | 🔴 **Scheduled — RELEASE-BLOCKING.** Filed 2026-08-24 under [D22](purpose-and-scope.md#owner-decisions--2026-08-15): *"mssql server and azure sql both need to be covered."* **Gate 2** on the 3.0.0 tag, beside [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container)'s Gate 1. **No Azure resource exists and no Azure run has been attempted.** Blocked on eleven unmade infrastructure decisions, none of them an agent's to choose |
+| 20 | [Decide the localhost SQL Server certificate-validation boundary](#20--decide-the-localhost-sql-server-certificate-validation-boundary) | **Proposed** — filed 2026-08-29 from the Security Reviewer Low finding. Test-only and localhost-only; no remediation or owner decision has been taken |
 
 Numbers are permanent. Entries are never renumbered and never removed —
 [purpose-and-scope.md](purpose-and-scope.md) cites entries by number, and a rejected entry is decision
@@ -1502,7 +1535,7 @@ the file is here.
 
 ```ini
 [submodule "Submod"]
-	branch = main
+  branch = main
 ```
 
 No `path`, no `url`. Git tolerates it today because nothing resolves it, but it is a malformed submodule
@@ -1706,6 +1739,24 @@ exactly what `docs/api-contract.md` S2 calls the flat method surface and what it
 
 ## 11 — Certify the contract suite on SQLite in-memory and a SQL Server container
 
+> **CURRENT RESULT — 2026-08-29: LOCAL SQL SERVER GATE 1 IS SATISFIED; FR 11 REMAINS `Scheduled`.**
+>
+> Report 07 for run `20260829-1450-eftools-fr11-gate1` records external
+> `EFTOOLS_PROVIDER=SqlServer`, no test filter, and **328 discovered / 328 passed / 0 failed / 0 skipped**.
+> All **14** provider-comparison cases executed and passed while remaining exempt only from provider
+> selection, leaving **314 provider-honouring cases**. All **58** provider-selection guards passed, and the
+> local SQL Server catalogue held **zero** disposable `EFToolsTest_*` databases both before and after.
+>
+> The exact evidence source is
+> `.agent-runs/20260829-1450-eftools-fr11-gate1/07-test-designer-certification-run.md` under the project parent.
+> The runtime total supersedes the 287-case planning snapshot below without rewriting it as history.
+>
+> **This does not close the entry.** Whole-suite SQLite certification and the separately owned
+> pipeline/`LocalTestsOnly` work remain. It also does not reach Azure SQL;
+> [entry 19](#19--certify-the-contract-suite-against-azure-sql) remains the distinct, unsatisfied Gate 2.
+
+The dated 2026-08-24 re-triage below is preserved as the planning record that defined the gate.
+
 > 🔴 **RE-TRIAGED 2026-08-24 — THIS ENTRY IS A RELEASE GATE. It is GATE 1 OF TWO.** Status token **unchanged
 > at `Scheduled`**;
 > its *classification* moved from "not release-blocking" to blocking. **Read this block before the 2026-08-23
@@ -1880,16 +1931,16 @@ provisioning is legitimate; deferring it silently is not.**
 ### The `LocalTestsOnly` half is still `Pipeline Engineer`'s
 
 **Unchanged by [D20](purpose-and-scope.md#owner-decisions--2026-08-15), and deliberately so.** `app-variables.yml`
-still reads `LocalTestsOnly: 'yes'`, CI still executes none of the 270, and **nothing in the 2026-08-24 pass
+still reads `LocalTestsOnly: 'yes'`, CI still executes none of the suite, and **nothing in the 2026-08-24 pass
 authorizes changing that or any other `.yml`.** The gate D20 sets is satisfiable by a run on the owner's own
 machine; it says nothing about a build agent. Keeping the two apart is what stops the release gate from
 quietly acquiring a pipeline dependency it does not have.
 
-**Status:** 🔴 **Scheduled for v3.0.0, and RELEASE-BLOCKING as of 2026-08-24** —
-[D20](purpose-and-scope.md#owner-decisions--2026-08-15), environment and target run in
-[D21](purpose-and-scope.md#owner-decisions--2026-08-15). **This is Gate 1 of two.**
-[Entry 19](#19--certify-the-contract-suite-against-azure-sql) is Gate 2 under
-[D22](purpose-and-scope.md#owner-decisions--2026-08-15), and **closing this entry does not close that one.**
+**Status:** **Scheduled for v3.0.0; local SQL Server Gate 1 satisfied 2026-08-29.** D20's release-blocking
+condition is discharged by the run above, but whole-suite SQLite certification and the pipeline half remain
+open. [Entry 19](#19--certify-the-contract-suite-against-azure-sql) is Gate 2 under
+[D22](purpose-and-scope.md#owner-decisions--2026-08-15), remains release-blocking, and is not closed by this
+entry's local result.
 Originally scheduled 2026-08-15, approved by the owner as
 [D4](purpose-and-scope.md#owner-decisions--2026-08-15) and reinforced by
 [D8](purpose-and-scope.md#owner-decisions--2026-08-15), which turns "certified on SQLite and SQL Server"
@@ -1967,11 +2018,10 @@ certification claim. **So [D8](purpose-and-scope.md#owner-decisions--2026-08-15)
 is still unmet.**
 
 **That is now load-bearing rather than an oversight to tidy.** Had the wording landed on 2026-08-23 it would
-today be a published claim of certification on two providers with a whole-suite run on neither — exactly the
-failure the paragraph above names. **The correct sequence is: earn the SQL Server evidence (D20), then earn
-or re-scope the SQLite evidence, then write the wording.** `Modernizer` and `README Author` still own the
-edit; **nothing here authorizes writing it early, and nothing here authorizes narrowing D8's certified tier
-to SQL Server alone.**
+have been a published claim with a whole-suite run behind neither provider. **The SQL Server evidence was
+earned on 2026-08-29; the remaining sequence is to earn the SQLite evidence, then write the wording.**
+`Modernizer` and `README Author` still own the edit; **nothing here authorizes writing it early, and nothing
+here authorizes narrowing D8's certified tier to SQL Server alone.**
 
 ---
 
@@ -2627,6 +2677,17 @@ unqualified in a file whose namespace is `ProphetsWay.EFTools.Tests`.
 **Status:** **Proposed** — filed 2026-08-23 by `Purpose Refiner` during triage. **Not breaking, so it does not
 have to ride 3.0.0.**
 
+> **CURRENT FACT REFRESH — 2026-08-29.** The implementation described by this entry is on disk in commit
+> `e2f2120` (*Complete package metadata and enable Source Link*). Reopening
+> `ProphetsWay.EFTools/ProphetsWay.EFTools.csproj` confirms valued `RepositoryType`, `PackageProjectUrl`,
+> `PackageTags`, `PackageReleaseNotes`, `Copyright`, and `NeutralLanguage`; `PublishRepositoryUrl`,
+> `EmbedUntrackedSources`, `IncludeSymbols`, and `SymbolPackageFormat`; a `TF_BUILD`-conditioned
+> `ContinuousIntegrationBuild`; and `GenerateDocumentationFile`.
+>
+> **The status remains `Proposed`.** Completion is a factual candidate for `Proposed` → `Done`, not authority
+> to apply the transition. No quoted owner decision in the current packet authorizes it, so the historical
+> missing-field analysis below is preserved and the transition is left pending.
+
 **Filed because `AGENTS.md` deviation 5 had no entry in this index at all**, and a deviation with no feature
 request is a finding with nowhere to go. It is the same fact as that row; extend both together.
 
@@ -2893,8 +2954,8 @@ library, and `ProphetsWay.BPA` is the application that actually deploys to Azure
 
 | | Gate 1 — [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | Gate 2 — this entry |
 | --- | --- | --- |
-| **Blocked on** | Nothing. Environment ready today under D21 | Eleven decisions above, then an infrastructure design and review |
-| **The work** | Provider-selectable test wiring the seven store-backed local classes consume, plus a schema-provisioning decision → a **whole-suite local run** meeting the five criteria in [entry 11's restatement](#the-close-condition-restated-2026-08-24--the-number-moved-the-bar-did-not) | Bicep authored and built → `what-if` → **owner-approved** deploy → DACPAC apply → suite run → **owner-approved** teardown |
+| **Blocked on** | **Satisfied 2026-08-29** | Eleven decisions above, then an infrastructure design and review |
+| **The work** | **Complete:** provider-selectable test wiring and an externally selected, unfiltered local run at **328 / 14 exempt / 314 honouring / 0 failed** | Bicep authored and built → `what-if` → **owner-approved** deploy → DACPAC apply → suite run → **owner-approved** teardown |
 | **Irreversible steps** | None | **Two** |
 
 **Its input is a suite already proven provider-selectable.** Attempting Gate 2 first means debugging test
@@ -2917,3 +2978,46 @@ authoring, test wiring, and the certification evidence itself. **Out of scope:**
 (`Pipeline Engineer` owns it, `LocalTestsOnly` stays `Deferred`), the package wording (`Modernizer` and
 `README Author`, and it must not precede the evidence), and any change to the transaction contract, which
 would be a fresh owner decision rather than a consequence of this entry.
+
+---
+
+## 20 — Decide the localhost SQL Server certificate-validation boundary
+
+**Status:** **Proposed** — filed 2026-08-29 from the Security Reviewer Low finding. The complete index was
+searched before filing; no existing request covered certificate validation for the local test harness.
+Anyone may append a `Proposed` request, and no owner decision or implementation is inferred here.
+
+### Scope verdict — the local test harness accepting an unvalidated SQL Server certificate
+
+| | |
+| --- | --- |
+| **Verdict** | **In scope for this repository's test infrastructure; out of scope for the shipped library** |
+| **Purpose it's measured against** | The settled purpose includes certification evidence on relational providers; the harness that produces that evidence must state its trust boundary honestly |
+| **Because** | `ProphetsWay.EFTools.Tests/TestStore.cs` configures only `localhost`, uses Windows Integrated Security, and sets `TrustServerCertificate = true`. That weakens endpoint authentication for local tests but does not enter the non-packable runtime package or choose a provider for consumers |
+| **If it proceeds** | Change only the local test connection after the local SQL Server certificate configuration is known; do not import this setting into production, Azure SQL, package metadata, or consumer guidance |
+
+### The finding, re-verified
+
+`ProphetsWay.EFTools.Tests/TestStore.cs` builds the SQL Server connection with `DataSource = "localhost"`,
+`IntegratedSecurity = true`, and `TrustServerCertificate = true`. The test project sets
+`<IsPackable>false</IsPackable>`, and the published library has no reference to `TestStore`. No password,
+token, connection secret, production endpoint, or shipped runtime path is involved.
+
+The Security Reviewer therefore classified this **Low**: an actor able to interfere with the local SQL
+Server transport can present a certificate the test connection does not validate, while Windows identity
+authentication still applies. The finding did not block Gate 1 and does not invalidate its completed result.
+
+### The unresolved decision
+
+Two outcomes remain legitimate, and the local certificate configuration decides between them:
+
+| Option | Condition | Result |
+| --- | --- | --- |
+| Require validation | The local SQL Server presents a certificate trusted by the machine running the suite | Set `TrustServerCertificate` to `false` and keep the normal platform trust check |
+| Retain a bounded exception | Local certification cannot presently supply a trusted certificate | Keep the exception explicitly localhost-only, test-only, and forbidden for Azure SQL, shared servers, production, or copied consumer configuration; record the boundary and revisit trigger |
+
+**No option is selected.** The owner has not decided whether the local-only exception should be retained or
+removed, and the answer cannot be inferred without inspecting local certificate configuration. Route any
+implementation to `Test Harness Engineer v2` only after that decision.
+[Entry 19](#19--certify-the-contract-suite-against-azure-sql) has its own connection and infrastructure
+decisions; this request neither widens nor satisfies Gate 2.
