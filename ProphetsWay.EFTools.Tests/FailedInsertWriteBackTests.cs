@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 using ProphetsWay.BaseDataAccess;
@@ -396,15 +395,18 @@ namespace ProphetsWay.EFTools.Tests
 
 		private static void WithStore(Action<Func<FailedInsertContext>> body)
 		{
-			// Foreign Keys=True is stated rather than assumed: SQLite enforces no constraint without the pragma,
-			// and an arrangement whose write silently stopped failing would leave every test here green and empty.
-			using (var connection = new SqliteConnection("Filename=:memory:;Foreign Keys=True"))
-			{
-				connection.Open();
+			// Foreign key enforcement is the seam's obligation, not this fixture's: an arrangement whose write
+			// silently stopped failing would leave every test here green and empty.
+			var store = TestStore.OpenStore(nameof(FailedInsertWriteBackTests));
+			var completed = false;
 
-				var options = new DbContextOptionsBuilder<FailedInsertContext>()
-					.UseSqlite(connection)
-					.Options;
+			try
+			{
+				var builder = new DbContextOptionsBuilder<FailedInsertContext>();
+
+				store.Configure(builder);
+
+				var options = builder.Options;
 
 				Func<FailedInsertContext> factory = () => new FailedInsertContext(options);
 
@@ -412,6 +414,14 @@ namespace ProphetsWay.EFTools.Tests
 					schema.Database.EnsureCreated();
 
 				body(factory);
+
+				completed = true;
+			}
+			finally
+			{
+				// A store this run failed to drop is a database left on the server, so it is raised here - but only
+				// over a body that otherwise passed, or cleanup replaces the finding with its consequence.
+				TestStoreCleanup.DisposeReportingFailure(store, completed);
 			}
 		}
 

@@ -24,9 +24,10 @@ does not duplicate them, because duplicated rules drift.
 
 The scope bar every entry below is judged against is in
 [purpose-and-scope.md](purpose-and-scope.md#settled-one-sentence-purpose), and the owner decisions that set
-the statuses below are recorded as **D1–D19** in
+the statuses below are recorded as **D1–D22** in
 [purpose-and-scope.md § Owner Decisions](purpose-and-scope.md#owner-decisions--2026-08-15). **D1–D9 were
-taken 2026-08-15, D10–D13 on 2026-08-16, D14–D18 on 2026-08-18 and D19 on 2026-08-19**; the section heading
+taken 2026-08-15, D10–D13 on 2026-08-16, D14–D18 on 2026-08-18, D19 on 2026-08-19 and D20–D22 on
+2026-08-24**; the section heading
 carries the earliest date only. **This preamble said D1–D10 until 2026-08-19, and that was stale by nine
 decisions.**
 
@@ -60,6 +61,107 @@ deleted. ~~**A green build is not a passing suite** — this repository still co
 **D10**.~~ **That last sentence is dead as of 2026-08-23** — `ProphetsWay.EFTools.Tests/` holds 25 source files
 and the suite discovers 270 cases. Do not restate it.
 
+## Triage Pass — 2026-08-24 — **the release gate**
+
+> 🔴 **READ THIS BEFORE THE 2026-08-23 PASS BELOW. One entry moved from "not a blocker" to "the blocker,"
+> and every sentence in this file that says otherwise is superseded.**
+
+**The owner stated the release bar for the first time, and it lands squarely on
+[entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container).** Verbatim:
+
+> *"if we can't say EFTools is cleared to work in SQL Server, then it's not worth pushing out."*
+
+**`ProphetsWay.EFTools` 3.0.0 stays untagged and unpublished until a whole-suite SQL Server run exists.**
+Recorded as [D20](purpose-and-scope.md#owner-decisions--2026-08-15); the environment and the target run are
+[D21](purpose-and-scope.md#owner-decisions--2026-08-15). **No version bump, tag or publish is authorized by
+this pass**, and none is an agent's to take in any case.
+
+| Moved | Entry |
+| --- | --- |
+| **Not release-blocking → RELEASE-BLOCKING** | **11** — status token **unchanged at `Scheduled`**; what changed is its classification. No `Proposed`/`Deferred`/`Done` transition was taken or authorized |
+| **Newly filed — `Scheduled`, RELEASE-BLOCKING** | **19** — Azure SQL certification, filed later the same day under [D22](purpose-and-scope.md#owner-decisions--2026-08-15). See [the second gate](#later-the-same-day--azure-sql-becomes-a-second-gate-d22) |
+| Unchanged | 16, 17, 18 — still `Proposed`, still non-breaking, still not blockers |
+
+**Three claims in the 2026-08-23 pass below are now false and are corrected in place rather than deleted:**
+*"none of them is a blocker"*, *"Nothing needs to be built before 3.0.0 is published"*, and *"What remains
+before the package is on nuget.org is release mechanics, not work items."* Each was **true when written** —
+the judgement that certification was CI evidence rather than correctness was sound against the information
+available, and it was the owner supplying a *purpose* for the library, not a defect being found, that
+overturned it. That is why the pass is amended and not rewritten.
+
+### What did **not** change, and must not be read as cancelled
+
+**[D2](purpose-and-scope.md#owner-decisions--2026-08-15), [D4](purpose-and-scope.md#owner-decisions--2026-08-15)
+and [D8](purpose-and-scope.md#owner-decisions--2026-08-15) all stand.** They certify **SQLite *and* SQL
+Server** and put that claim on the package. D20 does not withdraw the SQLite half — it says which half is the
+**gate**:
+
+| | Certification on SQL Server, whole suite | Certification on SQLite, whole suite |
+| --- | --- | --- |
+| **Owner decision** | D20 — **release gate** | D2 / D4 / D8 — still owed, **not** the gate |
+| **Blocks the 3.0.0 tag?** | **Yes** | **No** |
+| **Why the split** | It is the provider the one real consumer deploys on — local MSSQL for development, Azure SQL in production | It is the fast CI leg D4 wants, and CI runs none of the suite today anyway ([`LocalTestsOnly`](#the-localtestsonly-half-is-still-pipeline-engineers)) |
+
+**Nothing here authorizes weakening D8's public wording to "SQL Server only."** The certified tier is still
+two providers; the SQLite evidence is *later*, not *withdrawn*. An agent that reads this pass and edits the
+package `<Description>` down to one provider has misread it — and see [Q4](#q4--closed-the-certification-is-a-public-claim),
+where the wording turns out not to be on the package at all yet.
+
+### Still undecided, and not decidable here
+
+> ✅ **ANSWERED later the same day — see [the second gate](#later-the-same-day--azure-sql-becomes-a-second-gate-d22).**
+> The paragraph below was correct for a few hours on 2026-08-24 and is kept because its *reasoning* about
+> `EnableRetryOnFailure` is unchanged and still governs the work. **Its conclusion — "no status is filed for
+> it" — is dead: [entry 19](#19--certify-the-contract-suite-against-azure-sql) is filed and blocking.**
+
+~~**Azure SQL as an additional certification leg is an open owner decision.**~~ The owner named two environments —
+local MSSQL for development and debugging, **Azure SQL for production** — and certifying the first does not
+certify the second. `EnableRetryOnFailure` is effectively mandatory against Azure SQL and an EF Core execution
+strategy is incompatible with a user-initiated transaction unless it is wrapped in `ExecuteInTransaction`,
+which lands **on this library's own transaction contract** rather than on the consumer's code. ~~**No status is
+filed for it and none is invented**: it needs the owner's scope call first. Until then D20 is a **SQL Server**
+gate and says nothing about Azure SQL.~~ **The scope call was made; the status exists.**
+
+### Later the same day — Azure SQL becomes a second gate (D22)
+
+**The owner answered the question above. Verbatim:**
+
+> *"yes, option 1 please, mssql server and azure sql both need to be covered, i don't have an azure sql
+> instance setup just yet, but if we get bicep, we shoudl be able to deploy an instance from cli and us that
+> to test?"*
+
+`option 1` is the offered choice **"Azure SQL is a certified target before 3.0.0"** and is interpreted as
+nothing wider. Recorded as [D22](purpose-and-scope.md#owner-decisions--2026-08-15).
+
+**There are now two certification gates on the 3.0.0 tag, and neither is satisfied:**
+
+| Gate | Provider | Entry | Evidence today |
+| --- | --- | --- | --- |
+| **1** | **Local Microsoft SQL Server** | [11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | Server reachable; `ProphetsWay.Example` schema has a **zero-drift DACPAC deploy report**; **the whole-suite run has not happened.** ~~the 270-case run~~ — the count moved to **287** on 2026-08-24 and 14 cases are exempt from the *selection*; see [the restatement](#the-close-condition-restated-2026-08-24--the-number-moved-the-bar-did-not) |
+| **2** | **Azure SQL** | [19](#19--certify-the-contract-suite-against-azure-sql) | **None.** No subscription named, no resource deployed, no run attempted |
+
+**Read the second row literally.** No Azure resource exists and no Azure result exists. Nothing in this file
+or in `purpose-and-scope.md` may be written in a way that implies otherwise.
+
+**What D22 authorizes, and what it does not.** Infrastructure may be **authored as Bicep, built and
+previewed**; `what-if` needs an available Azure context; **the deployment itself and the later teardown are
+two irreversible steps, each requiring the owner's explicit approval at the moment it is taken.** D22 is not
+that approval. **No version bump, tag, publish, `.yml` change, Azure resource creation or database mutation
+is authorized by this pass.**
+
+**Gate 1 runs first, and the two bodies of work stay separate.** The immediate lap is local: provider-selectable
+test wiring that the seven store-backed local classes actually consume, then a **whole-suite run** against the
+local instance meeting the five criteria in
+[entry 11's restatement](#the-close-condition-restated-2026-08-24--the-number-moved-the-bar-did-not). Bicep,
+`what-if`, deployment, the Azure DACPAC apply and the Azure run are
+[entry 19](#19--certify-the-contract-suite-against-azure-sql) and start from an infrastructure design the
+owner has not settled. **A Stage 3 lap that reaches for Azure is out of its own scope**, and debugging test
+wiring and cloud infrastructure simultaneously against a billed resource with no local baseline is the
+failure that ordering avoids.
+
+**The SQLite whole-suite leg is still owed under D2/D4 and is still not a gate** — and it is **not a
+substitute** for either SQL Server gate. Two gates and one deferred leg; do not collapse them into one item.
+
 ## Triage Pass — 2026-08-23
 
 **Eleven entries closed, two narrowed, three filed.** Run by `Purpose Refiner` against the owner's stated goal:
@@ -77,7 +179,7 @@ rather than as verified — see [entry 18](#18--committed-trx-files-under-testre
 | **Narrowed, still open** | 11 (certification), 12 (the release note) |
 | **Newly filed as `Proposed`** | 16 (Source Link and packaging), 17 (dead preprocessor guards), 18 (stale `.trx` artifacts) |
 
-### Closing lap, later the same day — entry 12 closes, and with it the last release blocker
+### Closing lap, later the same day — entry 12 closes, and with it the last release blocker *then known*
 
 **`Changelog Author` discharged the D12 obligation between the pass above and this one.** `CHANGELOG.md` was
 reopened on 2026-08-23 and every heading in its v3.0.0 entry re-read; **all four defects are now named as
@@ -91,9 +193,16 @@ four citing entries point at it rather than restating it.
 | `Scheduled` (release note) → **`Done`** | **12** |
 | Note corrected on an entry already `Done` | 3, 13, 14 — each carried *"release note still owed"*; that clause is now false and is struck where it appears |
 
-**Nothing in this repository now blocks publishing 3.0.0.** The section below is rewritten to say so.
-**Entries 11, 16, 17 and 18 remain open and none of them is a blocker** — that judgement is unchanged from
-the pass above and was not re-litigated here.
+> ⛔ **SUPERSEDED 2026-08-24 — the two bolded sentences below are false.**
+> [Entry 11 is now a release blocker](#triage-pass--2026-08-24--the-release-gate) by owner decision
+> **[D20](purpose-and-scope.md#owner-decisions--2026-08-15)**. They are kept because the *reasoning* that
+> produced them — that nothing outstanding was breaking, and that certification was evidence rather than
+> correctness — is still correct on its own terms and is what a reader needs in order to see why a statement
+> of **purpose** rather than a discovered defect is what overturned it. **Read them as history.**
+
+~~**Nothing in this repository now blocks publishing 3.0.0.** The section below is rewritten to say so.
+**Entries 11, 16, 17 and 18 remain open and none of them is a blocker**~~ — that judgement is unchanged from
+the pass above and was not re-litigated here. **16, 17 and 18 are still not blockers. 11 is.**
 
 **Three claims elsewhere in this file are now not merely stale but *wrong*, and are struck where they appear:**
 
@@ -111,22 +220,39 @@ the pass above and was not re-litigated here.
 > pointed at the unmet D12 release note. **That is no longer true**, and the strikethrough is not enough —
 > the sentence would be read as current by anyone skimming for a blocker.
 
-**Nothing needs to be built before 3.0.0 is published.**
+> ⛔ **SUPERSEDED 2026-08-24. This heading answers a question the owner asked on 2026-08-23 —
+> *"is anything unfinished that we'll need within a week"* — and its answer was right for that question.**
+> On 2026-08-24 the owner asked a **different** one and answered it themselves: *what is this library for, and
+> what would make it fit to publish.* The answer is
+> [the SQL Server gate](#triage-pass--2026-08-24--the-release-gate). **One thing does need to be built before
+> 3.0.0 is published, and it is test wiring** — see [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container).
 
-The [D12 release-note obligation](#the-changelog-author-obligation--d12) — the only item that ever blocked the
-push — was discharged by `Changelog Author` on 2026-08-23 and **verified here by reopening `CHANGELOG.md`**,
+~~**Nothing needs to be built before 3.0.0 is published.**~~ **One thing does: a whole-suite SQL Server run
+(D20).** Everything in the paragraph below remains true about the *D12* obligation specifically.
+
+The [D12 release-note obligation](#the-changelog-author-obligation--d12) — ~~the only item that ever blocked the
+push~~ **the only item that blocked it as of 2026-08-23** — was discharged by `Changelog Author` on 2026-08-23 and **verified here by reopening `CHANGELOG.md`**,
 not by accepting the report. All four shipped 2.2.0 defects are named as `Fixed`, each with the
 silent-failure characteristic that made D12 an obligation rather than a formality, and the entry opens with a
 2.2.0 known-issues section a reader finds without reading the rest of it. **The trade D12 made — four patches
 for four release notes — has been paid on both sides.**
 
-**Everything else open here is comfortably deferrable.** Entries 11, 16, 17 and 18 are, in order: CI evidence
-for a claim not yet printed on the package; non-breaking packaging metadata; four dead directive lines per file
-in an unshipped project; and a housekeeping decision about committed test artifacts. **None of them is
-breaking, and none of them blocks a publish.**
+**Entries 16, 17 and 18 are comfortably deferrable** — in order: non-breaking packaging metadata; four dead
+directive lines per file in an unshipped project; and a housekeeping decision about committed test artifacts.
+**None of them is breaking, and none of them blocks a publish.** ~~Entry 11 is CI evidence for a claim not yet
+printed on the package, and is equally deferrable.~~ **Struck 2026-08-24 — entry 11 is a gate ([D20](purpose-and-scope.md#owner-decisions--2026-08-15)).**
+The "CI evidence" framing was the error: the gate is not that a *build agent* runs the suite, it is that
+**anyone has run all 270 against SQL Server even once.**
 
-**What remains before the package is on nuget.org is release mechanics, not work items** — the D11 ordering,
-the tag, and the push. None of it is tracked by an entry in this index and none of it is an agent's to do.
+~~**What remains before the package is on nuget.org is release mechanics, not work items** — the D11 ordering,
+the tag, and the push.~~ ~~**Superseded 2026-08-24.** What remains is **one work item and then release
+mechanics**~~ — **corrected later the same day: TWO work items and then release mechanics.**
+[Entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container)'s whole-suite run
+against **local SQL Server**, *and*
+[entry 19](#19--certify-the-contract-suite-against-azure-sql)'s whole-suite run against **Azure SQL**
+([D22](purpose-and-scope.md#owner-decisions--2026-08-15)); *then* the D11 ordering, the tag and the push.
+The mechanics half of that sentence is unchanged and is still
+not an agent's to do.
 
 ## Index
 
@@ -142,14 +268,15 @@ the tag, and the push. None of it is tracked by an entry in this index and none 
 | 8 | [Remove `FluentAssertions` from `ProphetsWay.Example.DataAccess.EF`](#8--remove-fluentassertions-from-prophetswayexampledataaccessef) | **Done** — 2026-08-16; the reference is gone and the licence exposure is closed |
 | 9 | [Delete the stray `[submodule "Submod"]` block from `.gitmodules`](#9--delete-the-stray-submodule-submod-block-from-gitmodules) | **Done** — 2026-08-23; `.gitmodules` declares one submodule and no `Submod`. **It stopped the warning; it did not give this package Source Link** — see [entry 16](#16--source-link-symbol-packages-and-the-empty-packaging-metadata-stubs) |
 | 10 | [Collapse the `Guid`/`Int`/`Long` DAO triplication](#10--collapse-the-guidintlong-dao-triplication) | **Done** — 2026-08-23; the folder is flat and all 15 files declare `namespace ProphetsWay.EFTools`. Approved by **D3**, constrained by **D13** |
-| 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Scheduled** — **narrowed 2026-08-23.** Both providers are in real use; what is missing is a run of the *whole* suite on *either one*, plus the `LocalTestsOnly` half. **Not release-blocking.** Its "fact 2" is now false — read the triage note before citing it |
-| 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Done** — 2026-08-23, **both halves**. The code half was always moot (the member is gone); the release-note half landed and was verified by reopening `CHANGELOG.md` — § *"Fixed: commit and rollback no longer silently do nothing"*. **The 2.2.x patch stays `Rejected`**, which is decision history and does not reopen. **This was the last release blocker in the repository** |
+| 11 | [Certify the contract suite on SQLite in-memory and a SQL Server container](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | 🔴 **Scheduled — RELEASE-BLOCKING as of 2026-08-24 ([D20](purpose-and-scope.md#owner-decisions--2026-08-15)).** The **whole suite on local SQL Server** is **Gate 1** on the 3.0.0 tag: *"if we can't say EFTools is cleared to work in SQL Server, then it's not worth pushing out."* **[Entry 19](#19--certify-the-contract-suite-against-azure-sql) is Gate 2 and is equally blocking** — this entry does not cover Azure SQL. The **SQLite** whole-suite leg and the `LocalTestsOnly` half are still owed under D2/D4, are **not** a gate, and are **not a substitute** for either. **Do not restate "Not release-blocking"** — that read was correct on 2026-08-23 and is dead. **Do not restate "all 270" either** — the count is **287** and 14 cases are exempt from the provider *selection*; see [the restatement](#the-close-condition-restated-2026-08-24--the-number-moved-the-bar-did-not). Its "fact 2" is still false; read both triage notes before citing the entry |
+| 12 | [`RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction](#12--rootnoniddaoensurebegintransaction-silently-no-ops-against-a-pre-existing-transaction) | **Done** — 2026-08-23, **both halves**. The code half was always moot (the member is gone); the release-note half landed and was verified by reopening `CHANGELOG.md` — § *"Fixed: commit and rollback no longer silently do nothing"*. **The 2.2.x patch stays `Rejected`**, which is decision history and does not reopen. ~~**This was the last release blocker in the repository**~~ — **struck 2026-08-24: it was the last blocker *then known*.** [Entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) became one under [D20](purpose-and-scope.md#owner-decisions--2026-08-15). This entry is unaffected and stays `Done` |
 | 13 | [The soft-delete and keyless DAO bases cannot serve the 3.x contracts by inheritance](#13--the-soft-delete-and-keyless-dao-bases-cannot-serve-the-3x-contracts-by-inheritance) | **Done** — 2026-08-23; `RootBaseSoftDao` is deleted and the soft members are `override`s. **2.2.x patch stays `Rejected`**; its release note is **discharged** — `CHANGELOG.md` § *"Fixed: Update no longer un-deletes a soft-deleted row"*, which also names the second-`Delete` half |
 | 14 | [The Entity Framework DAO bases adopt the caller's instance, violating the SNAPSHOT rule](#14--the-entity-framework-dao-bases-adopt-the-callers-instance-violating-the-snapshot-rule) | **Done** — 2026-08-23; carried inside entry 10 under **D14**. Its release note is **discharged** — `CHANGELOG.md` § *"Fixed: a read or a write no longer hands you the store's own object"*, **including the "what stops happening" paragraph D12 says this one uniquely owes**. The clause this row carried saying that sentence was absent is dead |
 | 15 | [`ProphetsWay.EFTools.Guid` shadows `System.Guid` inside this assembly](#15--prophetswayeftoolsguid-shadows-systemguid-inside-this-assembly) | **Done** — 2026-08-23; closed for free inside entry 10, as predicted. The namespace does not exist, so the collision cannot occur |
 | 16 | [Source Link, symbol packages, and the empty packaging metadata stubs](#16--source-link-symbol-packages-and-the-empty-packaging-metadata-stubs) | **Proposed** — filed 2026-08-23. `AGENTS.md` deviation 5 had no entry here. **Non-breaking, so it can land after 3.0.0** |
 | 17 | [Five proving-ground DAOs carry dead preprocessor guards](#17--five-proving-ground-daos-carry-dead-preprocessor-guards) | **Proposed** — filed 2026-08-23. Cosmetic, unshipped, and **misleading in the one project whose job is to be copied from** |
 | 18 | [Committed `.trx` files under `TestResults/` are read as current and are not](#18--committed-trx-files-under-testresults-are-read-as-current-and-are-not) | **Proposed** — filed 2026-08-23. Seven committed run artifacts, **every one of them stale**, in a repository whose documents cite test counts as evidence |
+| 19 | [Certify the contract suite against Azure SQL](#19--certify-the-contract-suite-against-azure-sql) | 🔴 **Scheduled — RELEASE-BLOCKING.** Filed 2026-08-24 under [D22](purpose-and-scope.md#owner-decisions--2026-08-15): *"mssql server and azure sql both need to be covered."* **Gate 2** on the 3.0.0 tag, beside [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container)'s Gate 1. **No Azure resource exists and no Azure run has been attempted.** Blocked on eleven unmade infrastructure decisions, none of them an agent's to choose |
 
 Numbers are permanent. Entries are never renumbered and never removed —
 [purpose-and-scope.md](purpose-and-scope.md) cites entries by number, and a rejected entry is decision
@@ -169,6 +296,14 @@ file would otherwise not meet it.
    **green against it**.
 3. **This repository's submodule pointer is advanced to that tag.**
 4. **`ProphetsWay.EFTools` 3.0.0 is pull-requested, merged and published.**
+
+> 🔴 **Step 4 gained two preconditions on 2026-08-24, and D11 itself is otherwise unchanged.** Both
+> [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) (whole suite,
+> **local SQL Server**, [D20](purpose-and-scope.md#owner-decisions--2026-08-15)) and
+> [entry 19](#19--certify-the-contract-suite-against-azure-sql) (whole suite, **Azure SQL**,
+> [D22](purpose-and-scope.md#owner-decisions--2026-08-15)) must be green **before** step 4 runs.
+> **Steps 1–3 are unaffected**, and step 2's *"green against it"* still means the ordinary suite result, not
+> either certification.
 
 `ProphetsWay.BaseDataAccess` **3.1.0 is already published and current** and needs no release in this sequence.
 
@@ -303,6 +438,12 @@ taken the bump; do not restate `2 / 2 / 0`.** **An agent must never change it** 
 > fourteen rows describe work that has since landed, and the statuses in the [Index](#index) supersede this
 > column. It is kept as the record of how the release was scoped rather than as a current view. **The final
 > paragraph of this section is the part still worth reading**: this remains one indivisible release.
+>
+> 🔴 **Amended 2026-08-24 — two rows are missing from the table below and both block the tag.** Entry **11**
+> (local SQL Server, [D20](purpose-and-scope.md#owner-decisions--2026-08-15)) is **Gate 1** and entry **19**
+> (Azure SQL, [D22](purpose-and-scope.md#owner-decisions--2026-08-15)) is **Gate 2**. **Neither is satisfied,
+> and 3.0.0 is not eligible for a tag or a publish until both are.** The table's row 11 predates the
+> reclassification and reads as ordinary scheduled work; the [Index](#index) is the current view.
 
 | # | Status | Eligible for v3.0.0? | Why |
 | --- | --- | --- | --- |
@@ -1565,6 +1706,135 @@ exactly what `docs/api-contract.md` S2 calls the flat method surface and what it
 
 ## 11 — Certify the contract suite on SQLite in-memory and a SQL Server container
 
+> 🔴 **RE-TRIAGED 2026-08-24 — THIS ENTRY IS A RELEASE GATE. It is GATE 1 OF TWO.** Status token **unchanged
+> at `Scheduled`**;
+> its *classification* moved from "not release-blocking" to blocking. **Read this block before the 2026-08-23
+> one below it, which reached the opposite conclusion honestly and on less information.**
+>
+> **The owner's words, which are the decision:**
+>
+> > *"if we can't say EFTools is cleared to work in SQL Server, then it's not worth pushing out."*
+>
+> Recorded as [D20](purpose-and-scope.md#owner-decisions--2026-08-15). **`ProphetsWay.EFTools` 3.0.0 stays
+> untagged and unpublished until one complete whole-suite SQL Server run exists** — and, since
+> [D22](purpose-and-scope.md#owner-decisions--2026-08-15) later the same day, until
+> [entry 19](#19--certify-the-contract-suite-against-azure-sql)'s Azure SQL run exists as well.
+> **Both gates, not either.** The reason the 2026-08-23
+> pass got this wrong is worth keeping: it judged certification as *CI evidence for a correct package*, which
+> it is. What it could not know was that the package's one real consumer deploys on SQL Server, which makes
+> the same evidence a **fitness-for-purpose** claim instead. Nothing about the code changed; the bar did.
+>
+> **What the gate is, exactly — and what it is not:**
+>
+> | | Blocks the 3.0.0 tag? |
+> | --- | --- |
+> | **The whole suite executed against SQL Server, green** — ~~all 270 cases~~ **287 as of 2026-08-24, of which 14 are exempt from the *selection* and none from the *run*; see [the restatement](#the-close-condition-restated-2026-08-24--the-number-moved-the-bar-did-not)** | 🔴 **Yes** — this entry, D20 |
+> | The **whole** suite on **SQLite**, green | **No** — still owed under D2/D4, still not the gate. **Not cancelled** |
+> | `LocalTestsOnly: 'yes'` removed so CI runs any of it | **No** — `Pipeline Engineer`'s, still `Deferred`. See [below](#the-localtestsonly-half-is-still-pipeline-engineers) |
+> | An **Azure SQL** leg | 🔴 ~~**Undecided** — no owner scope call yet. Not filed, not invented~~ **Yes, and it is a SEPARATE gate** — decided later the same day as [D22](purpose-and-scope.md#owner-decisions--2026-08-15) and filed as [entry 19](#19--certify-the-contract-suite-against-azure-sql). **This entry does not cover it, and satisfying this entry does not satisfy it** |
+>
+> **The environment exists. That is not the same as the evidence existing.** The owner has confirmed:
+>
+> > *"i have a local instance of mssql running on local host, if we need to deploy the schema from Example's
+> > sqlproj dacpac, we can deploy it locally to then run our tests against it."*
+>
+> Recorded as [D21](purpose-and-scope.md#owner-decisions--2026-08-15), which also authorizes deploying
+> `ProphetsWay.Example.Database`'s DACPAC locally if the run needs it — the `.sqlproj` is present in the
+> submodule at `ProphetsWay.Example/ProphetsWay.Example.Database/ProphetsWay.Example.Database.sqlproj`,
+> located by file search on 2026-08-24. **A running server and a deployable schema are *available evidence*.
+> This entry closes when a run has happened, not when the means to run exists.**
+>
+> **The schema half is now stronger than "deployable" — and it is still not this entry's evidence.** The owner
+> reports the local `ProphetsWay.Example` schema carrying a **zero-drift DACPAC deploy report**, i.e. the
+> `.sqlproj` and the live database agree. That removes schema mismatch as a candidate explanation for any
+> failure the run produces, which is worth having before the run rather than after it. **It is not a test
+> result.** Zero cases have been executed against SQL Server outside the 13 adapted classes, and this entry
+> asks for 270.
+>
+> ### The implementation scope below is INSUFFICIENT — re-derived 2026-08-24
+>
+> **The 2026-08-23 block says closing item 1 "means making `Constants.GetExampleDataAccess`
+> provider-selectable." That is true and it is not enough**, and stating it as the plan sends the next agent
+> down a route that cannot reach 270. Verified on 2026-08-24 by opening the files named, not carried:
+>
+> | Group | How it picks a provider **today** | Reached by a `Constants` change? |
+> | --- | --- | --- |
+> | **13 adapted upstream classes** | `TestSeam.cs` `[ModuleInitializer]` → `TestDataAccessFactory.Use(() => Constants.GetExampleDataAccess, StoreCapabilities.TransactionIsolation)` → `Constants.GetExampleDataAccess` → `new ExampleDataAccess(connectionString)` → `.UseSqlServer(...)` | ✅ **Yes** — and they are **already on SQL Server** |
+> | **7 store-backed local classes** | Each builds its own `new SqliteConnection("Filename=:memory:")`, calls `.UseSqlite(connection)` and then `schema.Database.EnsureCreated()` — `KeylessDaoTests`, `KeylessSoftDaoTests`, `KeyPredicateOpenKeyTests`, `SoftDeleteTimestampHookTests`, `FailedInsertWriteBackTests`, `IdentifierResolutionTests`, and `AlternateKeyGuardSpikeTests`, which parameterizes `.UseSqlite` **and** `.UseInMemoryDatabase` per `[Theory]` | ❌ **No** — none of them calls `Constants`, so editing it moves none of them |
+> | **1 store-free local class** | `CompanyResourceConversionTests` — reflection only, no context, no connection | **n/a** — passes on any provider or none |
+>
+> **So the gap is not a connection string. It is that seven classes have no seam at all**, and each stands up
+> its own schema in-process against a throwaway in-memory connection — something SQL Server has no direct
+> equivalent of. **Reaching an all-270 SQL Server run requires provider-selectable wiring those seven
+> actually consume, plus a decision about how each gets an isolated schema.**
+>
+> **Three sub-questions Stage 3 must answer, and this entry deliberately does not:**
+>
+> 1. **What shape the wiring takes**, and whether the seven classes converge on one fixture or keep
+>    per-class construction with a provider parameter.
+> 2. **What happens to `AlternateKeyGuardSpikeTests`**, which parameterizes two providers *on purpose* — its
+>    own `<remarks>` call it *"an empirical spike, not a specification."* Forcing it onto SQL Server would
+>    destroy what it measures; leaving it pinned means "all 270 on SQL Server" has a footnote. **Either is
+>    defensible and the choice is not this document's.**
+> 3. **Schema provisioning** — `EnsureCreated()` per test against a real server is not free and is not
+>    isolated the way `Filename=:memory:` is. This is where [D21](purpose-and-scope.md#owner-decisions--2026-08-15)'s
+>    DACPAC authorization is likely to earn its place.
+>
+> **None of the three is a scope question**, which is why they are recorded rather than answered: they are
+> test-design questions for the agent that writes the lap. What *is* settled here is the target — **one
+> complete ~~270/270~~ whole-suite run against SQL Server** — and that no tag precedes it. **See the
+> restatement below: the count moved and the criterion did not.**
+
+### The close condition, restated 2026-08-24 — the number moved, the bar did not
+
+**Sub-question 2 above has been answered by `Test Designer`, and the answer changes the arithmetic of this
+entry rather than its target.** Recorded here because this entry's *"one complete 270/270 run"* is quoted
+elsewhere and is now wrong in both directions.
+
+| What moved | From | To | How it was established |
+| --- | --- | --- | --- |
+| Discovered cases | 270 | **287** | `Test Designer` added 17 provider-selection seam guards — `ProviderSelectionTests` declares 7 `[Fact]` plus 3 `[Theory]` carrying 10 `[InlineData]`; **counted 2026-08-24 by grepping every xUnit attribute in the file** |
+| Cases that can honour a provider selection | — | **273** | 287 minus the spike |
+| Cases structurally exempt from the selection | — | **14** | `AlternateKeyGuardSpikeTests`: 7 `[Theory]` × 2 `[InlineData]` (`InMemory`, `Sqlite`), **all `Scope=Characterization` / `Area=AlternateKeys`, verified by opening the file** |
+
+**The spike stays pinned, and it stays at full strength.** Its subject is Entity Framework Core's own
+alternate-key behaviour ***compared across* providers**, so the comparison **is** the measurement — forcing it
+onto the selected provider deletes the case rather than certifying it. `Test Designer` chose to pin and guard
+it rather than weaken or re-trait it; a new guard holds all its cases to `Scope=Characterization` so the
+exemption cannot quietly widen. **Do not "fix" this by re-traiting the spike or by dropping one of its
+`[InlineData]` legs.**
+
+**The exemption is from the *selection*, not from the *run*.** All 287 cases execute in the certification
+command and **all 287 must pass**. "Which store did it open" and "did it pass" are different questions and only
+the first has an exemption.
+
+**The five criteria that close this entry** are stated once, in
+[purpose-and-scope.md § Gate 1's success criterion](purpose-and-scope.md#gate-1s-success-criterion-stated-so-it-does-not-go-stale),
+and are not duplicated here. The short form a downstream agent needs: **an externally anchored SQL Server
+selection, a green no-filter run, every store-touching case on SQL Server bar the spike, a guard that turns red
+if anything else picks its own provider, and four recorded counts plus the resolved provider.** The counts
+(**287 / 14 / 273 / 0** today) are a snapshot; the criteria are the bar.
+
+### The SQLite half's scope — already settled by D2 and D4, and re-derived rather than re-decided
+
+**`Test Auditor` raised this on 2026-08-24 as an open question:** the specified `TestStoreProvider.Sqlite`
+member makes SQLite selectable for the **whole** suite, including the 13 adapted upstream classes whose
+SQLite schema provisioning nothing currently specifies. Whole-suite leg, or fast local leg only?
+
+**It is not an open question and no owner decision is needed.**
+[D2](purpose-and-scope.md#owner-decisions--2026-08-15) certifies *"only SQLite and SQL Server … by this
+repository's tests"*, [D4](purpose-and-scope.md#owner-decisions--2026-08-15) names SQLite the fast **CI
+contract/query gate**, and this entry's own 2026-08-23 block asks for *"a certified run of the **whole** suite
+on **both** providers."* **SQLite was decided as a whole-suite certification leg on 2026-08-15.** So the enum
+member is correct and the missing provisioning is **this entry's known non-blocking debt**, not an
+over-promise to be trimmed. Deleting the member or narrowing it to the local classes would silently descope a
+provider [D8](purpose-and-scope.md#owner-decisions--2026-08-15) puts on the package.
+
+**The constraint that follows, and it is the only new obligation in this block:** selecting SQLite must either
+**run the whole suite** or **refuse by name**. A SQLite selection that runs 273 cases and fails 13 adapters on
+a missing schema reads as a provider defect in this library and is the opposite of one. **Deferring the SQLite
+provisioning is legitimate; deferring it silently is not.**
+
 > **RE-TRIAGED 2026-08-23 — status **unchanged at `Scheduled`**, but the entry is **much narrower than it
 > reads**, and two of its own "verified facts" are now wrong.**
 >
@@ -1591,18 +1861,36 @@ exactly what `docs/api-contract.md` S2 calls the flat method surface and what it
 > 1. **A certified run of the *whole* suite on *both* providers.** Today the split is fixed by construction:
 >    the 8 local classes are SQLite-or-`InMemory` and the 13 adapted classes are SQL Server, and **no single
 >    provider runs all of it.** D2 certifies SQLite *and* SQL Server, and D8 puts that claim on the package,
->    so the claim currently outruns the evidence by exactly this gap. Closing it means making
->    `Constants.GetExampleDataAccess` provider-selectable so the adapted classes can also run on SQLite.
+>    so the claim currently outruns the evidence by exactly this gap. ~~Closing it means making
+>    `Constants.GetExampleDataAccess` provider-selectable so the adapted classes can also run on SQLite.~~
+>    **Struck 2026-08-24 as insufficient** — see the re-derived scope above. It reaches the 13 adapted
+>    classes and none of the seven store-backed local ones.
 > 2. **The `LocalTestsOnly` half**, which is `Deferred` to the pipeline owner and is **no longer justified by
 >    its own stated reason.** That reason was a local SQL Server dependency; the majority of the local suite
 >    now needs no database at all, and item 1 above is what would let the rest run without one. Recorded so
 >    the decayed justification is not inherited as still sound. `Pipeline Engineer` owns the edit; this is not
 >    an authorization to make it.
 >
-> **Neither is release-blocking.** Both are about *proving* 3.0.0 in CI rather than about 3.0.0 being correct,
-> and item 2 changes no code a consumer receives.
+> ~~**Neither is release-blocking.** Both are about *proving* 3.0.0 in CI rather than about 3.0.0 being correct,
+> and item 2 changes no code a consumer receives.~~ **STRUCK 2026-08-24.** Item 1, restricted to SQL Server,
+> **is** release-blocking under [D20](purpose-and-scope.md#owner-decisions--2026-08-15). Item 2 is not, and the
+> sentence remains true of it. The distinction the struck text missed: the gate is not that CI runs the suite,
+> it is that **the suite has been run against SQL Server at all.**
 
-**Status:** **Scheduled for v3.0.0** for the test work — 2026-08-15, approved by the owner as
+### The `LocalTestsOnly` half is still `Pipeline Engineer`'s
+
+**Unchanged by [D20](purpose-and-scope.md#owner-decisions--2026-08-15), and deliberately so.** `app-variables.yml`
+still reads `LocalTestsOnly: 'yes'`, CI still executes none of the 270, and **nothing in the 2026-08-24 pass
+authorizes changing that or any other `.yml`.** The gate D20 sets is satisfiable by a run on the owner's own
+machine; it says nothing about a build agent. Keeping the two apart is what stops the release gate from
+quietly acquiring a pipeline dependency it does not have.
+
+**Status:** 🔴 **Scheduled for v3.0.0, and RELEASE-BLOCKING as of 2026-08-24** —
+[D20](purpose-and-scope.md#owner-decisions--2026-08-15), environment and target run in
+[D21](purpose-and-scope.md#owner-decisions--2026-08-15). **This is Gate 1 of two.**
+[Entry 19](#19--certify-the-contract-suite-against-azure-sql) is Gate 2 under
+[D22](purpose-and-scope.md#owner-decisions--2026-08-15), and **closing this entry does not close that one.**
+Originally scheduled 2026-08-15, approved by the owner as
 [D4](purpose-and-scope.md#owner-decisions--2026-08-15) and reinforced by
 [D8](purpose-and-scope.md#owner-decisions--2026-08-15), which turns "certified on SQLite and SQL Server"
 into a claim the **package** makes. **The pipeline half is `Deferred`** to whoever owns
@@ -1667,12 +1955,35 @@ the wording without the suite would be the "asserted rather than demonstrated" f
 object to elsewhere. The wording itself belongs to `Modernizer` and `README Author`; the evidence behind it
 is this entry.
 
+#### The wording is **not on the package yet**, and as of 2026-08-24 that is a relief rather than a defect
+
+**Verified 2026-08-24 by opening `ProphetsWay.EFTools/ProphetsWay.EFTools.csproj` at `e2f2120` — the
+completed packaging commit — and grepping `README.md`.** The `<Description>` names EF and the decoupling
+paradigm and **does not use the word "certified"**; `<PackageTags>` reads
+`entity-framework efcore ef-core dal data-access data-access-layer dao repository abstraction decoupling`
+and names **no provider**; the README's nearest sentence says a consumer builds the `DbContextOptions` and
+*"you choose SQL Server, PostgreSQL, SQLite or in-memory"* — a statement about *configurability*, not a
+certification claim. **So [D8](purpose-and-scope.md#owner-decisions--2026-08-15)'s public-wording obligation
+is still unmet.**
+
+**That is now load-bearing rather than an oversight to tidy.** Had the wording landed on 2026-08-23 it would
+today be a published claim of certification on two providers with a whole-suite run on neither — exactly the
+failure the paragraph above names. **The correct sequence is: earn the SQL Server evidence (D20), then earn
+or re-scope the SQLite evidence, then write the wording.** `Modernizer` and `README Author` still own the
+edit; **nothing here authorizes writing it early, and nothing here authorizes narrowing D8's certified tier
+to SQL Server alone.**
+
 ---
 
 ## 12 — `RootNonIdDao.EnsureBeginTransaction` silently no-ops against a pre-existing transaction
 
 > **CLOSED 2026-08-23 — both halves. This entry is `Done`, and it was the last release blocker in the
-> repository.**
+> repository ~~—~~ *then known*.**
+>
+> > **Amended 2026-08-24.** The claim was true on its date and is no longer a statement about the present:
+> > [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) is now a
+> > release blocker under [D20](purpose-and-scope.md#owner-decisions--2026-08-15). **Nothing about *this*
+> > entry changed** — it is `Done`, both halves, and does not reopen.
 >
 > **The code half needs nothing.** `RootNonIdDao.cs` was rewritten wholesale in the 3.x collapse and the member
 > carrying the defect does not survive into the shipped surface — which is what this entry always predicted:
@@ -2468,3 +2779,141 @@ as the current state of this suite.** The owner reports the suite at **270 / 270
 **that figure was not re-measured by this pass** — no test was run — and it is recorded here as the owner's
 measurement, corroborated only by the fact that `f93f0a4` touches precisely the two files carrying all 11
 failures.
+
+---
+
+## 19 — Certify the contract suite against Azure SQL
+
+**Status:** 🔴 **Scheduled for v3.0.0, and RELEASE-BLOCKING.** Filed 2026-08-24 by `Purpose Refiner` on the
+owner's decision, recorded as [D22](purpose-and-scope.md#owner-decisions--2026-08-15). **Filed and scheduled
+in the same pass** — an entry normally opens as `Proposed`, and this one does not, because the owner scheduled
+it in the act of asking for it.
+
+> **The decision, verbatim:**
+>
+> > *"yes, option 1 please, mssql server and azure sql both need to be covered, i don't have an azure sql
+> > instance setup just yet, but if we get bicep, we shoudl be able to deploy an instance from cli and us that
+> > to test?"*
+>
+> `option 1` is read **only** as the choice it answered — **"Azure SQL is a certified target before 3.0.0."**
+> It is not read as approval of any infrastructure, any tool, any repository layout, or any spend.
+
+### What this entry is
+
+**One complete whole-suite run against a real Azure SQL database, green.** That is the whole close condition,
+and it is the same shape as [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container)'s
+close condition against local SQL Server.
+
+> **This entry read *"all 270 cases"* when it was filed, and that number is a snapshot rather than the bar —
+> corrected 2026-08-24.** The suite is at **287** since `Test Designer`'s 17 provider-selection seam guards
+> landed, and **14 of those cases are structurally exempt from any provider selection**: the
+> `AlternateKeyGuardSpikeTests` provider-comparison spike, whose measurement *is* the comparison. **The
+> exemption is from the selection and not from the run** — all 287 execute and all 287 must pass. Gate 2 closes
+> against the same five criteria as Gate 1, stated once in
+> [purpose-and-scope.md § Gate 1's success criterion](purpose-and-scope.md#gate-1s-success-criterion-stated-so-it-does-not-go-stale)
+> and re-derived for this entry in
+> [entry 11's restatement](#the-close-condition-restated-2026-08-24--the-number-moved-the-bar-did-not).
+> **Nothing about [D22](purpose-and-scope.md#owner-decisions--2026-08-15) changes.**
+
+**`ProphetsWay.EFTools` 3.0.0 stays untagged and unpublished until both gates are met.** Neither implies the
+other, and the [SQLite whole-suite leg](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container)
+still owed under D2/D4 is **not a substitute for either**.
+
+### Why it is a separate entry rather than a widening of entry 11
+
+**Because the failure it can catch is one local SQL Server structurally cannot.** Azure SQL disconnects as a
+matter of routine operation, so EF Core's `EnableRetryOnFailure` execution strategy is effectively mandatory
+against it — and **an execution strategy is incompatible with a user-initiated transaction unless that
+transaction is wrapped in `ExecuteInTransaction`**. `BaseEFDataAccess<TContext>` exposes `TransactionStart`,
+`TransactionCommit` and `TransactionRollBack` as first-class members of the contract this package advertises,
+so the incompatibility lands **on this library's public surface**, not on the consumer's code.
+
+**If Gate 2 exposes that, it is a finding for the owner and not a contract change an agent takes.** The
+possible answers — document the constraint, wrap internally, or change the transaction contract — differ in
+severity from a doc note to a breaking change, and only the owner picks. Recording the possibility here is
+what stops it being discovered at the moment of the run and patched in a hurry.
+
+The secondary reason is practical: entry 11 needs a connection string and a schema. This entry needs
+**infrastructure that does not exist**, and mixing an unblocked lap with a blocked one hides that one of them
+can start today.
+
+### What does NOT exist — stated plainly, because a later reader will assume otherwise
+
+- **No Azure subscription or tenant has been named.**
+- **No resource group, SQL server or database has been created.**
+- **No Bicep template exists in this repository.**
+- **No `what-if` preview has been run** — it requires an available Azure context, which there is not.
+- **No DACPAC has been applied to any Azure database.**
+- **No Azure SQL test run has been attempted, so there is no result of any kind to cite.**
+
+The owner's own words are a proposal in question form — *"if we get bicep, we shoudl be able to deploy an
+instance from cli and us that to test?"* Treat that as the approved **direction** and nothing further, exactly
+as [D10](purpose-and-scope.md#owner-decisions--2026-08-15) was treated: direction settled, design deferred.
+
+### What is authorized, and where the irreversible gates are
+
+| Step | Authorized by D22? |
+| --- | --- |
+| **Author** Bicep for an Azure SQL server + database | ✅ Yes — authoring only |
+| **Build / lint / compile** that Bicep | ✅ Yes |
+| **`what-if` preview** | ⚠️ Only with an available Azure context, which does not exist yet. Preview is read-only, but it still needs a real subscription — and naming one is a decision below |
+| **Deploy** the infrastructure | 🔴 **No.** Irreversible and billable. **Requires the owner's explicit approval at the moment it is taken** |
+| **Apply the DACPAC** to an Azure database | 🔴 **No** — downstream of a deployment that has not been approved |
+| **Run the suite** against it | 🔴 **No** — downstream of both |
+| **Tear the infrastructure down** | 🔴 **No.** Separately irreversible; **its own explicit owner approval** |
+| Change any `.yml`, bump a version, tag, or publish | 🔴 **No.** None of it, in this entry or any other |
+
+**Two irreversible gates, not one.** Deployment and teardown are approved separately because they fail in
+opposite directions: an unapproved deployment spends money the owner did not agree to, and an unapproved
+teardown destroys evidence the release depends on.
+
+### Blocked on eleven decisions, none of them an agent's to make
+
+**No value below has been chosen, and none may be inferred, defaulted, or filled in by a template.**
+
+| # | Decision | Why it cannot be guessed |
+| --- | --- | --- |
+| 1 | **Subscription and tenant** | No default exists and none is discoverable |
+| 2 | **Region** | Cost, latency and data residency all turn on it |
+| 3 | **Resource group name and isolation** | Whether certification shares a group with anything else is a blast-radius call |
+| 4 | **SQL server and database naming** | Azure SQL server names are globally unique; a guess collides or squats |
+| 5 | **Microsoft Entra / admin model** | Entra-only versus SQL authentication changes the connection string *and* the harness |
+| 6 | **Network and firewall access** | Public endpoint with an allowlist, private endpoint, or neither — this decides whether a local run can reach it at all |
+| 7 | **SKU and cost budget** | Serverless, Basic and provisioned tiers differ by orders of magnitude in both cost and behaviour under a suite |
+| 8 | **Retention** | Whether the instance survives the run, and for how long |
+| 9 | **Credential and secret handling** | Where the connection string lives. **No secret may be committed to any file in any of these repositories**, which rules out the shape entry 11 uses today |
+| 10 | **Lifetime and teardown** | Who tears it down, when, and on whose approval |
+| 11 | **Where the infrastructure lives** | `ProphetsWay.EFTools`, `ProphetsWay.BPA`, or a separate infrastructure home. This is a repository-boundary question of exactly the kind `Purpose Refiner` exists to answer, and **it has not been asked yet** |
+
+**Decision 11 is the one to ask first**, because it determines which repository the other ten are recorded in.
+It is not obviously this one: infrastructure that exists to certify a library is arguably not part of the
+library, and `ProphetsWay.BPA` is the application that actually deploys to Azure SQL.
+
+### Sequencing — Gate 1 first, and this is not a preference
+
+| | Gate 1 — [entry 11](#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | Gate 2 — this entry |
+| --- | --- | --- |
+| **Blocked on** | Nothing. Environment ready today under D21 | Eleven decisions above, then an infrastructure design and review |
+| **The work** | Provider-selectable test wiring the seven store-backed local classes consume, plus a schema-provisioning decision → a **whole-suite local run** meeting the five criteria in [entry 11's restatement](#the-close-condition-restated-2026-08-24--the-number-moved-the-bar-did-not) | Bicep authored and built → `what-if` → **owner-approved** deploy → DACPAC apply → suite run → **owner-approved** teardown |
+| **Irreversible steps** | None | **Two** |
+
+**Its input is a suite already proven provider-selectable.** Attempting Gate 2 first means debugging test
+wiring and cloud infrastructure simultaneously, against a billed resource, with no local baseline to attribute
+a failure to. That is the argument; it is not a claim that Gate 2 matters less. **It matters more** — Azure
+SQL is where the code actually runs in production.
+
+### The counter-argument, recorded so it is not lost
+
+**Gating a tag on infrastructure that does not exist can delay 3.0.0 indefinitely**, and the package is
+already correct by every other measure in this index. A defensible alternative was available: certify local
+SQL Server, publish 3.0.0, and certify Azure SQL into a 3.0.1 or 3.1.0 with the wording updated then. **The
+owner considered the choice and took the stricter one.** It is recorded here rather than argued, because the
+bar is a fitness-for-purpose bar and the owner is the one person who can set it.
+
+### Scope boundary
+
+**In scope:** whatever it takes to execute the suite against Azure SQL and record the result — infrastructure
+authoring, test wiring, and the certification evidence itself. **Out of scope:** the `.yml`
+(`Pipeline Engineer` owns it, `LocalTestsOnly` stays `Deferred`), the package wording (`Modernizer` and
+`README Author`, and it must not precede the evidence), and any change to the transaction contract, which
+would be a fresh owner decision rather than a consequence of this entry.

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 using ProphetsWay.BaseDataAccess;
@@ -289,13 +288,17 @@ namespace ProphetsWay.EFTools.Tests
 		{
 			var recorder = new KeyPredicateOpenKeyTests.CommandRecorder();
 
-			using (var connection = new SqliteConnection("Filename=:memory:"))
-			{
-				// Held open for the whole body: closing it discards the in-memory database.
-				connection.Open();
+			// Held for the whole body: disposing the store discards the database every context here reads.
+			var store = TestStore.OpenStore(nameof(KeylessDaoTests));
+			var completed = false;
 
-				var options = new DbContextOptionsBuilder<KeylessContext>()
-					.UseSqlite(connection)
+			try
+			{
+				var builder = new DbContextOptionsBuilder<KeylessContext>();
+
+				store.Configure(builder);
+
+				var options = builder
 					.AddInterceptors(recorder)
 					.Options;
 
@@ -305,6 +308,14 @@ namespace ProphetsWay.EFTools.Tests
 					schema.Database.EnsureCreated();
 
 				body(factory, recorder);
+
+				completed = true;
+			}
+			finally
+			{
+				// A store this run failed to drop is a database left on the server, so it is raised here - but only
+				// over a body that otherwise passed, or cleanup replaces the finding with its consequence.
+				TestStoreCleanup.DisposeReportingFailure(store, completed);
 			}
 		}
 

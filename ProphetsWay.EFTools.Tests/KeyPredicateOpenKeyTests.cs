@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -274,13 +273,17 @@ namespace ProphetsWay.EFTools.Tests
 		{
 			var recorder = new CommandRecorder();
 
-			using (var connection = new SqliteConnection("Filename=:memory:"))
-			{
-				// Held open for the whole body: closing it discards the in-memory database.
-				connection.Open();
+			// Held for the whole body: disposing the store discards the database every context here reads.
+			var store = TestStore.OpenStore(nameof(KeyPredicateOpenKeyTests));
+			var completed = false;
 
-				var options = new DbContextOptionsBuilder<KeyPredicateContext>()
-					.UseSqlite(connection)
+			try
+			{
+				var builder = new DbContextOptionsBuilder<KeyPredicateContext>();
+
+				store.Configure(builder);
+
+				var options = builder
 					.AddInterceptors(recorder)
 					.Options;
 
@@ -290,6 +293,14 @@ namespace ProphetsWay.EFTools.Tests
 					schema.Database.EnsureCreated();
 
 				body(factory, recorder);
+
+				completed = true;
+			}
+			finally
+			{
+				// A store this run failed to drop is a database left on the server, so it is raised here - but only
+				// over a body that otherwise passed, or cleanup replaces the finding with its consequence.
+				TestStoreCleanup.DisposeReportingFailure(store, completed);
 			}
 		}
 
