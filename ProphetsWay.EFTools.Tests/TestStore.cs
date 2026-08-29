@@ -252,6 +252,11 @@ namespace ProphetsWay.EFTools.Tests
 
             internal Store(TestStoreProvider provider, string identity)
             {
+                if (!IsDisposableIdentity(identity))
+                    throw new ArgumentException($"Store identity '{identity}' is not disposable.", nameof(identity));
+
+                _provider = provider;
+                Identity = identity;
                 RegisterIdentity(identity);
 
                 try
