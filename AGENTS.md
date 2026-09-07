@@ -314,6 +314,17 @@ narrower and is not a decision: **3.0.0 is set but not yet tagged or published, 
 paragraph above. Do not restate `2` / `2` / `0`, and do not describe the tree and the version file as
 disagreeing.
 
+### Azure SQL Certification Fixture — deployed 2026-09-06
+
+`infra/` contains `bicepconfig.json`, `group.bicep`, `example.solution.bicep`, and `README.md`.
+Under **D-033**, the owner authors and manually deploys the fixture while agents review and document it;
+**D-034** records that owner deployment `deploy-sql-manually-ggn8` succeeded in `westus`. The live shape is
+a dedicated resource group and logical server, the `ProphetsWay.Example` database online at Basic (5 DTUs,
+2 GiB), one exact-address firewall rule, and a dedicated security-enabled, non-mail-enabled Microsoft Entra
+administrator Group. Do not reproduce protected IDs or the client address. **Gate 2 remains open and
+release-blocking:** DACPAC publication, connection and authentication configuration, and the Azure whole-suite
+test run are still pending. Source-control policy for the current live-value defaults is also unresolved.
+
 ### 3.x Progress — the four implementation laps landed, and four more commits landed on 2026-08-23
 
 The owner approved an EF Core-only, relational-provider-neutral 3.x redesign with generic

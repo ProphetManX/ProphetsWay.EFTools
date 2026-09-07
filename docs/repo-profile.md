@@ -111,6 +111,27 @@ twelve-class 3.0.0 surface **and nothing else**, and referencing **no database p
 **The two are not yet the same artifact on nuget.org.** `app-variables.yml` reads `3` / `0` / `0`, but
 3.0.0 is **not tagged and not published**, so a reader of the listing still meets the first sentence.
 
+## Azure SQL Certification Fixture
+
+The owner-authored `infra/` surface contains four files: `bicepconfig.json`, `group.bicep`,
+`example.solution.bicep`, and `README.md`. `bicepconfig.json` enables the Microsoft Graph Bicep extension;
+`group.bicep` declares a dedicated security-enabled, non-mail-enabled Microsoft Entra administrator Group;
+and `example.solution.bicep` is subscription-scoped and composes pinned Azure Verified Modules for a dedicated
+resource group, logical SQL server, Basic database, and one exact-address firewall rule
+([infra/bicepconfig.json](../infra/bicepconfig.json), [infra/group.bicep](../infra/group.bicep),
+[infra/example.solution.bicep](../infra/example.solution.bicep), [infra/README.md](../infra/README.md)).
+
+**D-033 is the controlling route:** the owner authors and manually deploys; agents review and document.
+**D-034 records the milestone:** owner deployment `deploy-sql-manually-ggn8` succeeded in `westus`, creating
+the dedicated resource group and logical server, an Online Basic 5-DTU/2-GiB `ProphetsWay.Example` database,
+one firewall rule, and the dedicated Group as Entra-only SQL administrator
+([decision-log.md](decision-log.md)). No object IDs, membership identities, or client address are reproduced.
+
+**Gate 2 remains open and release-blocking.** The deployment proves the resources exist, not database use:
+the DACPAC, protected connection and authentication inputs, DACPAC authorization, and Azure whole-suite test
+run remain pending. The source-control policy for the current live-value defaults is also unresolved
+([infra/README.md](../infra/README.md), [decision-log.md](decision-log.md)).
+
 ## What It Actually Does
 
 Everything below was read from the file cited, on 2026-08-22.

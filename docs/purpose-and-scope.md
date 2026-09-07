@@ -70,6 +70,21 @@ implements v3.0.0 and do not block the release being planned.
 > it advertises — are **closed by what shipped**, and they are the clearest evidence the scope calls were right:
 > each was named here before the work started and each was fixed as named.
 
+## Deployment Refresh — 2026-09-06
+
+**Scope verdict: In scope.** Recording the Azure SQL deployment milestone serves the settled purpose and
+changes neither the purpose sentence nor the Gate 2 certification bar.
+
+[D-034](decision-log.md#d-034-record-the-owner-deployed-group-admin-fixture-and-defer-database-use)
+records the owner-deployed `westus` fixture: a provisioned resource group, a ready SQL server with public
+network access, the Online Basic 5 DTU / 2 GiB `ProphetsWay.Example` database, one firewall rule, and a
+dedicated security-enabled, non-mail-enabled Microsoft Entra administrator Group. Exact live identifiers and
+address values are deliberately not copied here.
+
+**FR 19 remains `Scheduled` and release-blocking.** Deployment is a completed prerequisite, not
+certification: no DACPAC application or Azure whole-suite run is established, and protected connection and
+authentication inputs remain deferred under D-033's owner-manual route.
+
 ## Certification Refresh — 2026-08-29
 
 **Local Microsoft SQL Server Gate 1 is satisfied.** The authoritative run record is
@@ -83,8 +98,9 @@ suite-size promise.
 **FR 11 remains `Scheduled`.** Gate 1 being satisfied does not discharge its whole-suite SQLite or
 pipeline/`LocalTestsOnly` obligations. Those remaining obligations do not block the 3.0.0 tag.
 [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql) remains the separate,
-unsatisfied Azure SQL Gate 2 and the remaining certification blocker; no Azure resource or run is inferred
-from the local result.
+unsatisfied Azure SQL Gate 2 and the remaining certification blocker. The local result establishes neither
+Azure deployment nor certification; the current deployment state is recorded in the 2026-09-06 refresh
+above.
 
 The Security Reviewer Low finding about localhost `TrustServerCertificate=true` is deduplicated as
 [FR 20](feature-requests.md#20--decide-the-localhost-sql-server-certificate-validation-boundary),
@@ -168,7 +184,7 @@ pose. Every status change in [feature-requests.md](feature-requests.md) traces t
 | **D19** *(2026-08-19)* · **Ratified by the owner directly** | **`Restore` belongs to `IDepartmentDao` and to no library contract.** In the owner's words: *"`Restore` is only for `IDepartmentDao`, to illustrate a custom method on a consumer's own DAO interface. It is **not** meant to be built into the `ProphetsWay.BaseDataAccess` interface contracts."* It is the "1%" the purpose sentence leaves to the consumer, and it stays there. **Neither the generic soft-delete families nor `ProphetsWay.BaseDataAccess` gains a `Restore` member**, and the option is **rejected rather than deferred**. | **Closes the question the 2026-08-18 session left open** — *does `Restore` belong on the soft-delete family or stay on `IDepartmentDao`?* Constrains the `Interface Architect` shape pass on [FR 10](feature-requests.md#10--collapse-the-guidintlong-dao-triplication); reasoning and consequences in [The `Restore` Boundary](#the-restore-boundary--settled-d19) |
 | **D20** *(2026-08-24)* · **Ratified by the owner directly** | 🔴 **Whole-suite SQL Server certification is a release gate on 3.0.0.** In the owner's words: *"if we can't say EFTools is cleared to work in SQL Server, then it's not worth pushing out."* **`ProphetsWay.EFTools` 3.0.0 stays untagged and unpublished until one complete run of all 270 cases against SQL Server is green.** *(Clarified 2026-08-24, without altering the decision: **"all 270" was the suite's size on the day, not the bar.** The suite is now **287** and **14 cases are structurally exempt from the provider selection** — see [the restatement](#what-all-270-on-sql-server-means-now--restated-2026-08-24). The exemption is from the selection, never from the run.)* This **narrows which certification gates the tag**; it does **not** withdraw [D2](#owner-decisions--2026-08-15)'s or [D4](#owner-decisions--2026-08-15)'s SQLite leg, which is still owed and is **not** a blocker. ~~**Azure SQL as an additional leg is a separate, undecided question** — the owner named it as the production target, and certifying local SQL Server does not certify it.~~ **⛔ That final clause was answered later the same day by [D22](#owner-decisions--2026-08-15): Azure SQL *is* a certified leg and a *second* release gate. Everything before it stands unchanged.** | Reclassifies [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) as release-blocking; constrains [D11](#owner-decisions--2026-08-15) step 4; reasoning in [The SQL Server Certification Gate](#the-sql-server-certification-gate--settled-d20--d21) |
 | **D21** *(2026-08-24)* · **Ratified by the owner directly** | **The certification environment is the owner's local MSSQL instance, and deploying the `ProphetsWay.Example` DACPAC to it is authorized.** In the owner's words: *"i have a local instance of mssql running on local host, if we need to deploy the schema from Example's sqlproj dacpac, we can deploy it locally to then run our tests against it."* **The approved target is one complete 270/270 SQL Server run.** *(Same 2026-08-24 clarification as D20 — the count is a snapshot; the bar is [the five criteria](#gate-1s-success-criterion-stated-so-it-does-not-go-stale).)* A running server and a deployable schema are **available evidence, not completed certification** — [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) closes on a run, not on the means to run. **This authorizes no `.yml` change and no `LocalTestsOnly` edit**; those remain `Pipeline Engineer`'s and remain `Deferred`. | Supplies the environment D20 requires; unblocks the Stage 3 lap scoped in [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) |
-| **D22** *(2026-08-24)* · **Ratified by the owner directly** | 🔴 **Azure SQL is a certified leg of 3.x, and a SECOND release gate on 3.0.0.** In the owner's words: *"yes, option 1 please, mssql server and azure sql both need to be covered, i don't have an azure sql instance setup just yet, but if we get bicep, we shoudl be able to deploy an instance from cli and us that to test?"* — `option 1` being the offered choice **"Azure SQL is a certified target before 3.0.0."** **Both local Microsoft SQL Server *and* Azure SQL must carry successful certification evidence before the 3.0.0 tag or publish.** This **extends** [D20](#owner-decisions--2026-08-15) rather than replacing it: D20's local SQL Server gate stands exactly as written, and Azure SQL is added beside it. **What this authorizes: nothing operational.** Infrastructure may be **authored as Bicep, built and previewed**; `what-if` requires an available Azure context; **actual deployment and later teardown each require the owner's explicit approval at their own irreversible gate.** **No Azure resource exists, no subscription is named, and no Azure run has happened** — see [Azure SQL is a separate scope question](#azure-sql-is-a-separate-scope-question-and-it-reaches-this-librarys-own-contract) for the open design decisions, none of which is an agent's to choose. | **Closes [Q5](#unresolved-purpose-level-questions).** Files [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql) as `Scheduled` and release-blocking; adds a second precondition to [D11](#owner-decisions--2026-08-15) step 4; supersedes D20's closing clause |
+| **D22** *(2026-08-24)* · **Ratified by the owner directly** | 🔴 **Azure SQL is a certified leg of 3.x, and a SECOND release gate on 3.0.0.** In the owner's words: *"yes, option 1 please, mssql server and azure sql both need to be covered, i don't have an azure sql instance setup just yet, but if we get bicep, we shoudl be able to deploy an instance from cli and us that to test?"* — `option 1` being the offered choice **"Azure SQL is a certified target before 3.0.0."** **Both local Microsoft SQL Server *and* Azure SQL must carry successful certification evidence before the 3.0.0 tag or publish.** This **extends** [D20](#owner-decisions--2026-08-15) rather than replacing it: D20's local SQL Server gate stands exactly as written, and Azure SQL is added beside it. **Historical D22 authority boundary:** this authorized nothing operational; infrastructure could be authored, built and previewed, while deployment and teardown required the owner's approval at their own irreversible gates. ~~**No Azure resource exists, no subscription is named, and no Azure run has happened.**~~ **Current-state amendment:** [D-033](decision-log.md#d-033-replace-the-stopped-agent-led-azure-sql-route-with-the-owners-manual-route) replaced that operational route, and [D-034](decision-log.md#d-034-record-the-owner-deployed-group-admin-fixture-and-defer-database-use) records the owner's completed manual deployment. No DACPAC application or Azure whole-suite run is established. | **Closes [Q5](#unresolved-purpose-level-questions).** Files [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql) as `Scheduled` and release-blocking; adds a second precondition to [D11](#owner-decisions--2026-08-15) step 4; supersedes D20's closing clause |
 
 **⏳ D14–D18 were taken by the owner in conversation on 2026-08-18 and recorded here by an agent so they
 would not be lost overnight. The substance is the owner's and is not to be re-litigated; the numbering and
@@ -599,7 +615,7 @@ behind a friendlier name reintroduces the coupling.
 > | Gate | Provider | Decision | Tracked as | Evidence today |
 > | --- | --- | --- | --- | --- |
 > | **Gate 1** | **Local Microsoft SQL Server** | D20 · D21 | [FR 11](feature-requests.md#11--certify-the-contract-suite-on-sqlite-in-memory-and-a-sql-server-container) | **Satisfied 2026-08-29:** external `EFTOOLS_PROVIDER=SqlServer`; unfiltered 328 / 328 / 0 / 0; 14 selection-exempt executed; 314 provider-honouring; 58 guards passed; 0 disposable databases before and after |
-> | **Gate 2** | **Azure SQL** | **D22** | [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql) | **None.** No subscription named, no resource deployed, no run attempted |
+> | **Gate 2** | **Azure SQL** | **D22 · D-033 · D-034** | [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql) | **Deployment milestone complete 2026-09-06:** an owner-deployed `westus` fixture has a ready public-network SQL server, the Online Basic 5 DTU / 2 GiB `ProphetsWay.Example` database, one firewall rule, and a dedicated security-enabled, non-mail-enabled Entra administrator Group. **Still open:** no DACPAC application or Azure whole-suite run is established |
 >
 > **Gate 1 is satisfied; Gate 2 is not, and neither may be inferred from the other** — see
 > [Azure SQL is a separate scope question](#azure-sql-is-a-separate-scope-question-and-it-reaches-this-librarys-own-contract),
@@ -640,7 +656,7 @@ are untouched.** The certified tier is still **SQLite and SQL Server**. D20 says
 | **The whole suite green against SQLite** — same restatement | D2, D4 | **No** | Owed. **Not cancelled, not descoped** — deferred behind the gate |
 | `LocalTestsOnly: 'yes'` retired so CI runs any of it | D4 | **No** | `Deferred` to `Pipeline Engineer`. **No `.yml` change is authorized** |
 | Certification wording on `<Description>`, `PackageTags`, README | D8 | **No**, but it must not *precede* the evidence | **Unmet** — verified 2026-08-24 against the csproj at `e2f2120` and the README. Fortunate: writing it on 2026-08-23 would have published a claim with a whole-suite run behind neither provider. **[D22](#owner-decisions--2026-08-15) adds Azure SQL to what that wording must eventually cover**; the phrasing belongs to `Modernizer` and `README Author`, and the "must not precede the evidence" rule now applies to two gates |
-| **Azure SQL**, whole suite green | **D22** | 🔴 **Yes** | Owed, and **nothing exists yet** — no subscription, no resource, no run. Tracked as [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql) |
+| **Azure SQL**, whole suite green | **D22** | 🔴 **Yes** | Owed. [D-034](decision-log.md#d-034-record-the-owner-deployed-group-admin-fixture-and-defer-database-use) records the deployed fixture; no DACPAC application or Azure whole-suite run is established. Tracked as [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql) |
 
 **An agent that reads D20 and narrows the certified tier to SQL Server alone has misread it.** The SQLite leg
 is *later*, not *withdrawn* — it is the fast gate D4 wants, and it is what makes the eventual `LocalTestsOnly`
@@ -764,50 +780,52 @@ mattered: Gate 2 can surface a contract defect that Gate 1 structurally cannot.
 | **Owner's decision** | **Approved:** *"mssql server and azure sql both need to be covered."* Both are pre-tag gates |
 | **If it proceeds** | The purpose sentence, cohesion map and extraction verdict are unchanged. What changes is that [D11](#owner-decisions--2026-08-15) step 4 now has **two** preconditions — and that a transaction-contract change becomes *possible*, because `EnableRetryOnFailure` may prove incompatible with the contract as written. **If it does, that is a finding for the owner, not a change an agent takes** |
 
-#### What does NOT exist, stated plainly so no document later implies it does
+#### Current Gate 2 state — deployment exists; certification does not
 
-- **No Azure subscription, tenant, resource group, SQL server or database has been named, created or
-  deployed by any run to date.**
-- **No Bicep template exists in this repository**, and none is authorized to be *deployed* by its existence.
-- **No Azure SQL test run has been attempted**, so there is no result to cite — green, red, or partial.
+- [D-034](decision-log.md#d-034-record-the-owner-deployed-group-admin-fixture-and-defer-database-use)
+  records an owner-deployed fixture in `westus`: a provisioned resource group, a ready SQL server with
+  public network access, the Online Basic 5 DTU / 2 GiB `ProphetsWay.Example` database, and one firewall
+  rule.
+- The owner-authored Bicep uses a dedicated security-enabled, non-mail-enabled Microsoft Entra Group as
+  the Entra-only SQL administrator. Exact live identifiers and address values are deliberately not copied
+  into this document.
+- **No DACPAC application is established.** Protected connection and authentication inputs have not been
+  supplied for the next workstream.
+- **No Azure SQL whole-suite run is established**, so Gate 2 has no certification result to cite.
 
-The owner's own framing is a question, not a completed plan: *"if we get bicep, we shoudl be able to deploy
-an instance from cli and us that to test?"* Treat it as the approved **direction**, exactly as
-[D10](#owner-decisions--2026-08-15) was treated — direction settled, design deferred.
+The earlier owner question — *"if we get bicep, we shoudl be able to deploy an instance from cli and us that
+to test?"* — remains preserved in D22 as the historical direction. [D-033](decision-log.md#d-033-replace-the-stopped-agent-led-azure-sql-route-with-the-owners-manual-route)
+later established the owner-manual route, and D-034 records that route's completed deployment milestone.
 
 #### The two bodies of work are sequential and must not be merged
 
 | | Gate 1 — local SQL Server | Gate 2 — Azure SQL |
 |---|---|---|
-| **Blocked on** | **Satisfied 2026-08-29** | An infrastructure design the owner has not yet settled |
-| **The work** | **Complete:** provider-selectable test wiring plus an externally selected, unfiltered local run meeting [the five criteria](#gate-1s-success-criterion-stated-so-it-does-not-go-stale) at **328 / 14 exempt / 314 honouring / 0 failed** | Bicep authored and built → `what-if` previewed against an available Azure context → **owner-approved** deployment → DACPAC applied → suite run → **owner-approved** teardown |
-| **Irreversible steps** | None. Local database, local run | **Two** — the deployment and the teardown. **Each needs the owner's explicit approval at the moment it is taken**; neither is pre-authorized by D22 |
-| **Order** | **Completed first.** The suite is now proven provider-selectable locally | **Next.** Its input is the completed Gate 1 result |
+| **Blocked on** | **Satisfied 2026-08-29** | DACPAC preparation and authorization, protected connection and authentication inputs, connection configuration, and the Azure whole-suite run |
+| **The work** | **Complete:** provider-selectable test wiring plus an externally selected, unfiltered local run meeting [the five criteria](#gate-1s-success-criterion-stated-so-it-does-not-go-stale) at **328 / 14 exempt / 314 honouring / 0 failed** | **Deployment complete:** owner-authored Bicep → owner-manual deployment. **Remaining:** DACPAC application → protected connection configuration → suite run |
+| **Irreversible steps** | None. Local database, local run | Deployment was completed by the owner. DACPAC publication and any future teardown remain separately governed, human-executed operations under D-033 |
+| **Order** | **Completed first.** The suite is now proven provider-selectable locally | **In progress.** Deployment is complete; database use and certification are next |
 
 **Completing Gate 1 first avoided debugging test wiring and cloud infrastructure at the same time**, against
 a billed resource with no local baseline to attribute a failure to. That remains the argument for the order;
 it is not a claim that Gate 2 matters less.
 
-#### Open Azure design decisions — the owner's, and none of them is inferable
+#### Deployment choices now recorded; database use remains deferred
 
-**Not one of these has a value. Do not choose one, and do not let a template imply one.**
+[D-034](decision-log.md#d-034-record-the-owner-deployed-group-admin-fixture-and-defer-database-use)
+records the owner-selected deployment shape without copying protected values:
 
-| Decision | Why it cannot be inferred |
+| Area | Current state |
 |---|---|
-| **Subscription and tenant** | There is no default and no discoverable correct answer |
-| **Region** | Cost, latency and data-residency all differ; the owner picks |
-| **Resource group name and isolation** | Whether certification shares a group with anything else is a blast-radius decision |
-| **SQL server and database naming** | Server names are globally unique; a guess collides or squats |
-| **Microsoft Entra / admin model** | Entra-only vs. SQL authentication changes both the connection string and the test harness |
-| **Network and firewall access** | Public endpoint with an allowlist, private endpoint, or something else — this decides whether a local run can reach it at all |
-| **SKU and cost budget** | Serverless, Basic, and a provisioned tier differ by orders of magnitude in cost and in behaviour under a test suite |
-| **Retention** | Whether the instance survives the run, and for how long |
-| **Credential and secret handling** | Where the connection string lives. **No secret may be written to any file in any of these repositories** |
-| **Lifetime and teardown** | Who tears it down, when, and on whose approval |
-| **Where the infrastructure lives** | `ProphetsWay.EFTools`, `ProphetsWay.BPA`, or a separate infrastructure home. This is a repository-boundary question of exactly the kind this document exists to answer, and it has not been asked yet |
+| **Placement and naming** | Deployed into a dedicated resource group in `westus`; the SQL server and database names are selected. Exact subscription, tenant, and live identifiers are not repeated here |
+| **Administrator** | A dedicated security-enabled, non-mail-enabled Microsoft Entra Group is the Entra-only SQL administrator |
+| **Network** | Public network access is enabled with exactly one firewall rule; the address value is not recorded here |
+| **Database capacity** | `ProphetsWay.Example` is Online on the Basic tier at 5 DTU with a 2 GiB maximum size |
+| **Infrastructure home and lifetime** | Owner-authored Bicep lives under `infra/`; the owner intends the fixture to persist for now under D-033's manual route |
+| **Still deferred** | Protected connection and authentication inputs, DACPAC preparation and authorization, connection configuration, Azure test execution, and any future teardown |
 
-**The decision the owner still owes is no longer *whether* — it is *these eleven values*.** An agent that
-invents any of them has manufactured a fact about someone's cloud account.
+The deployment choices are no longer blockers. Gate 2 remains blocked on preparing the database for use and
+producing the required whole-suite Azure SQL result.
 
 ### What Stage 3 delivered
 
@@ -821,8 +839,8 @@ single closed selection exemption; all 14 of its cases still execute in the whol
 **328 discovered / 14 selection-exempt / 314 provider-honouring / 0 failed**, with no skips and zero
 disposable databases before and after. **No Bicep, `what-if`, Azure deployment, Azure DACPAC apply, or Azure
 test run was part of it** — that remains
-[FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql), starting from an infrastructure
-design the owner has not settled.
+[FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql). D-034 later records the
+owner-deployed fixture; DACPAC application and the Azure whole-suite run remain open.
 
 ---
 
@@ -1252,13 +1270,11 @@ reads, and **it is the owner's to confirm or reverse.**
 
 > **Amended 2026-08-24.** That sentence is still true of *scope*: [Q5](#unresolved-purpose-level-questions) was
 > opened and closed the same day, and no scope question is open. It is **not** true of *values*.
-> [D22](#owner-decisions--2026-08-15) settles that Azure SQL is a certified leg and leaves **eleven
-> infrastructure decisions unmade** — subscription, tenant, region, resource-group naming and isolation,
-> server and database naming, the Entra/admin model, network access, SKU and budget, retention, credential
-> handling, lifetime and teardown, and which repository the infrastructure lives in. They are listed in
-> [the gate section](#open-azure-design-decisions--the-owners-and-none-of-them-is-inferable). **None is an
-> agent's to choose**, and [FR 19](feature-requests.md#19--certify-the-contract-suite-against-azure-sql)
-> cannot start until they are answered.
+> [D22](#owner-decisions--2026-08-15) settled that Azure SQL is a certified leg. **Current-state amendment,
+> 2026-09-06:** [D-034](decision-log.md#d-034-record-the-owner-deployed-group-admin-fixture-and-defer-database-use)
+> records the owner-selected and deployed infrastructure, closing the earlier deployment-choice block.
+> Protected connection and authentication inputs, DACPAC preparation and authorization, connection
+> configuration, and the Azure whole-suite run remain open under D-033's owner-manual route.
 
 ---
 
