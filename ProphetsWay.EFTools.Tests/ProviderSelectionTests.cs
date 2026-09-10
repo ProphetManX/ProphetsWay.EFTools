@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Text.RegularExpressions;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -187,6 +188,22 @@ namespace ProphetsWay.EFTools.Tests
 			}
 		}
 
+		public class AlternateProbeContext : DbContext
+		{
+			public AlternateProbeContext(DbContextOptions<AlternateProbeContext> options) : base(options)
+			{
+			}
+
+			public DbSet<AlternateProbe> AlternateProbes { get; set; }
+		}
+
+		public class AlternateProbe
+		{
+			public int Id { get; set; }
+
+			public string Note { get; set; }
+		}
+
 		#endregion
 
 		#region reaching the seam
@@ -334,6 +351,20 @@ namespace ProphetsWay.EFTools.Tests
 			return identity;
 		}
 
+		private static string StoreProperty(object store, string name)
+		{
+			var property = store.GetType().GetProperty(
+				name,
+				BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+			property.ShouldNotBeNull($"{store.GetType().FullName} exposes no '{name}' property for reusable-slot diagnostics.");
+
+			var value = property.GetValue(store) as string;
+			string.IsNullOrWhiteSpace(value).ShouldBeFalse($"{store.GetType().FullName}.{name} must be a non-empty name.");
+
+			return value;
+		}
+
 		/// <summary>
 		/// Whether the seam can still find the named store. This must be answered by asking the server — or the
 		/// live connection registry — not by consulting a list the seam edits in <c>Dispose</c>, or the answer is
@@ -394,6 +425,15 @@ namespace ProphetsWay.EFTools.Tests
 				builder);
 
 			return new ProbeContext(builder.Options);
+		}
+
+		private static AlternateProbeContext AlternateContextFor(object store)
+		{
+			var builder = new DbContextOptionsBuilder<AlternateProbeContext>();
+
+			Invoke(Method(store.GetType(), "Configure", typeof(DbContextOptionsBuilder)), store, builder);
+
+			return new AlternateProbeContext(builder.Options);
 		}
 
 		/// <summary>
@@ -468,6 +508,29 @@ namespace ProphetsWay.EFTools.Tests
 			SeamTypeName,
 			"ProphetsWay.EFTools.Tests.AlternateKeyGuardSpikeTests"
 		};
+
+		private static readonly string[] LocalPhysicalLifecycleMethodNames =
+		{
+			nameof(ShouldLeaveEntityFrameworkUnableToFindAStoreThatWasDisposed),
+			nameof(ShouldRemoveTheStoreItselfWhenItIsDisposed),
+			nameof(ShouldLeaveNoDisposableStoreBehindOnTheServer),
+			nameof(ShouldRegisterAStoreBeforeProvisioningItAndForgetItIfProvisioningFails),
+			nameof(ShouldDecideEveryDropWithTheOnePredicateThatGuardsIt),
+			nameof(ShouldNameEveryStoreInsideTheDroppableNamespace)
+		};
+
+		private static bool ReusableSqlServerIsSelected()
+		{
+			if (!SqlServerIsSelected())
+				return false;
+
+			var lifecycle = Invoke(
+				Method(SeamType(), "ResolveSqlServerStoreLifecycle", typeof(string)),
+				null,
+				Environment.GetEnvironmentVariable("EFTOOLS_SQLSERVER_STORE_LIFECYCLE"));
+
+			return string.Equals(lifecycle.ToString(), "Reusable", StringComparison.Ordinal);
+		}
 
 		/// <summary>
 		/// A provider selection made one call away. <c>new ExampleDataAccess(string)</c> reads
@@ -546,9 +609,11 @@ namespace ProphetsWay.EFTools.Tests
 		/// there on — it does not throw, it simply stops finding things, which is the failure mode a guard like this
 		/// one cannot afford to have silently.
 		/// </remarks>
-		private static IEnumerable<int> CallTokens(byte[] il, Action onAbandoned)
+		private static IEnumerable<int> CallTokens(byte[] il, Action onAbandoned, Action<int> onStringToken = null,
+			Action onUnsupportedFlow = null)
 		{
 			var offset = 0;
+			var returns = 0;
 
 			while (offset < il.Length)
 			{
@@ -598,6 +663,7 @@ namespace ProphetsWay.EFTools.Tests
 						yield break;
 					}
 
+					onUnsupportedFlow?.Invoke();
 					offset = operandAt + 4 + (branches * 4);
 
 					continue;
@@ -610,8 +676,18 @@ namespace ProphetsWay.EFTools.Tests
 					yield break;
 				}
 
+				if ((code >= 0x2C && code <= 0x37) || (code >= 0x39 && code <= 0x44) ||
+					code == 0x27 || code == 0x29 || code == 0x7A || code == 0xDD || code == 0xDE ||
+					(code == 0x2B && il[operandAt] != 0) ||
+					(code == 0x38 && BitConverter.ToInt32(il, operandAt) != 0) ||
+					(code == 0x2A && ++returns > 1))
+					onUnsupportedFlow?.Invoke();
+
 				if (isCall)
 					yield return BitConverter.ToInt32(il, operandAt);
+
+				if (code == 0x72)
+					onStringToken?.Invoke(BitConverter.ToInt32(il, operandAt));
 
 				offset = operandAt + size;
 			}
@@ -671,7 +747,8 @@ namespace ProphetsWay.EFTools.Tests
 			return methods;
 		}
 
-		private static IEnumerable<MethodBase> CalleesOf(MethodBase method, ISet<string> found)
+		private static IEnumerable<MethodBase> CalleesOf(MethodBase method, ISet<string> found, Action<string> onString = null,
+			Action onUnsupportedFlow = null)
 		{
 			MethodBody body = null;
 
@@ -689,6 +766,9 @@ namespace ProphetsWay.EFTools.Tests
 			if (il == null || il.Length == 0)
 				yield break;
 
+			if (body.ExceptionHandlingClauses.Count > 0)
+				onUnsupportedFlow?.Invoke();
+
 			var declaring = method.DeclaringType;
 
 			var typeArguments = declaring != null && declaring.IsGenericType
@@ -701,7 +781,20 @@ namespace ProphetsWay.EFTools.Tests
 
 			var abandoned = false;
 
-			foreach (var token in CallTokens(il, () => abandoned = true))
+			foreach (var token in CallTokens(il, () => abandoned = true, stringToken =>
+			{
+				if (onString == null)
+					return;
+
+				try
+				{
+					onString(method.Module.ResolveString(stringToken));
+				}
+				catch (Exception ex)
+				{
+					found.Add($"{BlindSpot}a string token in {Describe(method)} could not be resolved ({ex.GetType().Name})");
+				}
+			}, onUnsupportedFlow))
 			{
 				MethodBase callee = null;
 
@@ -1243,7 +1336,7 @@ namespace ProphetsWay.EFTools.Tests
 
 		/// <summary>
 		/// The second half, and the one that costs a real database if it is wrong. Same identity, same
-		/// <c>ConfigureExisting</c>, after disposal.
+		/// independent options captured through <c>ConfigureExisting</c> while active, queried after disposal.
 		/// </summary>
 		/// <remarks>
 		/// <c>Exists() &amp;&amp; HasTables()</c> rather than <c>Exists()</c> alone because a released SQLite
@@ -1252,10 +1345,12 @@ namespace ProphetsWay.EFTools.Tests
 		/// </remarks>
 		[Fact]
 		[Trait("Area", "ProviderSelection")]
+		[Trait("Execution", "LocalPhysicalLifecycle")]
 		public void ShouldLeaveEntityFrameworkUnableToFindAStoreThatWasDisposed()
 		{
 			//setup
 			string identity;
+			DbContextOptions<ProbeContext> probeOptions;
 
 			using (var store = OpenStore(nameof(ShouldLeaveEntityFrameworkUnableToFindAStoreThatWasDisposed)))
 			{
@@ -1267,10 +1362,25 @@ namespace ProphetsWay.EFTools.Tests
 					context.Probes.Add(new Probe { Note = "written before disposal" });
 					context.SaveChanges();
 				}
+
+				var builder = new DbContextOptionsBuilder<ProbeContext>();
+				ConfigureExistingOnto(identity, builder);
+				probeOptions = builder.Options;
+
+				using (var probe = new ProbeContext(probeOptions))
+				{
+					probe.Probes.Select(row => row.Note).ToArray().ShouldBe(new[] { "written before disposal" },
+						"The independent probe must read the committed row from this store before observing its disposal.");
+				}
 			}
 
 			//act
-			var entityFrameworkFindsIt = EntityFrameworkFinds(identity);
+			bool entityFrameworkFindsIt;
+			using (var probe = new ProbeContext(probeOptions))
+			{
+				var creator = probe.Database.GetService<IRelationalDatabaseCreator>();
+				entityFrameworkFindsIt = creator.Exists() && creator.HasTables();
+			}
 
 			//assert
 			entityFrameworkFindsIt.ShouldBeFalse(
@@ -1297,6 +1407,7 @@ namespace ProphetsWay.EFTools.Tests
 		/// </summary>
 		[Fact]
 		[Trait("Area", "ProviderSelection")]
+		[Trait("Execution", "LocalPhysicalLifecycle")]
 		public void ShouldRemoveTheStoreItselfWhenItIsDisposed()
 		{
 			//setup
@@ -1347,11 +1458,151 @@ namespace ProphetsWay.EFTools.Tests
 				"failure instead of its own assertion." + WhatThisFailureMeans);
 
 			//assert
-			StoreExists(identity).ShouldBeFalse(
-				$"Store '{identity}' outlived its owner because no context ever materialised it. A store that is " +
-				"provisioned lazily still has to be removed if it was provisioned at all, and one that was never " +
-				"provisioned still has to stop existing by this measure - otherwise 'exists' means two different " +
-				"things depending on how the store was used." + WhatThisFailureMeans);
+			LiveIdentities().ShouldNotContain(identity,
+				$"Lease '{identity}' remained live after its unopened store was disposed. Reusable stores retain their " +
+				"physical scratch database, but the lease must retire immediately so an old handle cannot configure a " +
+				"new owner's slot." + WhatThisFailureMeans);
+
+			Should.Throw<ObjectDisposedException>(() => ContextForExistingStore(identity),
+				$"Retired lease '{identity}' was accepted as an existing store. A later lease may reuse its physical " +
+				"slot, but it must never revive an old identity or handle." + WhatThisFailureMeans);
+		}
+
+		[Fact]
+		[Trait("Area", "ProviderSelection")]
+		public void ShouldClassifyExactlyTheApprovedLocalPhysicalLifecycleMethods()
+		{
+			var methods = typeof(ProviderSelectionTests).Assembly.GetTypes()
+				.Where(type => type.IsClass && !type.IsAbstract)
+				.SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+					.Where(IsTestMethod)
+					.Select(method => new { Type = type, Method = method }))
+				.ToArray();
+
+			var excluded = methods
+				.Where(test => TraitsOf(test.Method, test.Type).Contains("Execution=LocalPhysicalLifecycle"))
+				.SelectMany(test => DiscoveredCases(test.Type, test.Method))
+				.OrderBy(name => name, StringComparer.Ordinal)
+				.ToArray();
+
+			var expectedExcluded = LocalPhysicalLifecycleMethodNames
+				.Select(name => typeof(ProviderSelectionTests).FullName + "." + name)
+				.OrderBy(name => name, StringComparer.Ordinal)
+				.ToArray();
+
+			excluded.ShouldBe(expectedExcluded,
+				"Only D-035's six physical database lifecycle specifications may be excluded from a reusable Azure run.");
+
+			methods.Where(test => IsSkipped(test.Method, test.Type))
+				.Select(test => test.Type.FullName + "." + test.Method.Name)
+				.ShouldBeEmpty("D-035 uses a filter, never a skipped test, for lifecycle selection.");
+
+			var included = methods
+				.Where(test => !TraitsOf(test.Method, test.Type).Contains("Execution=LocalPhysicalLifecycle"))
+				.SelectMany(test => DiscoveredCases(test.Type, test.Method))
+				.OrderBy(name => name, StringComparer.Ordinal)
+				.ToArray();
+			var discovered = methods
+				.SelectMany(test => DiscoveredCases(test.Type, test.Method))
+				.OrderBy(name => name, StringComparer.Ordinal)
+				.ToArray();
+
+			included.Intersect(excluded, StringComparer.Ordinal).ShouldBeEmpty(
+				"A discovered test case cannot be both Azure-included and local-physical-lifecycle-excluded.");
+			included.Concat(excluded).OrderBy(name => name, StringComparer.Ordinal).ShouldBe(discovered);
+		}
+
+		private static bool IsTestMethod(MethodInfo method)
+		{
+			return method.GetCustomAttributes(typeof(FactAttribute), true).Any() ||
+				method.GetCustomAttributes(typeof(TheoryAttribute), true).Any();
+		}
+
+		private static bool IsSkipped(MethodInfo method, Type concreteType)
+		{
+			return FactAttributesOf(method, concreteType).Any(attribute => !string.IsNullOrWhiteSpace(attribute.Skip));
+		}
+
+		private static IEnumerable<FactAttribute> FactAttributesOf(MethodInfo method, Type concreteType)
+		{
+			return method.GetCustomAttributes(typeof(FactAttribute), true).OfType<FactAttribute>()
+				.Concat(concreteType.GetCustomAttributes(typeof(FactAttribute), true).OfType<FactAttribute>());
+		}
+
+		private static IReadOnlyCollection<string> TraitsOf(MethodInfo method, Type concreteType)
+		{
+			return CustomAttributeData.GetCustomAttributes(method)
+				.Concat(TraitsOfTypeAndBases(concreteType))
+				.Where(attribute => attribute.AttributeType == typeof(TraitAttribute) && attribute.ConstructorArguments.Count == 2)
+				.Select(attribute => attribute.ConstructorArguments[0].Value + "=" + attribute.ConstructorArguments[1].Value)
+				.ToArray();
+		}
+
+		private static IEnumerable<CustomAttributeData> TraitsOfTypeAndBases(Type type)
+		{
+			for (var current = type; current != null; current = current.BaseType)
+				foreach (var attribute in CustomAttributeData.GetCustomAttributes(current))
+					yield return attribute;
+		}
+
+		private static IEnumerable<string> DiscoveredCases(Type concreteType, MethodInfo method)
+		{
+			var name = concreteType.FullName + "." + method.Name;
+			var count = InvocationCount(method);
+
+			for (var index = 0; index < count; index++)
+				yield return count == 1 ? name : name + "[" + index + "]";
+		}
+
+		private static int InvocationCount(MethodInfo method)
+		{
+			return method.GetCustomAttributes(typeof(TheoryAttribute), true).Any()
+				? method.GetCustomAttributes(typeof(InlineDataAttribute), true).Length
+				: 1;
+		}
+
+		[Fact]
+		[Trait("Area", "ProviderSelection")]
+		public void ShouldResetAReusedStoreBeforeAnotherModelCreatesItsSchema()
+		{
+			IDisposable first = null;
+			IDisposable heldOtherSlot = null;
+			IDisposable reacquired = null;
+
+			try
+			{
+				first = OpenStore(nameof(ShouldResetAReusedStoreBeforeAnotherModelCreatesItsSchema));
+				heldOtherSlot = OpenStore(nameof(ShouldResetAReusedStoreBeforeAnotherModelCreatesItsSchema));
+				var firstDatabaseName = StoreProperty(first, "DatabaseName");
+
+				using (var context = ContextFor(first))
+				{
+					context.Database.EnsureCreated();
+					context.Probes.Add(new Probe { Note = "first model" });
+					context.SaveChanges();
+				}
+
+				first.Dispose();
+				first = null;
+				reacquired = OpenStore(nameof(ShouldResetAReusedStoreBeforeAnotherModelCreatesItsSchema));
+
+				if (ReusableSqlServerIsSelected())
+					StoreProperty(reacquired, "DatabaseName").ShouldBe(firstDatabaseName,
+						"With the other reusable slot held, the alternate model must receive the exact physical slot that the first model released.");
+
+				using (var context = AlternateContextFor(reacquired))
+				{
+					context.Database.EnsureCreated();
+					context.AlternateProbes.Count().ShouldBe(0,
+						"The alternate model must receive a schema-empty store after the first model releases it.");
+				}
+			}
+			finally
+			{
+				reacquired?.Dispose();
+				first?.Dispose();
+				heldOtherSlot?.Dispose();
+			}
 		}
 
 		[Fact]
@@ -1986,6 +2237,7 @@ namespace ProphetsWay.EFTools.Tests
 		/// </remarks>
 		[Fact]
 		[Trait("Area", "StoreCleanup")]
+		[Trait("Execution", "LocalPhysicalLifecycle")]
 		public void ShouldLeaveNoDisposableStoreBehindOnTheServer()
 		{
 			//setup
@@ -2104,6 +2356,7 @@ namespace ProphetsWay.EFTools.Tests
 		/// </remarks>
 		[Fact]
 		[Trait("Area", "StoreCleanup")]
+		[Trait("Execution", "LocalPhysicalLifecycle")]
 		public void ShouldRegisterAStoreBeforeProvisioningItAndForgetItIfProvisioningFails()
 		{
 			//setup
@@ -2249,18 +2502,61 @@ namespace ProphetsWay.EFTools.Tests
 		}
 
 		/// <summary>
-		/// One predicate, consulted everywhere a drop is decided. Named through the ADO call the drop makes rather
-		/// than through the seam's private method name, so the guard survives that method being renamed and still
-		/// fails if a second, hand-written prefix check appears beside it.
+		/// One predicate, consulted by every database-DDL execution owner. SQL literals and reachable builders
+		/// distinguish database lifecycle commands from reusable table reset, never a private method's name.
 		/// </summary>
 		[Fact]
 		[Trait("Area", "StoreCleanup")]
+		[Trait("Execution", "LocalPhysicalLifecycle")]
 		public void ShouldDecideEveryDropWithTheOnePredicateThatGuardsIt()
 		{
 			//setup
-			var executing = MethodsWithin(SeamType())
-				.Select(m => new { Method = m, Callees = CalleeNamesOf(m) })
-				.Where(m => m.Callees.Contains("ExecuteNonQuery", StringComparer.Ordinal))
+			var blindSpots = new SortedSet<string>(StringComparer.Ordinal);
+			var controls = typeof(DatabaseDdlControls);
+
+			SqlCommandsOf(Method(controls, "Reset", typeof(DbCommand)), blindSpots)
+				.ShouldBe(new[] { SqlCommandKind.Database });
+			SqlCommandsOf(Method(controls, "ResetTables", typeof(DbCommand)), blindSpots)
+				.ShouldBe(new[] { SqlCommandKind.Schema });
+			SqlCommandsOf(Method(controls, "FromBuilder", typeof(DbCommand)), blindSpots)
+				.ShouldBe(new[] { SqlCommandKind.Database });
+			SqlCommandsOf(Method(controls, "Read", typeof(DbCommand)), blindSpots)
+				.ShouldBe(new[] { SqlCommandKind.Read });
+			SqlCommandsOf(Method(controls, "Unknown", typeof(DbCommand), typeof(string)), blindSpots)
+				.ShouldBe(new[] { SqlCommandKind.Unknown });
+			SqlCommandsOf(Method(controls, "Mixed", typeof(DbCommand), typeof(string)), blindSpots)
+				.ShouldBe(new[] { SqlCommandKind.Schema, SqlCommandKind.Unknown });
+			SqlCommandsOf(Method(controls, "Alternative", typeof(DbCommand), typeof(string), typeof(bool)), blindSpots)
+				.ShouldBe(new[] { SqlCommandKind.Unknown });
+
+			var unresolvedControls = new[]
+			{
+				Method(controls, "FromBranchingBuilder", typeof(DbCommand), typeof(string), typeof(bool)),
+				Method(controls, "FromNestedBuilder", typeof(DbCommand), typeof(string), typeof(bool)),
+				Method(controls, "FromUnresolvedBuilder", typeof(DbCommand), typeof(string)),
+				Method(controls, "FromCyclicBuilder", typeof(DbCommand)),
+				Method(controls, "ReadWithDynamicExecution", typeof(DbCommand)),
+				Method(controls, "SchemaWithDynamicExecution", typeof(DbCommand))
+			};
+			unresolvedControls
+				.Select(method => $"{method.Name}: {string.Join(", ", SqlCommandsOf(method, blindSpots))}")
+				.ShouldBe(new[]
+				{
+					"FromBranchingBuilder: Unknown",
+					"FromNestedBuilder: Unknown",
+					"FromUnresolvedBuilder: Unknown",
+					"FromCyclicBuilder: Unknown",
+					"ReadWithDynamicExecution: Unknown, Unknown",
+					"SchemaWithDynamicExecution: Unknown, Unknown"
+				});
+
+			var predicate = Method(SeamType(), "IsDisposableIdentity", typeof(string));
+			var executing = TypesOf(SeamType().Assembly, blindSpots)
+				.Where(type => RootOf(type) == SeamType())
+				.SelectMany(type => DeclaredMethods(type, blindSpots))
+				.Select(method => new { Method = method, Callees = CalleesOf(method, blindSpots).ToArray() })
+				.Where(method => method.Callees.Any(ExecutesSql))
+				.Select(method => new { method.Method, method.Callees, Commands = SqlCommandsOf(method.Method, blindSpots) })
 				.ToList();
 
 			executing.ShouldNotBeEmpty(
@@ -2269,15 +2565,25 @@ namespace ProphetsWay.EFTools.Tests
 				"reporting that it looked rather than that it found nothing." + WhatACleanupFailureMeans);
 
 			//act
-			var unguarded = executing
-				.Where(m => !m.Callees.Contains("IsDisposableIdentity", StringComparer.Ordinal))
+			var databaseDdl = executing.Where(method => method.Commands.Contains(SqlCommandKind.Database)).ToList();
+			var unclassified = executing
+				.Where(method => method.Commands.Count == 0 || method.Commands.Contains(SqlCommandKind.Unknown))
+				.Select(method => Describe(method.Method))
+				.OrderBy(name => name, StringComparer.Ordinal)
+				.ToList();
+			var unguarded = databaseDdl
+				.Where(method => !method.Callees.Contains(predicate))
 				.Select(m => Describe(m.Method))
 				.OrderBy(n => n, StringComparer.Ordinal)
 				.ToList();
 
 			//assert
+			unclassified.ShouldBeEmpty(
+				"Every SQL execution site must be classified; unknown SQL cannot be exempted from database-DDL guards.");
+			databaseDdl.ShouldNotBeEmpty(
+				"No real CREATE, DROP or ALTER DATABASE executor was found; table reset alone cannot satisfy physical lifecycle.");
 			unguarded.ShouldBeEmpty(
-				"These methods issue a command against the server without consulting IsDisposableIdentity:\n  " +
+				"These methods issue database DDL without consulting IsDisposableIdentity:\n  " +
 				string.Join("\n  ", unguarded) +
 				"\n\nThe drop is a DROP DATABASE against an instance that also carries ProphetsWay.Example. Whatever " +
 				"decides which names are droppable must be the same predicate " +
@@ -2285,9 +2591,248 @@ namespace ProphetsWay.EFTools.Tests
 				nameof(ShouldLeaveNoDisposableStoreBehindOnTheServer) + " sweeps with, or the three can disagree " +
 				"and the only one that matters is the one nothing tests." + WhatACleanupFailureMeans);
 
-			CalleeNamesOf(StoreConstructor()).ShouldContain("IsDisposableIdentity",
+			CalleesOf(StoreConstructor(), blindSpots).ShouldContain(predicate,
 				$"{StoreType().FullName}'s constructor does not consult IsDisposableIdentity, so a foreign identity " +
 				"is refused - if at all - only once something tries to drop it." + WhatACleanupFailureMeans);
+			blindSpots.ShouldBeEmpty("An incomplete IL scan cannot establish database-DDL ownership.");
+		}
+
+		private enum SqlCommandKind
+		{
+			Unknown,
+			Read,
+			Schema,
+			Database
+		}
+
+		private static bool ExecutesSql(MethodBase method)
+		{
+			return new[] { "ExecuteNonQuery", "ExecuteReader", "ExecuteScalar", "ExecuteDbDataReader", "ExecuteSql" }
+				.Any(name => method.Name.StartsWith(name, StringComparison.Ordinal));
+		}
+
+		private static IReadOnlyList<SqlCommandKind> SqlCommandsOf(MethodBase method, ISet<string> blindSpots)
+		{
+			var commands = new List<SqlCommandKind>();
+			var assignments = new List<SqlCommandKind>();
+			var literals = new List<string>();
+			var unknownBuilder = false;
+
+			foreach (var callee in CalleesOf(method, blindSpots, literals.Add))
+			{
+				if (ExecutesSql(callee))
+				{
+					if (assignments.Count == 0)
+						assignments.Add(unknownBuilder ? SqlCommandKind.Unknown : ClassifySql(literals));
+
+					commands.Add(assignments.Contains(SqlCommandKind.Unknown) ? SqlCommandKind.Unknown : assignments.Max());
+					assignments.Clear();
+					literals.Clear();
+					unknownBuilder = false;
+				}
+				else if (callee.Name == "set_CommandText" && typeof(DbCommand).IsAssignableFrom(callee.DeclaringType))
+				{
+					assignments.Add(unknownBuilder ? SqlCommandKind.Unknown : ClassifySql(literals));
+					literals.Clear();
+					unknownBuilder = false;
+				}
+				else if (callee is ConstructorInfo && typeof(DbConnection).IsAssignableFrom(callee.DeclaringType))
+				{
+					literals.Clear();
+					unknownBuilder = false;
+				}
+				else if (IsSqlBuilder(callee, method))
+				{
+					var builderLiterals = SqlBuilderLiterals(callee, new HashSet<MethodBase>(), blindSpots);
+					unknownBuilder |= builderLiterals == null;
+
+					if (builderLiterals != null)
+						literals.AddRange(builderLiterals);
+				}
+			}
+
+			return commands;
+		}
+
+		private static bool IsSqlBuilder(MethodBase callee, MethodBase owner)
+		{
+			return callee is MethodInfo method && method.ReturnType == typeof(string) &&
+				callee.Module.Assembly == owner.Module.Assembly;
+		}
+
+		private static IReadOnlyList<string> SqlBuilderLiterals(MethodBase method, ISet<MethodBase> visited, ISet<string> blindSpots)
+		{
+			if (!visited.Add(method))
+				return null;
+
+			try
+			{
+				var literals = new List<string>();
+				var unsupportedFlow = false;
+
+				foreach (var callee in CalleesOf(method, blindSpots, literals.Add, () => unsupportedFlow = true))
+				{
+					if (!IsSqlBuilder(callee, method))
+						continue;
+
+					var nestedLiterals = SqlBuilderLiterals(callee, visited, blindSpots);
+
+					if (nestedLiterals == null)
+						return null;
+
+					literals.AddRange(nestedLiterals);
+				}
+
+				return unsupportedFlow || literals.Count == 0 ? null : literals;
+			}
+			finally
+			{
+				visited.Remove(method);
+			}
+		}
+
+		private static SqlCommandKind ClassifySql(IEnumerable<string> literals)
+		{
+			var sql = string.Join(" ", literals);
+			const RegexOptions options = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
+
+			if (Regex.IsMatch(sql, @"\bEXEC(?:UTE)?\b", options))
+				return SqlCommandKind.Unknown;
+
+			var operations = Regex.Matches(sql, @"\b(CREATE|ALTER|DROP|EXEC(?:UTE)?|INSERT|UPDATE|DELETE|TRUNCATE)\s+([A-Z]+)\b", options)
+				.Cast<Match>().ToArray();
+
+			if (operations.Any(operation =>
+				!Regex.IsMatch(operation.Groups[1].Value, @"^(CREATE|ALTER|DROP)$", options) ||
+				!Regex.IsMatch(operation.Groups[2].Value, @"^(DATABASE|TABLE|SCHEMA|CONSTRAINT)$", options)))
+				return SqlCommandKind.Unknown;
+
+			if (operations.Any(operation => string.Equals(operation.Groups[2].Value, "DATABASE", StringComparison.OrdinalIgnoreCase)))
+				return SqlCommandKind.Database;
+
+			if (operations.Length > 0)
+				return SqlCommandKind.Schema;
+
+			return Regex.IsMatch(sql, @"\bSELECT\b", options) ? SqlCommandKind.Read : SqlCommandKind.Unknown;
+		}
+
+		private static class DatabaseDdlControls
+		{
+			internal static void Reset(DbCommand command)
+			{
+				command.CommandText = "DROP DATABASE [control]";
+				command.ExecuteNonQuery();
+			}
+
+			internal static void ResetTables(DbCommand command)
+			{
+				command.CommandText = "ALTER TABLE [control] DROP CONSTRAINT [fk]; DROP TABLE [control]";
+				command.ExecuteNonQuery();
+			}
+
+			internal static void FromBuilder(DbCommand command)
+			{
+				command.CommandText = DatabaseCommand();
+				command.ExecuteNonQuery();
+			}
+
+			private static string DatabaseCommand()
+			{
+				return "CREATE DATABASE [control]; ALTER DATABASE [control] SET MULTI_USER";
+			}
+
+			internal static void Read(DbCommand command)
+			{
+				command.CommandText = "SELECT 1";
+				command.ExecuteScalar();
+			}
+
+			internal static void Unknown(DbCommand command, string statement)
+			{
+				command.CommandText = statement;
+				command.ExecuteNonQuery();
+			}
+
+			internal static void Mixed(DbCommand command, string statement)
+			{
+				command.CommandText = "DROP TABLE [control]";
+				command.ExecuteNonQuery();
+				command.CommandText = statement;
+				command.ExecuteNonQuery();
+			}
+
+			internal static void Alternative(DbCommand command, string statement, bool known)
+			{
+				if (known)
+					command.CommandText = "DROP TABLE [control]";
+				else
+					command.CommandText = statement;
+
+				command.ExecuteNonQuery();
+			}
+
+			internal static void FromBranchingBuilder(DbCommand command, string statement, bool known)
+			{
+				command.CommandText = BranchingCommand(statement, known);
+				command.ExecuteNonQuery();
+			}
+
+			private static string BranchingCommand(string statement, bool known)
+			{
+				if (known)
+					return "DROP TABLE [control]";
+
+				return statement;
+			}
+
+			internal static void FromNestedBuilder(DbCommand command, string statement, bool known)
+			{
+				command.CommandText = NestedCommand(statement, known);
+				command.ExecuteNonQuery();
+			}
+
+			private static string NestedCommand(string statement, bool known)
+			{
+				return "DROP TABLE [outer]; " + BranchingCommand(statement, known);
+			}
+
+			internal static void FromUnresolvedBuilder(DbCommand command, string statement)
+			{
+				command.CommandText = "DROP TABLE [control]; " + UnresolvedCommand(statement);
+				command.ExecuteNonQuery();
+			}
+
+			private static string UnresolvedCommand(string statement)
+			{
+				return statement;
+			}
+
+			internal static void FromCyclicBuilder(DbCommand command)
+			{
+				command.CommandText = CyclicCommand();
+				command.ExecuteNonQuery();
+			}
+
+			private static string CyclicCommand()
+			{
+				return "DROP TABLE [control]; " + CyclicCommand();
+			}
+
+			internal static void ReadWithDynamicExecution(DbCommand command)
+			{
+				command.CommandText = "SELECT 1; EXEC(@statement)";
+				command.ExecuteScalar();
+				command.CommandText = "SELECT 1; execute @statement";
+				command.ExecuteScalar();
+			}
+
+			internal static void SchemaWithDynamicExecution(DbCommand command)
+			{
+				command.CommandText = "DROP TABLE [control]; eXeC(@statement)";
+				command.ExecuteNonQuery();
+				command.CommandText = "DROP TABLE [control]; EXEC @statement";
+				command.ExecuteNonQuery();
+			}
 		}
 
 		/// <summary>
@@ -2346,6 +2891,7 @@ namespace ProphetsWay.EFTools.Tests
 		/// </remarks>
 		[Fact]
 		[Trait("Area", "StoreCleanup")]
+		[Trait("Execution", "LocalPhysicalLifecycle")]
 		public void ShouldNameEveryStoreInsideTheDroppableNamespace()
 		{
 			//setup
