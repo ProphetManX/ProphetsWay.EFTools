@@ -859,3 +859,50 @@ does not authorize changes outside this repository or block applying D-014 to th
 - **Authority:** The owner's statement above; the current owner-authored
   `infra/example.solution.bicep` and `infra/group.bicep`; and the parent-supplied live read-only
   evidence recorded for the 2026-09-06 documentation run.
+
+## D-035: Split Azure certification from physical database lifecycle checks
+
+**Date:** 2026-09-07 | **Owner:** G. Gordon Nasseri | **Status:** Settled
+
+- **Exact owner approval:** `approved as written`, covering the complete scope quoted in the
+  [2026-09-07 run record](../../.agent-runs/20260907-1550-azure-certification-split/run.md).
+- **Revised certification outcome:** Physical database create/drop tests remain required locally and
+  are explicitly excluded from Azure. The Azure run retains all data-access, constraint, isolation,
+  disposal, and transaction contract coverage; exclusions are reported separately, with no silent
+  passes or unexpected skips.
+- **Implementation authority:** Test classifications, supporting fixtures and helpers, necessary test
+  configuration, and related certification documentation may change. Azure uses the fixed
+  `ProphetsWay.Example` database plus reusable, explicitly configured scratch databases; minimum
+  scratch capacity is derived from concrete test needs and explained before provisioning. Shared-store
+  resets and use are controlled and exclusive while preserving required simultaneous isolation, and a
+  reset failure fails the run. Local validation may use builds, offline or in-memory checks, and focused
+  localhost integration tests limited to test-owned disposable resources.
+- **Preservation and no-live boundary:** No production-library behavior change, weakened assertion,
+  unrelated refactor, YAML change, commit, release, live Azure provisioning, reset, deletion, or test
+  execution is authorized. The previously reported survivor remains unremoved and unverified; exact
+  Azure scratch names and every live cost, time, or mutation approval remain deferred.
+- **Decision effect:** This revises the Gate 2 certification outcome and supersedes D-009 and D-025
+  only where they contemplated physical create/drop activity during an Azure certification wave. It
+  does not complete FR 19, alter a production contract, or authorize a new Azure run. All earlier
+  entries remain unchanged as historical decisions.
+
+## Session Note: 2026-09-08 Result And Owner Boundary
+
+Factual session evidence only; no new product decision or amendment to D-001 through D-035.
+
+- **Result observation:** The owner supplied a `net10.0` result using the unchanged
+  `Execution!=LocalPhysicalLifecycle` filter in [azure-sql-test-execution.md](azure-sql-test-execution.md):
+  369 passed, 0 failed, 0 skipped, 99.4 seconds; build reported successful in 103.5 seconds.
+  Parent verification of the saved TRX established 369 distinct passing executions and linked
+  definitions, all 14 comparison cases passing, no results from the six local physical tests,
+  and the exact-six exclusion guard passing. Separate local physical evidence is not added to 369.
+- **Owner boundary:** Documentation maintenance, a next-session wrapup, and conditional reviewed
+  commit/push were authorized for tonight (2026-09-08). The owner reserved tomorrow (2026-09-09):
+  "tomorrow i'll do a final overlook and pr/merge changes so we can get the azure sql certification
+  completed". This records the boundary, not a completed Git operation or approval to PR, merge,
+  certify, or release tonight.
+- **Evidence limits and pending decisions:** The supplied result verifies test outcomes and identities;
+  Azure targeting remains owner-context. Endpoint, authentication, deployment state, and live cleanup
+  were not independently verified by that result. Formal Gate 2/FR19 closure awaits owner review;
+  release remains unapproved. The existing private-Bicep source-control policy question remains
+  unresolved. No historical decision, approval, test-count requirement, or feature-request status changes.

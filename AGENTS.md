@@ -250,7 +250,7 @@ the project header and sidecars are what change.
   | `Interface Architect` | Interfaces and their supporting types — never tests, never implementations |
   | `API Designer` | HTTP contracts and `docs/api/` — never implementations |
   | `Test Designer` | `*Tests.cs` only |
-  | `Implementer` | Implementation `.cs` only — **never** a test file |
+  | `Implementer` | Production implementation artifacts, including `.cs`, `.sql`, and explicitly scoped `.xml` — **never** tests or project/build files |
   | `Refactorer` | Implementation `.cs` only, behavior-preserving — **never** a test file |
   | `Modernizer` | `.csproj` / `.sqlproj` build and packaging config — never versions, never namespaces |
   | `Pipeline Engineer` | `.yml` / `.yaml` only — never versions, secrets, project files, or Markdown |
@@ -290,6 +290,36 @@ the project header and sidecars are what change.
 
 **Family:** Data Access · **Published:** yes, as `ProphetsWay.EFTools`
 
+### Current Certification Status - 2026-09-08
+
+This is a narrow status refresh, not a new repository audit. The older dated inventory, API,
+dependency, packaging, test-count and HEAD statements below retain their historical dates; they
+were not freshly reverified and must not be read as today's inventory or final commit identity.
+
+**Local preparation is complete for the filtered trial; do not repeat the helper implementation work.**
+The current [Constants.cs](ProphetsWay.EFTools.Tests/Constants.cs) SQL Server branch configures the
+existing `ProphetsWay.Example` database through
+[TestStore.cs](ProphetsWay.EFTools.Tests/TestStore.cs). The helper selects the explicit `Reusable`
+lifecycle and validates two scratch database names. Use the canonical
+[execution guide](docs/azure-sql-test-execution.md#current-route-configuration) for configuration and
+reset boundaries: the fixed DACPAC-seeded Example database is not a scratch-reset target, though tests
+may write synthetic rows there. Do not automatically republish its DACPAC.
+
+**The owner-run Azure-context trial has run.** On `net10.0`, with
+`Execution!=LocalPhysicalLifecycle`, it recorded **369 passed, 0 failed, 0 skipped**; the owner reported
+**99.4 seconds**. The parent's offline result reconciliation includes all **14** provider-selection-exempt
+comparison cases, excludes the **six** named local physical-lifecycle cases, and confirms the exact-six
+classification guard passed. Historical local physical **6/6** evidence remains separate. These are dated
+execution observations, not new discovery totals or fixed acceptance counts. See the
+[filtered trial result](docs/azure-sql-test-execution.md#filtered-trial-result-2026-09-08).
+
+**Gate 2, FR 19 and release remain pending owner review.** Deployment, endpoint, authentication and
+seeded-state claims are owner execution context, not fresh live inspection or facts proved by the TRX.
+The private-defaults publication policy remains unresolved; documentation maintenance authorizes neither
+removing protected values nor publishing them or history. Preserve uncommitted owner changes; this note
+does not identify a final commit. The canonical guide above is the portable entry point, not a private
+raw-TRX filesystem link.
+
 The published 2.2.0 line implements `ProphetsWay.BaseDataAccess` 2.5.0 with abstract Entity Framework
 DAO, context, and DAL bases. It ships two implementations selected by target framework: EF6 6.5.1
 on .NET Framework and EF Core on .NET 8/9. The branches differ in API and behavior; notably,
@@ -322,8 +352,10 @@ Under **D-033**, the owner authors and manually deploys the fixture while agents
 a dedicated resource group and logical server, the `ProphetsWay.Example` database online at Basic (5 DTUs,
 2 GiB), one exact-address firewall rule, and a dedicated security-enabled, non-mail-enabled Microsoft Entra
 administrator Group. Do not reproduce protected IDs or the client address. **Gate 2 remains open and
-release-blocking:** DACPAC publication, connection and authentication configuration, and the Azure whole-suite
-test run are still pending. Source-control policy for the current live-value defaults is also unresolved.
+release-blocking.** This is the dated deployment snapshot, not current trial status: the
+[2026-09-08 filtered result](docs/azure-sql-test-execution.md#filtered-trial-result-2026-09-08)
+supersedes the earlier pending-preparation/trial wording. It does not close certification or resolve
+source-control policy for the live-value defaults.
 
 ### 3.x Progress — the four implementation laps landed, and four more commits landed on 2026-08-23
 
