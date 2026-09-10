@@ -1,8 +1,8 @@
 targetScope = 'subscription'
 
 
-param userObjectId string = '120597d8-c801-4103-ab55-5ec06989b91e'
-param userFirewallIpAddress string = '71.166.214.26'
+param userObjectId string
+param userFirewallIpAddress string
 
 
 
@@ -59,24 +59,33 @@ module sql 'br/public:avm/res/sql/server:0.22.0' = {
 }
 
 
-module databaseDeployment 'br/public:avm/res/sql/server/database:0.3.0' = {
-  name: '${deployName}-deploy-sql-db'
-  scope: deploymentRg
-  params: {
-    name: 'ProphetsWay.Example'
-    serverName: sql.outputs.name
-    location: location
-    availabilityZone: -1
-    zoneRedundant: false
-    enableTelemetry: false
-    sku: {
-      name: 'Basic'
-      tier: 'Basic'
-      capacity: 5
+var scratchDatabaseNames = [
+  'ProphetsWay.Example'
+  'EFToolsScratch_1'
+  'EFToolsScratch_2'
+]
+
+module scratchDatabases 'br/public:avm/res/sql/server/database:0.3.0' = [
+  for databaseName in scratchDatabaseNames: {
+    name: '${deployName}-database-${databaseName}'
+    scope: deploymentRg
+    params: {
+      name: databaseName
+      serverName: sql.outputs.name
+      location: location
+      availabilityZone: -1
+      zoneRedundant: false
+      enableTelemetry: false
+      sku: {
+        name: 'Basic'
+        tier: 'Basic'
+        capacity: 5
+      }
+      maxSizeBytes: 2147483648
     }
-    maxSizeBytes: 2147483648
   }
-}
+]
+
 
 module firewallRuleDeployment 'br/public:avm/res/sql/server/firewall-rule:0.1.0' = {
   name: '${deployName}-deploy-sql-fw-client'

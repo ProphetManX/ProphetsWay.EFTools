@@ -1,5 +1,13 @@
 # Azure SQL Gate 2 Certification Requirements
 
+> **D-035 precedence (2026-09-07):** For test execution, reusable scratch stores, and the exact
+> local-only physical-lifecycle inventory, [azure-sql-test-execution.md](azure-sql-test-execution.md)
+> is controlling. It supersedes every later Azure per-test database create/drop requirement and
+> unfiltered Azure-run requirement. Current Azure selection is `Execution!=LocalPhysicalLifecycle`,
+> with exactly six reported local-only exclusions, all included cases passing, and no skips. The
+> remaining text is historical or applies only where that reviewed compact contract preserves it.
+> This note grants no live operation authority.
+
 ## Current Status And Supersession
 
 [D-033](decision-log.md#d-033-replace-the-stopped-agent-led-azure-sql-route-with-the-owners-manual-route)
@@ -16,17 +24,20 @@ SQL administrator with the intended user membership, and exactly one client fire
 end are the same protected address. Database `ProphetsWay.Example` is `Online` on the Basic tier at 5 DTUs
 and 2 GiB. Exact identities and the firewall address remain excluded from this document.
 
-The DACPAC is not established as applied, protected connection and authentication inputs have not been
-supplied, and no Azure whole-suite run has occurred. The active remaining path is DACPAC publish
-preparation and validation followed by separately authorized application, protected connection
-configuration, and the complete unfiltered Azure SQL test run. This status amendment grants no Azure,
-SQL, DACPAC, test, release, or Git operation authority. The historical status, requirements, gates, and
-acceptance criteria below remain preserved and must be read through this supersession.
+The owner reports the Example DACPAC deployed with synthetic seed data and has completed the filtered
+trial. The canonical [2026-09-08 trial result](azure-sql-test-execution.md#filtered-trial-result-2026-09-08)
+separates the measured TRX outcomes from owner-reported Azure context and prior local physical evidence.
+This documentation close-out does not independently verify the live database. Do not automatically
+republish the DACPAC. **Gate 2, FR 19, and release remain pending the owner's final review planned for
+2026-09-09.** Further Azure scratch provisioning, protected configuration, and live execution still require
+separate authority; this status amendment grants no Azure, SQL, DACPAC, test, release, or Git operation
+authority. The historical status, requirements, gates, and acceptance criteria below remain preserved and
+must be read through this supersession; this factual update adds no normative criteria.
 
 ### D-033/D-034 Current-Route Authority Boundary
 
-For current D-033/D-034 continuation, this subsection takes precedence over every conflicting statement
-later in this document. D-001 through D-032 and their derived status, scope, requirements, gates, failure
+For current D-033/D-034 continuation, subject to D-035 above, this subsection takes precedence over every
+conflicting statement later in this document. D-001 through D-032 and their derived status, scope, requirements, gates, failure
 rows, dependency and readiness rows, acceptance criteria, exclusions, handoff, and repair-traceability
 entries remain verbatim historical evidence. Wherever encountered, a later statement is **historical and
 non-operative for the current route** when it requires the predecessor protected-package or
@@ -51,14 +62,14 @@ or source-control policy.
 | Database and firewall | The deployed database is `ProphetsWay.Example`, `Online`, Basic, 5 DTUs, and 2 GiB. Public access has exactly one client firewall rule whose start and end are the same address. | These are current implementation facts for the existing fixture. They do not prove DACPAC application, connection readiness, a test result, or Gate 2. |
 | Current parameter shape and defaults | Current root declares `userObjectId` and `userFirewallIpAddress` with repository-owned defaults, `now` defaulted by `utcNow('MMddHHmm')`, `deployName` derived from `now`, and `location` defaulted from deployment context. The two protected literal values are deliberately omitted here. | Their presence is a current implementation fact, so inherited old parameter-shape, sealed-authentication-object, no-default, and no-protected-literal checks cannot reject or require alteration of the D-034 implementation. Successful owner deployment does **not** settle whether identity/address defaults may remain in reusable or public source; that source-control policy remains unresolved. No downstream connection or test work may expose, copy, log, publish, or reuse either value, or infer permission to do so, without a later owner decision and separately supplied authorized inputs. |
 
-| Current downstream activity | D-033/D-034 traceability and boundary |
+| Current downstream activity | Current-route traceability and boundary |
 | --- | --- |
-| Requirements and focused review | Apply this precedence map to every inherited surface. Review RR-CS-001 against the global historical classification, RR-CS-002 against these activity mappings and the authority rows below, and RR-CS-003 against every source-fact row above. A review verdict grants no operation authority. |
+| Requirements and focused review | Apply this precedence map, with D-035 and the already-reviewed compact execution contract controlling test execution. This documentation alignment does not reopen the completed D-035 review or grant operation authority. |
 | Infrastructure review | `Azure Deployment Reviewer v2` may review the current five-module, Group-admin, generated-name, `westus` source and recorded deployed state when separately tasked. It must not apply predecessor acceptance or naming oracles and receives no authority to preview, deploy, change, or remove resources. |
 | Security and threat review | `Threat Modeler v2` and `Security Reviewer v2` must treat the Group administrator, public exact-address boundary, and current identity/address defaults as current facts, while treating reusable/public source policy for those defaults as unresolved. They must not reproduce the values or infer connection, reuse, mutation, or publication authority. |
-| DACPAC preparation and validation | D-033 identifies this as the next workstream, but it begins only under a separate exact-scope packet. DACPAC application remains a separately authorized human action; D-034 records no application. |
-| Connection configuration and test work | Protected connection and authentication details remain unsupplied. `Test Designer` may use only the unchanged Gate 2 outcome: one complete green unfiltered Azure SQL run. No agent may connect or run tests without separate authority, or obtain connection material by reusing the source defaults. |
-| Gate 2 and release | The successful deployment is infrastructure state, not Gate 2 evidence. Only the separately authorized complete unfiltered Azure SQL run can satisfy Gate 2, and release actions remain independently governed. |
+| DACPAC preparation and validation | The owner reports the Example schema applied. Validate the existing schema and access under separate exact-scope authority; do not automatically republish. Any later DACPAC application remains a separately authorized human action. |
+| Connection configuration and test work | Use the D-035 [current-route configuration](azure-sql-test-execution.md#current-route-configuration): explicit `SqlServer`/`Reusable`, both validated pre-existing scratch names, and the owner-supplied private process-local connection override. Azure selection is `Execution!=LocalPhysicalLifecycle`. No agent may connect or run tests without separate authority, or obtain connection material by reusing the source defaults. |
+| Gate 2 and release | Deployment and local verification are not Azure certification. Only the separately authorized D-035 Azure selection, with exactly six listed local-only exclusions, every included case passing and no skips, can supply Gate 2 test evidence. Release actions remain independently governed. |
 
 This boundary explicitly repairs `RR-CS-001` through global supersession, `RR-CS-002` through formal
 D-033/D-034 downstream traceability, and `RR-CS-003` through complete current-source classification. It
