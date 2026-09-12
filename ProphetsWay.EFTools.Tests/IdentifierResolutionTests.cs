@@ -1,6 +1,5 @@
 using System;
 
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 using ProphetsWay.BaseDataAccess;
@@ -119,13 +118,17 @@ namespace ProphetsWay.EFTools.Tests
 
 		private static void WithStore(Action<Func<IdentifierResolutionContext>> body)
 		{
-			using (var connection = new SqliteConnection("Filename=:memory:"))
-			{
-				connection.Open();
+			// Held for the whole body: disposing the store discards the database every context here reads.
+			var store = TestStore.OpenStore(nameof(IdentifierResolutionTests));
+			var completed = false;
 
-				var options = new DbContextOptionsBuilder<IdentifierResolutionContext>()
-					.UseSqlite(connection)
-					.Options;
+			try
+			{
+				var builder = new DbContextOptionsBuilder<IdentifierResolutionContext>();
+
+				store.Configure(builder);
+
+				var options = builder.Options;
 
 				Func<IdentifierResolutionContext> factory = () => new IdentifierResolutionContext(options);
 
@@ -133,6 +136,14 @@ namespace ProphetsWay.EFTools.Tests
 					schema.Database.EnsureCreated();
 
 				body(factory);
+
+				completed = true;
+			}
+			finally
+			{
+				// A store this run failed to drop is a database left on the server, so it is raised here - but only
+				// over a body that otherwise passed, or cleanup replaces the finding with its consequence.
+				TestStoreCleanup.DisposeReportingFailure(store, completed);
 			}
 		}
 
@@ -140,13 +151,18 @@ namespace ProphetsWay.EFTools.Tests
 		/// A context that never opens a connection. The three constructor obligations must not need a database,
 		/// and using one would hide an implementation that touched the store during construction.
 		/// </summary>
-		private static IdentifierResolutionContext UnopenedContext()
+		/// <remarks>
+		/// The store is a parameter rather than a local because the caller has to outlive the context: nothing here
+		/// materialises the database, but the seam still owns whatever naming one provisioned, and disposing it
+		/// before the assertions run would leave the context pointed at a store that had already been taken away.
+		/// </remarks>
+		private static IdentifierResolutionContext UnopenedContext(TestStore.Store store)
 		{
-			var options = new DbContextOptionsBuilder<IdentifierResolutionContext>()
-				.UseSqlite("Filename=:memory:")
-				.Options;
+			var builder = new DbContextOptionsBuilder<IdentifierResolutionContext>();
 
-			return new IdentifierResolutionContext(options);
+			store.Configure(builder);
+
+			return new IdentifierResolutionContext(builder.Options);
 		}
 
 		/// <summary>
@@ -201,13 +217,27 @@ namespace ProphetsWay.EFTools.Tests
 		public void ShouldThrowConventionExceptionFromTheConstructorWhenTheIdentifierIsAnExplicitInterfaceImplementation()
 		{
 			//setup
-			using (var context = UnopenedContext())
-			{
-				//act
-				var thrown = Record.Exception(() => new ExplicitKeyedDao(context));
+			var store = TestStore.OpenStore(nameof(IdentifierResolutionTests));
+			var completed = false;
 
-				//assert
-				thrown.ShouldBeOfType<DataAccessConventionException>();
+			try
+			{
+				using (var context = UnopenedContext(store))
+				{
+					//act
+					var thrown = Record.Exception(() => new ExplicitKeyedDao(context));
+
+					//assert
+					thrown.ShouldBeOfType<DataAccessConventionException>();
+				}
+
+				completed = true;
+			}
+			finally
+			{
+				// Same rule as WithStore: a store this run failed to drop is raised here, but only over a body that
+				// otherwise passed.
+				TestStoreCleanup.DisposeReportingFailure(store, completed);
 			}
 		}
 
@@ -217,13 +247,25 @@ namespace ProphetsWay.EFTools.Tests
 		public void ShouldThrowConventionExceptionFromTheConstructorWhenTheIdentifierPropertyIsNotPublic()
 		{
 			//setup
-			using (var context = UnopenedContext())
-			{
-				//act
-				var thrown = Record.Exception(() => new HiddenKeyedDao(context));
+			var store = TestStore.OpenStore(nameof(IdentifierResolutionTests));
+			var completed = false;
 
-				//assert
-				thrown.ShouldBeOfType<DataAccessConventionException>();
+			try
+			{
+				using (var context = UnopenedContext(store))
+				{
+					//act
+					var thrown = Record.Exception(() => new HiddenKeyedDao(context));
+
+					//assert
+					thrown.ShouldBeOfType<DataAccessConventionException>();
+				}
+
+				completed = true;
+			}
+			finally
+			{
+				TestStoreCleanup.DisposeReportingFailure(store, completed);
 			}
 		}
 

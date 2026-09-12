@@ -4,6 +4,38 @@ _Generated 2026-08-15. Evidence-based; every claim cites a source file._
 
 ---
 
+## Current Certification Status - 2026-09-08
+
+**Scope: current-status documentation only.** The dated profile below is preserved as history, not
+freshly reverified API, dependency, packaging, coverage or repository inventory. Its older HEAD and
+test totals are not a current commit identity or new acceptance requirements.
+
+Local reusable-store preparation is complete for the trial. The current
+[Constants.cs](../ProphetsWay.EFTools.Tests/Constants.cs) configures existing `ProphetsWay.Example`
+on SQL Server via [TestStore.cs](../ProphetsWay.EFTools.Tests/TestStore.cs); the helper routes explicit
+`Reusable` lifecycle to two validated scratch database names. The
+[test project](../ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj) declares `net10.0`.
+Follow the canonical [current-route configuration](azure-sql-test-execution.md#current-route-configuration)
+instead of repeating helper implementation work. The fixed, owner-reported DACPAC-seeded Example
+database is outside scratch reset; tests may still write synthetic rows there. No automatic DACPAC
+republication is pending.
+
+The [filtered trial result](azure-sql-test-execution.md#filtered-trial-result-2026-09-08) records the
+owner-run `net10.0` selection `Execution!=LocalPhysicalLifecycle`: **369 passed, 0 failed, 0 skipped**,
+with **99.4 seconds** reported by the owner. Parent offline reconciliation verified the result identities,
+all **14** included provider-selection-exempt comparison cases, absence of the **six** local physical
+cases, and the passing exact-six classification guard. Historical local physical **6/6** results are
+separate, not added to 369. These are dated observations; no fresh whole-assembly discovery or test run
+was performed for this refresh.
+
+**Gate 2, FR 19 and release remain pending the owner's final review.** Azure deployment, endpoint,
+authentication and seeded-state details are owner context, not independent live inspection or conclusions
+from the TRX. The private-defaults publication policy remains unresolved; this refresh grants no cleanup,
+Git, publication or live-operation authority. Existing uncommitted owner changes are preserved; no final
+commit SHA is claimed. Use the portable guide above for durable routing, not external private TRX links.
+
+---
+
 ## Reading Note — re-derived 2026-08-23 at HEAD `a9e8199`
 
 **This document was re-profiled against the working tree on 2026-08-22 after laps 1–4, and re-derived again
@@ -110,6 +142,28 @@ twelve-class 3.0.0 surface **and nothing else**, and referencing **no database p
 
 **The two are not yet the same artifact on nuget.org.** `app-variables.yml` reads `3` / `0` / `0`, but
 3.0.0 is **not tagged and not published**, so a reader of the listing still meets the first sentence.
+
+## Azure SQL Certification Fixture
+
+The owner-authored `infra/` surface contains four files: `bicepconfig.json`, `group.bicep`,
+`example.solution.bicep`, and `README.md`. `bicepconfig.json` enables the Microsoft Graph Bicep extension;
+`group.bicep` declares a dedicated security-enabled, non-mail-enabled Microsoft Entra administrator Group;
+and `example.solution.bicep` is subscription-scoped and composes pinned Azure Verified Modules for a dedicated
+resource group, logical SQL server, Basic database, and one exact-address firewall rule
+([infra/bicepconfig.json](../infra/bicepconfig.json), [infra/group.bicep](../infra/group.bicep),
+[infra/example.solution.bicep](../infra/example.solution.bicep), [infra/README.md](../infra/README.md)).
+
+**D-033 is the controlling route:** the owner authors and manually deploys; agents review and document.
+**D-034 records the milestone:** owner deployment `deploy-sql-manually-ggn8` succeeded in `westus`, creating
+the dedicated resource group and logical server, an Online Basic 5-DTU/2-GiB `ProphetsWay.Example` database,
+one firewall rule, and the dedicated Group as Entra-only SQL administrator
+([decision-log.md](decision-log.md)). No object IDs, membership identities, or client address are reproduced.
+
+**Gate 2 remains open and release-blocking.** This historical deployment snapshot is superseded for
+preparation and trial status by the
+[2026-09-08 filtered result](azure-sql-test-execution.md#filtered-trial-result-2026-09-08), not a claim
+that the Azure trial never ran. Final certification review and the live-value-defaults publication policy
+remain unresolved; the result does not independently establish endpoint or authentication state.
 
 ## What It Actually Does
 

@@ -641,19 +641,68 @@ The solution contains seven projects — three owned here (`ProphetsWay.EFTools`
 `ProphetsWay.Example.DataAccess.EF`, `ProphetsWay.EFTools.Tests`) and four from the
 [`ProphetsWay.Example`](https://github.com/ProphetManX/ProphetsWay.Example) submodule.
 
+### Current SQL Server and Azure test runs
+
+Follow [docs/azure-sql-test-execution.md](docs/azure-sql-test-execution.md). Local SQL Server defaults to
+`Disposable`; Azure requires `EFTOOLS_SQLSERVER_STORE_LIFECYCLE=Reusable`.
+Set `EFTOOLS_PROVIDER=SqlServer` explicitly and supply `EFTOOLS_SQLSERVER_CONNECTION_STRING`
+securely as the base connection. Set `EFTOOLS_SQLSERVER_SCRATCH_DATABASE_1` and
+`EFTOOLS_SQLSERVER_SCRATCH_DATABASE_2` to two distinct, pre-existing, dedicated scratch databases
+matching `^EFToolsScratch_[A-Za-z0-9_]{1,113}$`. Those two configured names are the reset allowlist.
+Keep settings private and session-local; do not commit or log connection values. Run only one test
+process against a scratch pair at a time: the lease pool coordinates callers within that process.
+Start with two empty scratch databases; do not publish the Example DACPAC to either. The fixtures
+create their own models after reset.
+
+**Destructive reset:** reusable leases drop every user foreign key and table before and after use,
+destroying their contents. Never point scratch settings at a database containing anything you need.
+Reusable mode does not create or drop databases, or run migrations.
+
+The fixed `ProphetsWay.Example` database is separate and never scratch-reset. The owner reports its
+Example DACPAC and synthetic seed data already applied. Before another authorized live run, validate
+the existing schema, connection and authentication; do not automatically republish the DACPAC.
+No commit is needed to run tests.
+
+For a separately approved trial, configure the settings above and run from the repository root:
+
+```powershell
+dotnet test ProphetsWay.EFTools.Tests/ProphetsWay.EFTools.Tests.csproj -f net10.0 --filter "Execution!=LocalPhysicalLifecycle"
+```
+
+The filter excludes the six local physical-lifecycle checks, not all `Guard=Seam` checks.
+Keep those physical checks in the unfiltered local `Disposable` run; their prior **6/6** result is
+separate historical evidence, not part of the filtered trial total.
+
+**Owner-run filtered trial, 2026-09-08:** the retained TRX reconciliation confirms **369 included
+executions, all passing, zero failures and zero skips**, including all **14 provider-selection-exempt
+comparison cases**. The owner reports **99.4 seconds** for the trial and a successful build in
+**103.5 seconds**. See the [dated result](docs/azure-sql-test-execution.md#filtered-trial-result-2026-09-08)
+for the evidence boundaries. Azure endpoint and authentication were not independently verified.
+**Gate 2, FR 19, and release remain pending owner review**; this passing milestone is not
+certification or release sign-off. The two owner-specific defaults were removed from the fixture
+template. The owner prefers history removal but accepts leaving prior history intact and accepts
+the fixture source as-is. Those decisions do not independently verify live infrastructure or clear
+the infrastructure review gate.
+
 ### Running the tests
 
 ```
 dotnet test
 ```
 
-**Most of the suite needs a local SQL Server.** `ProphetsWay.EFTools.Tests/Constants.cs` holds a
-`Data Source=localhost;Initial Catalog=ProphetsWay.Example;Integrated Security=True;TrustServerCertificate=True`
-connection string, and the schema is the submodule's `ProphetsWay.Example.Database` project. That is why
-`app-variables.yml` sets `LocalTestsOnly: 'yes'` and the pipeline skips the suite entirely.
+**SQL Server is the default test provider.**
+[TestStore.cs](ProphetsWay.EFTools.Tests/TestStore.cs#L29) owns connection configuration: localhost,
+integrated security and `TrustServerCertificate=True` by default, with an optional
+`EFTOOLS_SQLSERVER_CONNECTION_STRING` override.
+[Constants.cs](ProphetsWay.EFTools.Tests/Constants.cs#L10) names the fixed `ProphetsWay.Example` database
+and delegates configuration to `TestStore`. Its schema comes from the submodule's
+`ProphetsWay.Example.Database` project; the existing baseline is prepared separately and is not
+scratch-reset. CI policy is unchanged: `app-variables.yml` sets `LocalTestsOnly: 'yes'` and the pipeline
+skips the suite entirely.
 
-The tests written directly against this library's own surface stand up **SQLite in-memory** contexts instead
-and need no database at all. Select them with the traits the suite carries:
+Direct fixtures also use `TestStore` and follow its provider selection. Set `EFTOOLS_PROVIDER=Sqlite`
+in the test process for **SQLite in-memory** checks without SQL Server; leaving it unset selects SQL Server.
+The following trait filter selects the keyless and insert areas, not a provider:
 
 ```
 dotnet test --filter "Area=Keyless|Area=Insert"
