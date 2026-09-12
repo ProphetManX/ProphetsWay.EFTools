@@ -678,9 +678,11 @@ executions, all passing, zero failures and zero skips**, including all **14 prov
 comparison cases**. The owner reports **99.4 seconds** for the trial and a successful build in
 **103.5 seconds**. See the [dated result](docs/azure-sql-test-execution.md#filtered-trial-result-2026-09-08)
 for the evidence boundaries. Azure endpoint and authentication were not independently verified.
-**Gate 2, FR 19, and release remain pending the owner's final review planned for 2026-09-09**;
-this passing milestone is not certification or release sign-off. Protected-value source-control
-policy also remains unresolved.
+**Gate 2, FR 19, and release remain pending owner review**; this passing milestone is not
+certification or release sign-off. The two owner-specific defaults were removed from the fixture
+template. The owner prefers history removal but accepts leaving prior history intact and accepts
+the fixture source as-is. Those decisions do not independently verify live infrastructure or clear
+the infrastructure review gate.
 
 ### Running the tests
 

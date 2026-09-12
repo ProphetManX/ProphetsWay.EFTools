@@ -43,9 +43,9 @@ The template uses stable resource names, so an incremental redeployment targets 
 
 ## Caveats And Next Step
 
-`example.solution.bicep` currently contains default values for a user object ID and a public IP address. They are suitable only for this manual fixture and must be parameterized before reuse or publication; do not copy those values into documentation, parameter files, or command history.
+[example.solution.bicep](example.solution.bicep) declares `userObjectId` and `userFirewallIpAddress` as required owner-supplied strings with no defaults. The prior owner-specific defaults were removed; do not copy private values into documentation, parameter files, or command history.
 
-The reuse/publication policy for those private defaults remains unresolved. Exact subscription and tenant identity, current live inventory, and costs were not independently checked; this factual README update supplies no missing deployment identity or policy approval.
+The owner prefers removal of the prior values from history but accepts leaving prior history intact. That settles the narrow defaults/history question, not whole-history sanitization, blanket publication approval, or independent infrastructure clearance. Exact subscription and tenant identity, effective deployment parameters, current live inventory, and costs were not independently checked; this factual README update supplies no missing deployment identity or gate approval.
 
 The owner reports that the fixed Example database already has the DACPAC and synthetic seed data; **no automatic DACPAC republication is pending**. The two scratch databases must be dedicated, initially empty reusable stores with no foreign data or user objects, and **do not receive the Example DACPAC**. Follow the existing [Azure SQL test execution contract](../docs/azure-sql-test-execution.md) for protected configuration and lifecycle boundaries: reusable tests clear all user foreign keys and tables in a leased scratch database before use and on release, then create the current test model. They do not create or drop the scratch databases. Fixed Example is never scratch-reset, although adapted tests may write synthetic rows there. Use synthetic test data only and **one test process per scratch pair**; the in-process lease pool does not coordinate separate processes.
 

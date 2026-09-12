@@ -25,7 +25,7 @@ establishes test outcomes and identities, not endpoint, authentication, deployed
 No automatic DACPAC republication is pending. The raw TRX source location remains in the supplied result
 record; durable retention is separate evidence work, and no verified copy receipt is claimed here.
 
-**Gate 2, FR 19, and release remain pending the owner's final review planned for 2026-09-09.** This dated
+**Gate 2, FR 19, and release remain pending the owner's final review.** This dated
 observation changes no D-035 rule, acceptance criterion, test/count requirement, or historical decision,
 and grants no operation authority.
 
