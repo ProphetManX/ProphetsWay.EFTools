@@ -290,7 +290,7 @@ the project header and sidecars are what change.
 
 **Family:** Data Access · **Published:** yes, as `ProphetsWay.EFTools`
 
-### Current Certification Status - 2026-09-08
+### Current Certification Status - 2026-09-11
 
 This is a narrow status refresh, not a new repository audit. The older dated inventory, API,
 dependency, packaging, test-count and HEAD statements below retain their historical dates; they
@@ -315,10 +315,19 @@ execution observations, not new discovery totals or fixed acceptance counts. See
 
 **Gate 2, FR 19 and release remain pending owner review.** Deployment, endpoint, authentication and
 seeded-state claims are owner execution context, not fresh live inspection or facts proved by the TRX.
-The private-defaults publication policy remains unresolved; documentation maintenance authorizes neither
-removing protected values nor publishing them or history. Preserve uncommitted owner changes; this note
-does not identify a final commit. The canonical guide above is the portable entry point, not a private
-raw-TRX filesystem link.
+The 2026-09-09 owner clarification settled the narrow defaults/history question: the two owner-specific
+defaults were removed, and the owner prefers history removal but accepts leaving prior history intact.
+Reopened on 2026-09-11, [example.solution.bicep](infra/example.solution.bicep) declares `userObjectId`
+and `userFirewallIpAddress` without defaults. This is not blanket publication approval or independent
+clearance of prior infrastructure findings. The same clarification records three deployed databases
+as owner context: only the primary received its DACPAC manually; neither scratch database did.
+No scratch DACPAC publication or automatic primary republication follows.
+
+The 2026-09-10 wrapup records verified owner-made EFTools and Example branch pushes and a reachable
+Example gitlink target; it does not establish a merge to Example `main` or release approval. The
+owner-deferred solution diff remains unmodified and awaits disposition. Exact live deployment inputs,
+matching preview/cost evidence and infrastructure gate clearance remain pending. Preserve uncommitted
+owner changes. The canonical guide above remains the portable entry point, not a private raw-TRX link.
 
 The published 2.2.0 line implements `ProphetsWay.BaseDataAccess` 2.5.0 with abstract Entity Framework
 DAO, context, and DAL bases. It ships two implementations selected by target framework: EF6 6.5.1
@@ -354,8 +363,9 @@ a dedicated resource group and logical server, the `ProphetsWay.Example` databas
 administrator Group. Do not reproduce protected IDs or the client address. **Gate 2 remains open and
 release-blocking.** This is the dated deployment snapshot, not current trial status: the
 [2026-09-08 filtered result](docs/azure-sql-test-execution.md#filtered-trial-result-2026-09-08)
-supersedes the earlier pending-preparation/trial wording. It does not close certification or resolve
-source-control policy for the live-value defaults.
+supersedes the earlier pending-preparation/trial wording. It does not close certification. The later
+2026-09-09 owner clarification settles the narrow sanitized-defaults/history fallback described above;
+it does not independently clear the infrastructure gate or grant blanket publication approval.
 
 ### 3.x Progress — the four implementation laps landed, and four more commits landed on 2026-08-23
 
